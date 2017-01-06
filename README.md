@@ -2,7 +2,7 @@
 
 CTranslate is a C++ implementation of OpenNMT's `translate.lua` script, with no Torch/Lua dependencies. It facilitates the use of OpenNMT models in existing products and on various platforms using [Eigen](http://eigen.tuxfamily.org) as a backend.
 
-It supports CPU OpenNMT models. You can convert GPU trained models the [`release_model.lua`](https://github.com/OpenNMT/OpenNMT/tree/master/tools#release-model) script.
+It supports CPU OpenNMT models. You can convert GPU trained models with the [`release_model.lua`](https://github.com/OpenNMT/OpenNMT/tree/master/tools#release-model) script.
 
 ## Dependencies
 
