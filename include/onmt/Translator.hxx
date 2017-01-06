@@ -217,7 +217,6 @@ namespace onmt
     , _decoder(_model.get_decoder_module(0))
     , _generator(_model.get_decoder_module(1))
   {
-    dynamic_cast<nn::Graph<MatFwd, MatIn, MatEmb, ModelT>*>(_encoder)->to_dot("encoder.dot", "encoder");
   }
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
