@@ -23,6 +23,8 @@ It will produce the dynamic library `libonmt.so` and the translation client `cli
 
 To compile only the library, use the `-DLIB_ONLY=ON` flag.
 
+Unless you are cross-compiling for a different architecture, you can add `-DCMAKE_CXX_FLAGS="-march=native"` to the cmake command above to optimize for speed.
+
 ## Using
 
 ### Client
