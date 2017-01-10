@@ -30,7 +30,7 @@ add_library(${PROJECT_NAME} SHARED
   src/TranslationResult.cc
   )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -Wextra -fopenmp")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -Wextra -fopenmp -march=native -DNDEBUG")
 
 if(ANDROID)
   set(LIB_ONLY ON)
