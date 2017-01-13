@@ -19,11 +19,12 @@ $ cd build
 $ cmake -DEIGEN_ROOT=<path to Eigen library> ..
 ```
 
-It will produce the dynamic library `libonmt.so` and the translation client `cli/translate`.
+It will produce the dynamic library `libonmt.so` and the translation client `cli/translate`. To compile only the library, use the `-DLIB_ONLY=ON` flag.
 
-To compile only the library, use the `-DLIB_ONLY=ON` flag.
+### Performance tips
 
-Unless you are cross-compiling for a different architecture, you can add `-DCMAKE_CXX_FLAGS="-march=native"` to the cmake command above to optimize for speed.
+* Unless you are cross-compiling for a different architecture, you can add `-DCMAKE_CXX_FLAGS="-march=native"` to the `cmake` command above to optimize for speed.
+* Consider using [Intel® MKL](https://software.intel.com/en-us/intel-mkl) if available. You should follow [Eigen instructions](https://eigen.tuxfamily.org/dox/TopicUsingIntelMKL.html) to link against it.
 
 ## Using
 
