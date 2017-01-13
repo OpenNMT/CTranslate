@@ -6,12 +6,12 @@ It supports CPU OpenNMT models. You can convert GPU trained models with the [`re
 
 ## Dependencies
 
-* `C++11`
-* `CMake`
 * `Boost`
 * `Eigen` > 3.3
 
 ## Compiling
+
+*A compiler that supports the C++11 standard and CMake are required to compile the project.*
 
 ```
 mkdir build
