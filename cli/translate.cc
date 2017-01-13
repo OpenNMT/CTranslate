@@ -5,6 +5,7 @@
 #include <algorithm>
 
 #include "onmt/TranslatorFactory.h"
+#include "onmt/Threads.h"
 #include "BatchReader.h"
 #include "BatchWriter.h"
 
@@ -24,6 +25,7 @@ int main(int argc, char* argv[])
     ("beam_size", po::value<size_t>()->default_value(5), "beam size")
     ("max_sent_length", po::value<size_t>()->default_value(250), "maximum sentence length to produce")
     ("time", po::bool_switch()->default_value(false), "output average translation time")
+    ("threads", po::value<size_t>()->default_value(0), "number of threads to use (set to 0 to use the number defined by OpenMP)")
     ;
 
   po::variables_map vm;
@@ -41,6 +43,9 @@ int main(int argc, char* argv[])
     std::cerr << "missing model" << std::endl;
     return 1;
   }
+
+  if (vm["threads"].as<size_t>() > 0)
+    onmt::Threads::set(vm["threads"].as<size_t>());
 
   auto translator = onmt::TranslatorFactory::build(vm["model"].as<std::string>(),
                                                    vm["phrase_table"].as<std::string>(),
