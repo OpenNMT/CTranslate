@@ -14,9 +14,9 @@ It supports CPU OpenNMT models. You can convert GPU trained models with the [`re
 ## Compiling
 
 ```
-$ mkdir build
-$ cd build
-$ cmake -DEIGEN_ROOT=<path to Eigen library> ..
+mkdir build
+cd build
+cmake -DEIGEN_ROOT=<path to Eigen library> ..
 ```
 
 It will produce the dynamic library `libonmt.so` and the translation client `cli/translate`. To compile only the library, use the `-DLIB_ONLY=ON` flag.
