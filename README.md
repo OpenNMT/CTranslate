@@ -40,7 +40,7 @@ Here is a very simple example:
 ```cpp
 #include <iostream>
 
-#include <onmt/TranslatorFactory.h>
+#include <onmt/onmt.h>
 
 int main()
 {

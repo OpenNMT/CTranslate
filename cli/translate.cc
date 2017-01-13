@@ -4,8 +4,8 @@
 #include <chrono>
 #include <algorithm>
 
-#include "onmt/TranslatorFactory.h"
-#include "onmt/Threads.h"
+#include <onmt/onmt.h>
+
 #include "BatchReader.h"
 #include "BatchWriter.h"
 
