@@ -58,8 +58,9 @@ int main()
 For a more advanced usage, see:
 
 * `include/onmt/TranslatorFactory.h` to instantiate a new translator
-* `include/onmt/ITranslator.h` to translate sequences or batch of sequences
+* `include/onmt/ITranslator.h` (the `Translator` iterface) to translate sequences or batch of sequences
 * `include/onmt/TranslationResult.h` to retrieve results and attention vectors
+* `include/onmt/Threads.h` to programmatically control the number of threads to use
 
 ## Missing features
 
