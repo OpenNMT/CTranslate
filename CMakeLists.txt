@@ -33,6 +33,10 @@ add_library(${PROJECT_NAME} SHARED
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -Wextra -fopenmp -DNDEBUG")
 
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  string(REPLACE "-fopenmp" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+endif()
+
 if(ANDROID)
   set(LIB_ONLY ON)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
