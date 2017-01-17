@@ -31,6 +31,7 @@ const char *THDiskFile_name(THFile *self)
 
 /* workaround mac osx lion ***insane*** fread bug */
 #ifdef __APPLE__
+#define THMin(X, Y)  ((X) < (Y) ? (X) : (Y))
 size_t fread__(void *ptr, size_t size, size_t nitems, FILE *stream)
 {
   size_t nread = 0;
