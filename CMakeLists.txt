@@ -10,17 +10,17 @@ if(NOT Boost_FOUND)
 endif()
 
 add_subdirectory(lib/TH)
+add_subdirectory(lib/unicode)
 
 set(INCLUDE_DIRECTORIES
   ${CMAKE_CURRENT_SOURCE_DIR}/lib/TH
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib/unicode
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${EIGEN_ROOT}/include/eigen3
-add_subdirectory(lib/unicode)
   ${Boost_INCLUDE_DIRS}
   )
 include_directories(${INCLUDE_DIRECTORIES})
 
-  ${CMAKE_CURRENT_SOURCE_DIR}/lib/unicode
 
 add_library(${PROJECT_NAME} SHARED
   src/th/Env.cc
@@ -31,6 +31,8 @@ add_library(${PROJECT_NAME} SHARED
   src/TranslatorFactory.cc
   src/TranslationResult.cc
   src/Threads.cc
+  src/CaseModifier.cc
+  src/Tokenizer.cc
   )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -Wextra -fopenmp -DNDEBUG")

@@ -83,6 +83,24 @@ unicode_code_point_t utf8_to_cp(const unsigned char* s, unsigned int &l)
   return 0; // Incorrect unicode
 }
 
+void split_utf8(std::string str,
+                std::vector<std::string>& chars,
+                std::vector<unicode_code_point_t>& code_points)
+{
+  size_t offset = 0;
+
+  while (offset < str.length())
+  {
+    unsigned int char_size = 0;
+    unicode_code_point_t code_point = utf8_to_cp(reinterpret_cast<const unsigned char*>(str.c_str()),
+                                                 char_size);
+
+    code_points.push_back(code_point);
+    chars.emplace_back(str.substr(0, char_size));
+    str.erase(0, char_size);
+  }
+}
+
 static bool _find_codepoint(unicode_code_point_t u, const map_of_list_t &map)
 {
   map_of_list_t::const_iterator it = map.begin();

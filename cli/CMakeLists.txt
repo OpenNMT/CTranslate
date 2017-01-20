@@ -13,3 +13,11 @@ target_link_libraries(translate
   ${PROJECT_NAME}
   ${Boost_LIBRARIES}
   )
+
+add_executable(tokenize
+  tokenize.cc
+  )
+target_link_libraries(tokenize
+  ${PROJECT_NAME}
+  ${Boost_LIBRARIES}
+  )
