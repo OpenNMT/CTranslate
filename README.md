@@ -62,8 +62,9 @@ For a more advanced usage, see:
 * `include/onmt/TranslatorFactory.h` to instantiate a new translator
 * `include/onmt/ITranslator.h` (the `Translator` interface) to translate sequences or batch of sequences
 * `include/onmt/TranslationResult.h` to retrieve results and attention vectors
+* `include/onmt/Tokenizer.h` to apply OpenNMT's tokenization and detokenization
 * `include/onmt/Threads.h` to programmatically control the number of threads to use
 
 ## Missing features
 
-* OpenNMT tokenization and detokenization
+* BPE support in tokenization
