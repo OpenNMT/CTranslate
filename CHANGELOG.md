@@ -1,3 +1,9 @@
+## [Unreleased]
+
+### New features
+
+* Tokenization and detokenization
+
 ## [v0.2.0](https://github.com/OpenNMT/CTranslate/releases/tag/v0.2.0) (2017-01-19)
 
 ### New features
