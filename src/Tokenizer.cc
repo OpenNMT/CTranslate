@@ -126,8 +126,7 @@ namespace onmt
             if (is_number(v)
                 || (c == "-" && letter)
                 || (c == "_")
-                || (letter || ((c == "." || c == ",")
-                               && (is_number(next_v) || is_letter(next_v, type_letter)))))
+                || (letter && (c == "." || c == ",") && (is_number(next_v) || is_letter(next_v, type_letter))))
               cur_letter = true;
           }
 
