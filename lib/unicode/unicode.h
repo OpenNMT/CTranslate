@@ -1,5 +1,4 @@
-#ifndef _UNICODE_HH
-#define _UNICODE_HH
+#pragma once
 
 #include <cstdint>
 #include <map>
@@ -22,5 +21,3 @@ bool isNumber(unicode_code_point_t u);
 
 unicode_code_point_t getUpper(unicode_code_point_t u);
 unicode_code_point_t getLower(unicode_code_point_t u);
-
-#endif

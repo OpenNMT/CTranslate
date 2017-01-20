@@ -15,10 +15,12 @@ set(INCLUDE_DIRECTORIES
   ${CMAKE_CURRENT_SOURCE_DIR}/lib/TH
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${EIGEN_ROOT}/include/eigen3
+add_subdirectory(lib/unicode)
   ${Boost_INCLUDE_DIRS}
   )
 include_directories(${INCLUDE_DIRECTORIES})
 
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib/unicode
 
 add_library(${PROJECT_NAME} SHARED
   src/th/Env.cc
@@ -45,7 +47,9 @@ if(ANDROID)
   endif()
 endif()
 
-target_link_libraries(${PROJECT_NAME} TH)
+target_link_libraries(${PROJECT_NAME}
+  unicode
+  TH)
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIRECTORIES})
 

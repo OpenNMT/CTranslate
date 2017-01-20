@@ -1,5 +1,5 @@
-#include "unicode.hh"
-#include "unicode_data.hh"
+#include "unicode.h"
+#include "unicode_data.h"
 
 std::string cp_to_utf8(unicode_code_point_t uc)
 {
