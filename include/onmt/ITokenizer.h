@@ -19,8 +19,11 @@ namespace onmt
     virtual std::string detokenize(const std::vector<std::string>& words,
                                    const std::vector<std::vector<std::string> >& features) = 0;
 
-    // Tokenize/detokenize space-separated tokens.
+    // Tokenize and use spaces as a token separators.
     virtual std::string tokenize(const std::string& text);
+
+    // Split the text on spaces and detokenize.
     virtual std::string detokenize(const std::string& text);
   };
+
 }

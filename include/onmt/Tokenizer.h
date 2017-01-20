@@ -5,6 +5,7 @@
 namespace onmt
 {
 
+  // This Tokenizer implements the behaviour of OpenNMT's tools/tokenize.lua.
   class Tokenizer: public ITokenizer
   {
   public:
