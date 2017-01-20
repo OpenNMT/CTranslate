@@ -8,7 +8,7 @@ namespace po = boost::program_options;
 
 int main(int argc, char* argv[])
 {
-  po::options_description desc("OpenNMT Translator");
+  po::options_description desc("Tokenization");
   desc.add_options()
     ("help", "display available options")
     ("mode", po::value<std::string>()->default_value("conservative"), "Define how aggressive should the tokenization be: 'aggressive' only keeps sequences of letters/numbers, 'conservative' allows mix of alphanumeric as in: '2,000', 'E65', 'soft-landing'")
