@@ -1,12 +1,11 @@
 #pragma once
 
-#include <vector>
-#include <string>
+#include "onmt/ITokenizer.h"
 
 namespace onmt
 {
 
-  class Tokenizer
+  class Tokenizer: public ITokenizer
   {
   public:
     enum class Mode
@@ -16,7 +15,6 @@ namespace onmt
     };
 
     static const std::string joiner_marker;
-    static const std::string feature_marker;
 
     Tokenizer(Mode mode = Mode::Conservative,
               bool case_feature = false,
@@ -26,8 +24,12 @@ namespace onmt
     Tokenizer(bool case_feature = false,
               const std::string& joiner = joiner_marker);
 
-    std::vector<std::string> tokenize(const std::string& text);
-    std::string detokenize(const std::vector<std::string>& tokens);
+    void tokenize(const std::string& text,
+                  std::vector<std::string>& words,
+                  std::vector<std::vector<std::string> >& features) override;
+
+    std::string detokenize(const std::vector<std::string>& words,
+                           const std::vector<std::vector<std::string> >& features) override;
 
   private:
     Mode _mode;
@@ -35,8 +37,6 @@ namespace onmt
     bool _joiner_annotate;
     bool _joiner_new;
     std::string _joiner;
-
-    std::vector<std::string> tokenize_line(const std::string& text);
 
     bool has_left_join(const std::string& word);
     bool has_right_join(const std::string& word);

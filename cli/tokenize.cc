@@ -28,28 +28,20 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  onmt::Tokenizer tokenizer(vm["mode"].as<std::string>() == "aggressive"
-                            ? onmt::Tokenizer::Mode::Aggressive
-                            : onmt::Tokenizer::Mode::Conservative,
-                            vm["case_feature"].as<bool>(),
-                            vm["joiner_annotate"].as<bool>(),
-                            vm["joiner_new"].as<bool>(),
-                            vm["joiner"].as<std::string>());
+  onmt::ITokenizer* tokenizer = new onmt::Tokenizer(vm["mode"].as<std::string>() == "aggressive"
+                                                    ? onmt::Tokenizer::Mode::Aggressive
+                                                    : onmt::Tokenizer::Mode::Conservative,
+                                                    vm["case_feature"].as<bool>(),
+                                                    vm["joiner_annotate"].as<bool>(),
+                                                    vm["joiner_new"].as<bool>(),
+                                                    vm["joiner"].as<std::string>());
 
   std::string line;
 
   while (std::getline(std::cin, line))
   {
     if (!line.empty())
-    {
-      auto tokens = tokenizer.tokenize(line);
-      for (auto it = tokens.begin(); it != tokens.end(); it++)
-      {
-        if (it != tokens.begin())
-          std::cout << " ";
-        std::cout << *it;
-      }
-    }
+      std::cout << tokenizer->tokenize(line);
 
     std::cout << std::endl;
   }

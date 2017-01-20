@@ -28,11 +28,14 @@ add_library(${PROJECT_NAME} SHARED
   src/th/Utils.cc
   src/Dictionary.cc
   src/PhraseTable.cc
+  src/ITranslator.cc
   src/TranslatorFactory.cc
   src/TranslationResult.cc
   src/Threads.cc
   src/CaseModifier.cc
+  src/ITokenizer.cc
   src/Tokenizer.cc
+  src/SpaceTokenizer.cc
   )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -Wextra -fopenmp -DNDEBUG")

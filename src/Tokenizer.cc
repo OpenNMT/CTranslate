@@ -9,7 +9,6 @@ namespace onmt
 {
 
   const std::string Tokenizer::joiner_marker("￭");
-  const std::string Tokenizer::feature_marker("￨");
 
   Tokenizer::Tokenizer(Mode mode,
                        bool case_feature,
@@ -32,35 +31,17 @@ namespace onmt
   {
   }
 
-  std::vector<std::string> Tokenizer::tokenize(const std::string& text)
-  {
-    auto tokens = tokenize_line(text);
-
-    if (_case_feature)
-    {
-      for (size_t i = 0; i < tokens.size(); ++i)
-      {
-        auto data = CaseModifier::extract_case(tokens[i]);
-        tokens[i] = data.first + feature_marker + data.second;
-      }
-    }
-
-    return tokens;
-  }
-
-  std::string Tokenizer::detokenize(const std::vector<std::string>& tokens)
+  std::string Tokenizer::detokenize(const std::vector<std::string>& words,
+                                    const std::vector<std::vector<std::string> >& features)
   {
     std::string line;
-    std::string prev_word;
 
-    for (size_t i = 0; i < tokens.size(); ++i)
+    for (size_t i = 0; i < words.size(); ++i)
     {
-      std::vector<std::string> parts = split_utf8(tokens[i], feature_marker);
-
-      if (i > 0 && !has_right_join(prev_word) && !has_left_join(parts[0]))
+      if (i > 0 && !has_right_join(words[i - 1]) && !has_left_join(words[i]))
         line += " ";
 
-      std::string word = parts[0];
+      std::string word = words[i];
 
       if (has_right_join(word))
         word.erase(word.length() - _joiner.length(), _joiner.length());
@@ -69,26 +50,26 @@ namespace onmt
 
       if (_case_feature)
       {
-        if (parts.size() < 2)
+        if (features.empty())
           throw std::runtime_error("Missing case feature");
-        word = CaseModifier::apply_case(word, parts[1][0]);
+        word = CaseModifier::apply_case(word, features[0][i][0]);
       }
 
       line += word;
-      prev_word = parts[0];
     }
 
     return line;
   }
 
-  std::vector<std::string> Tokenizer::tokenize_line(const std::string& text)
+  void Tokenizer::tokenize(const std::string& text,
+                           std::vector<std::string>& words,
+                           std::vector<std::vector<std::string> >& features)
   {
     std::vector<std::string> chars;
     std::vector<unicode_code_point_t> code_points;
 
     explode_utf8(text, chars, code_points);
 
-    std::vector<std::string> tokens;
     std::string token;
 
     bool letter = false;
@@ -108,18 +89,18 @@ namespace onmt
       {
         if (!space)
         {
-          tokens.push_back(token);
+          words.push_back(token);
           token.clear();
         }
 
         if (v == 0x200D && _joiner_annotate)
         {
-          if (_joiner_new && !tokens.empty())
-            tokens.push_back(_joiner);
+          if (_joiner_new && !words.empty())
+            words.push_back(_joiner);
           else
           {
             if (other || (number && is_letter(next_v, type_letter)))
-              tokens.back() += _joiner;
+              words.back() += _joiner;
             else
               token = _joiner;
           }
@@ -156,17 +137,17 @@ namespace onmt
             {
               if (_joiner_annotate && !_joiner_new)
                 token += _joiner;
-              tokens.push_back(token);
+              words.push_back(token);
               if (_joiner_annotate && _joiner_new)
-                tokens.push_back(_joiner);
+                words.push_back(_joiner);
               token.clear();
             }
             else if (other && _joiner_annotate && token.empty())
             {
               if (_joiner_new)
-                tokens.push_back(_joiner);
+                words.push_back(_joiner);
               else
-                tokens.back() += _joiner;
+                words.back() += _joiner;
             }
 
             token += c;
@@ -181,9 +162,9 @@ namespace onmt
             {
               if (_joiner_annotate && !_joiner_new && !letter)
                 token += _joiner;
-              tokens.push_back(token);
+              words.push_back(token);
               if (_joiner_annotate && _joiner_new)
-                tokens.push_back(_joiner);
+                words.push_back(_joiner);
               token.clear();
               if (_joiner_annotate && !_joiner_new && letter)
                 token += _joiner;
@@ -191,7 +172,7 @@ namespace onmt
             else if (other && _joiner_annotate)
             {
               if (_joiner_new)
-                tokens.push_back(_joiner);
+                words.push_back(_joiner);
               else
                 token = _joiner;
             }
@@ -206,9 +187,9 @@ namespace onmt
           {
             if (!space)
             {
-              tokens.push_back(token);
+              words.push_back(token);
               if (_joiner_annotate && _joiner_new)
-                tokens.push_back(_joiner);
+                words.push_back(_joiner);
               token.clear();
               if (_joiner_annotate && !_joiner_new)
                 token += _joiner;
@@ -216,13 +197,13 @@ namespace onmt
             else if (other && _joiner_annotate)
             {
               if (_joiner_new)
-                tokens.push_back(_joiner);
+                words.push_back(_joiner);
               else
                 token = _joiner;
             }
 
             token += c;
-            tokens.push_back(token);
+            words.push_back(token);
             token.clear();
             letter = false;
             number = false;
@@ -234,9 +215,21 @@ namespace onmt
     }
 
     if (!token.empty())
-      tokens.push_back(token);
+      words.push_back(token);
 
-    return tokens;
+    if (_case_feature)
+    {
+      std::vector<std::string> case_feat;
+
+      for (size_t i = 0; i < words.size(); ++i)
+      {
+        auto data = CaseModifier::extract_case(words[i]);
+        words[i] = data.first;
+        case_feat.emplace_back(1, data.second);
+      }
+
+      features.push_back(case_feat);
+    }
   }
 
   bool Tokenizer::has_left_join(const std::string& word)

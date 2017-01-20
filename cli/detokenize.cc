@@ -26,19 +26,15 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  onmt::Tokenizer tokenizer(vm["case_feature"].as<bool>(), vm["joiner"].as<std::string>());
+  onmt::ITokenizer* tokenizer = new onmt::Tokenizer(vm["case_feature"].as<bool>(),
+                                                    vm["joiner"].as<std::string>());
 
   std::string line;
 
   while (std::getline(std::cin, line))
   {
     if (!line.empty())
-    {
-      std::vector<std::string> tokens;
-      boost::split(tokens, line, boost::is_any_of(" "));
-
-      std::cout << tokenizer.detokenize(tokens);
-    }
+      std::cout << tokenizer->detokenize(line);
 
     std::cout << std::endl;
   }
