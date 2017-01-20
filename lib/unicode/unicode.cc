@@ -91,7 +91,7 @@ static bool _find_codepoint(unicode_code_point_t u, const map_of_list_t &map)
   {
     if (u >= it->first)
     {
-      unsigned int idx = ((u - it->first) >> 4) + 1;
+      unsigned int idx = ((u - it->first) >> 4);
       if (idx < it->second.size())
       {
         unsigned int p = (u - it->first) & 0xf;
