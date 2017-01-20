@@ -83,9 +83,38 @@ unicode_code_point_t utf8_to_cp(const unsigned char* s, unsigned int &l)
   return 0; // Incorrect unicode
 }
 
-void split_utf8(std::string str,
-                std::vector<std::string>& chars,
-                std::vector<unicode_code_point_t>& code_points)
+std::vector<std::string> split_utf8(const std::string& str, const std::string& sep)
+{
+  std::vector<std::string> chars;
+  std::vector<unicode_code_point_t> code_points;
+
+  explode_utf8(str, chars, code_points);
+
+  std::vector<std::string> fragments;
+  std::string fragment;
+
+  for (size_t i = 0; i < chars.size(); ++i)
+  {
+    if (chars[i] == sep)
+    {
+      fragments.push_back(fragment);
+      fragment.clear();
+    }
+    else
+    {
+      fragment += chars[i];
+    }
+  }
+
+  if (!fragment.empty() || chars.back() == sep)
+    fragments.push_back(fragment);
+
+  return fragments;
+}
+
+void explode_utf8(std::string str,
+                  std::vector<std::string>& chars,
+                  std::vector<unicode_code_point_t>& code_points)
 {
   size_t offset = 0;
 

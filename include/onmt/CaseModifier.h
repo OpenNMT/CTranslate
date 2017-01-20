@@ -9,8 +9,8 @@ namespace onmt
   class CaseModifier
   {
   public:
-    static char extract_case(const std::string& token,
-                             std::string& normalized_token);
+    static std::pair<std::string, char> extract_case(const std::string& token);
+    static std::string apply_case(const std::string& token, char feat);
 
   private:
     enum class Type

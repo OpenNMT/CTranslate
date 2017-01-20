@@ -1,6 +1,7 @@
 #include "onmt/Tokenizer.h"
 
 #include <unicode.h>
+#include <boost/algorithm/string.hpp>
 
 #include "onmt/CaseModifier.h"
 
@@ -23,6 +24,14 @@ namespace onmt
   {
   }
 
+  Tokenizer::Tokenizer(bool case_feature,
+                       const std::string& joiner)
+    : _mode(Mode::Conservative)
+    , _case_feature(case_feature)
+    , _joiner(joiner)
+  {
+  }
+
   std::vector<std::string> Tokenizer::tokenize(const std::string& text)
   {
     auto tokens = tokenize_line(text);
@@ -31,13 +40,45 @@ namespace onmt
     {
       for (size_t i = 0; i < tokens.size(); ++i)
       {
-        std::string new_token;
-        char feat = CaseModifier::extract_case(tokens[i], new_token);
-        tokens[i] = new_token + feature_marker + feat;
+        auto data = CaseModifier::extract_case(tokens[i]);
+        tokens[i] = data.first + feature_marker + data.second;
       }
     }
 
     return tokens;
+  }
+
+  std::string Tokenizer::detokenize(const std::vector<std::string>& tokens)
+  {
+    std::string line;
+    std::string prev_word;
+
+    for (size_t i = 0; i < tokens.size(); ++i)
+    {
+      std::vector<std::string> parts = split_utf8(tokens[i], feature_marker);
+
+      if (i > 0 && !has_right_join(prev_word) && !has_left_join(parts[0]))
+        line += " ";
+
+      std::string word = parts[0];
+
+      if (has_right_join(word))
+        word.erase(word.length() - _joiner.length(), _joiner.length());
+      if (has_left_join(word))
+        word.erase(0, _joiner.length());
+
+      if (_case_feature)
+      {
+        if (parts.size() < 2)
+          throw std::runtime_error("Missing case feature");
+        word = CaseModifier::apply_case(word, parts[1][0]);
+      }
+
+      line += word;
+      prev_word = parts[0];
+    }
+
+    return line;
   }
 
   std::vector<std::string> Tokenizer::tokenize_line(const std::string& text)
@@ -45,7 +86,7 @@ namespace onmt
     std::vector<std::string> chars;
     std::vector<unicode_code_point_t> code_points;
 
-    split_utf8(text, chars, code_points);
+    explode_utf8(text, chars, code_points);
 
     std::vector<std::string> tokens;
     std::string token;
@@ -197,6 +238,17 @@ namespace onmt
       tokens.push_back(token);
 
     return tokens;
+  }
+
+  bool Tokenizer::has_left_join(const std::string& word)
+  {
+    return (word.length() >= _joiner.length() && word.substr(0, _joiner.length()) == _joiner);
+  }
+
+  bool Tokenizer::has_right_join(const std::string& word)
+  {
+    return (word.length() >= _joiner.length()
+            && word.substr(word.length() - _joiner.length(), _joiner.length()) == _joiner);
   }
 
 }

@@ -23,8 +23,11 @@ namespace onmt
               bool joiner_annotate = false,
               bool joiner_new = false,
               const std::string& joiner = joiner_marker);
+    Tokenizer(bool case_feature = false,
+              const std::string& joiner = joiner_marker);
 
     std::vector<std::string> tokenize(const std::string& text);
+    std::string detokenize(const std::vector<std::string>& tokens);
 
   private:
     Mode _mode;
@@ -34,6 +37,9 @@ namespace onmt
     std::string _joiner;
 
     std::vector<std::string> tokenize_line(const std::string& text);
+
+    bool has_left_join(const std::string& word);
+    bool has_right_join(const std::string& word);
   };
 
 }

@@ -3,13 +3,12 @@
 namespace onmt
 {
 
-  char CaseModifier::extract_case(const std::string& token,
-                                  std::string& normalized_token)
+  std::pair<std::string, char> CaseModifier::extract_case(const std::string& token)
   {
     std::vector<std::string> chars;
     std::vector<unicode_code_point_t> code_points;
 
-    split_utf8(token, chars, code_points);
+    explode_utf8(token, chars, code_points);
 
     Type current_case = Type::None;
     std::string new_token;
@@ -27,10 +26,41 @@ namespace onmt
           v = lower;
       }
 
-      normalized_token += cp_to_utf8(v);
+      new_token += cp_to_utf8(v);
     }
 
-    return type_to_char(current_case);
+    return std::make_pair(new_token, type_to_char(current_case));
+  }
+
+  std::string CaseModifier::apply_case(const std::string& token, char feat)
+  {
+    Type case_type = char_to_type(feat);
+
+    if (case_type == Type::Lowercase || case_type == Type::None)
+      return token;
+
+    std::vector<std::string> chars;
+    std::vector<unicode_code_point_t> code_points;
+
+    explode_utf8(token, chars, code_points);
+
+    std::string new_token;
+
+    for (size_t i = 0; i < chars.size(); ++i)
+    {
+      unicode_code_point_t v = code_points[i];
+
+      if (new_token.empty() || case_type == Type::Uppercase)
+      {
+        unicode_code_point_t upper = get_upper(v);
+        if (upper)
+          v = upper;
+      }
+
+      new_token += cp_to_utf8(v);
+    }
+
+    return new_token;
   }
 
   CaseModifier::Type CaseModifier::update_type(Type current, _type_letter type)

@@ -21,3 +21,11 @@ target_link_libraries(tokenize
   ${PROJECT_NAME}
   ${Boost_LIBRARIES}
   )
+
+add_executable(detokenize
+  detokenize.cc
+  )
+target_link_libraries(detokenize
+  ${PROJECT_NAME}
+  ${Boost_LIBRARIES}
+  )
