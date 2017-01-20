@@ -114,7 +114,7 @@ namespace onmt
 
         if (v == 0x200D && _joiner_annotate)
         {
-          if (_joiner_new && tokens.size() > 0)
+          if (_joiner_new && !tokens.empty())
             tokens.push_back(_joiner);
           else
           {
@@ -144,92 +144,91 @@ namespace onmt
           {
             if (is_number(v)
                 || (c == "-" && letter)
-                || c == "_"
+                || (c == "_")
                 || (letter || ((c == "." || c == ",")
                                && (is_number(next_v) || is_letter(next_v, type_letter)))))
               cur_letter = true;
           }
-        }
 
-        if (cur_letter)
-        {
-          if (!letter && !space)
+          if (cur_letter)
           {
-            if (_joiner_annotate && !_joiner_new)
-              token += _joiner;
-            tokens.push_back(token);
-            if (_joiner_annotate && _joiner_new)
-              tokens.push_back(_joiner);
-            token.clear();
-          }
-          else if (other && _joiner_annotate && token.empty())
-          {
-            if (_joiner_new)
-              tokens.push_back(_joiner);
-            else
-              tokens.back() += _joiner;
-          }
-
-          token += c;
-          letter = true;
-          number = false;
-          other = false;
-          space = false;
-        }
-        else if (cur_number)
-        {
-          if (!letter && !space)
-          {
-            if (_joiner_annotate && !_joiner_new && !letter)
-              token += _joiner;
-            tokens.push_back(token);
-            if (_joiner_annotate && _joiner_new)
-              tokens.push_back(_joiner);
-            token.clear();
-            if (_joiner_annotate && !_joiner_new && letter)
-              token += _joiner;
-          }
-          else if (other && _joiner_annotate)
-          {
-            if (_joiner_new)
-              tokens.push_back(_joiner);
-            else
-              token = _joiner;
-          }
-
-          token += c;
-          letter = false;
-          number = true;
-          other = false;
-          space = false;
-        }
-        else
-        {
-          if (!space)
-          {
-            if (_joiner_annotate && !_joiner_new)
-              tokens.push_back(_joiner + token);
-            else
+            if (!letter && !space)
+            {
+              if (_joiner_annotate && !_joiner_new)
+                token += _joiner;
               tokens.push_back(token);
-            if (_joiner_annotate && _joiner_new)
-              tokens.push_back(_joiner);
-            token.clear();
-          }
-          else if (other && _joiner_annotate)
-          {
-            if (_joiner_new)
-              tokens.push_back(_joiner);
-            else
-              token = _joiner;
-          }
+              if (_joiner_annotate && _joiner_new)
+                tokens.push_back(_joiner);
+              token.clear();
+            }
+            else if (other && _joiner_annotate && token.empty())
+            {
+              if (_joiner_new)
+                tokens.push_back(_joiner);
+              else
+                tokens.back() += _joiner;
+            }
 
-          token += c;
-          tokens.push_back(token);
-          token.clear();
-          letter = false;
-          number = false;
-          other = true;
-          space = true;
+            token += c;
+            letter = true;
+            number = false;
+            other = false;
+            space = false;
+          }
+          else if (cur_number)
+          {
+            if (!number && !space)
+            {
+              if (_joiner_annotate && !_joiner_new && !letter)
+                token += _joiner;
+              tokens.push_back(token);
+              if (_joiner_annotate && _joiner_new)
+                tokens.push_back(_joiner);
+              token.clear();
+              if (_joiner_annotate && !_joiner_new && letter)
+                token += _joiner;
+            }
+            else if (other && _joiner_annotate)
+            {
+              if (_joiner_new)
+                tokens.push_back(_joiner);
+              else
+                token = _joiner;
+            }
+
+            token += c;
+            letter = false;
+            number = true;
+            other = false;
+            space = false;
+          }
+          else
+          {
+            if (!space)
+            {
+              tokens.push_back(token);
+              if (_joiner_annotate && _joiner_new)
+                tokens.push_back(_joiner);
+              token.clear();
+              if (_joiner_annotate && !_joiner_new)
+                token += _joiner;
+            }
+            else if (other && _joiner_annotate)
+            {
+              if (_joiner_new)
+                tokens.push_back(_joiner);
+              else
+                token = _joiner;
+            }
+
+            token += c;
+            tokens.push_back(token);
+            token.clear();
+            letter = false;
+            number = false;
+            other = true;
+            space = true;
+          }
         }
       }
     }
