@@ -125,10 +125,7 @@ namespace onmt
         if (net)
           return build(net);
         else
-        {
-          std::cerr << name << " module not implemented. Using Identity." << std::endl;
-          mod = new Identity<MatFwd>();
-        }
+          throw std::runtime_error(name + " is not supported yet");
       }
 
       if (custom_name)
