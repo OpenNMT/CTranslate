@@ -19,8 +19,8 @@ namespace onmt
 
       for (auto& mod: this->_sequence)
       {
-        MatFwd clone(input[0]);
-        out.push_back(mod->forward(clone));
+        std::vector<MatFwd> in(1, input[0]);
+        out.push_back(mod->forward(in)[0]);
       }
 
       return Module<MatFwd>::wrap_return(out);
