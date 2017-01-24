@@ -71,4 +71,3 @@ For a more advanced usage, see:
 ## Missing features
 
 * OpenNMT tokenization and detokenization
-* Support of models using word features
