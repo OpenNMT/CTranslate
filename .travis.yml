@@ -2,11 +2,16 @@ language: cpp
 compiler:
   - gcc
   - clang
-sudo: required
-before_install:
-  - sudo add-apt-repository ppa:george-edison55/cmake-3.x -y
-  - sudo apt-get update -q
-  - sudo apt-get install -y cmake libboost-dev libboost-program-options-dev
+sudo: false
+addons:
+  apt:
+    sources:
+      - george-edison55-precise-backports
+    packages:
+      - cmake
+      - cmake-data
+      - libboost-dev
+      - libboost-program-options-dev
 before_script:
   - export ROOT_TRAVIS_DIR=$(pwd)
   - wget http://bitbucket.org/eigen/eigen/get/3.3.2.tar.bz2
