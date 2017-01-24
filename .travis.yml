@@ -6,8 +6,12 @@ sudo: false
 addons:
   apt:
     packages:
-    - cmake
-    - libboost-all-dev
+    - libboost-dev
+    - libboost-program-options-dev
+before_install:
+  - sudo add-apt-repository ppa:george-edison55/cmake-3.x
+  - sudo apt-get update -q
+  - sudo apt-get install cmake -y
 before_script:
   - export ROOT_TRAVIS_DIR=$(pwd)
   - wget http://bitbucket.org/eigen/eigen/get/3.3.2.tar.bz2
