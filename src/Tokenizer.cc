@@ -1,6 +1,5 @@
 #include "onmt/Tokenizer.h"
 
-#include <unicode.h>
 #include <boost/algorithm/string.hpp>
 
 #include "onmt/CaseModifier.h"
@@ -66,9 +65,9 @@ namespace onmt
                            std::vector<std::vector<std::string> >& features)
   {
     std::vector<std::string> chars;
-    std::vector<unicode_code_point_t> code_points;
+    std::vector<unicode::code_point_t> code_points;
 
-    explode_utf8(text, chars, code_points);
+    unicode::explode_utf8(text, chars, code_points);
 
     std::string token;
 
@@ -77,15 +76,15 @@ namespace onmt
     bool other = false;
     bool space = true;
 
-    _type_letter type_letter;
+    unicode::_type_letter type_letter;
 
     for (size_t i = 0; i < chars.size(); ++i)
     {
       const std::string& c = chars[i];
-      unicode_code_point_t v = code_points[i];
-      unicode_code_point_t next_v = i + 1 < code_points.size() ? code_points[i + 1] : 0;
+      unicode::code_point_t v = code_points[i];
+      unicode::code_point_t next_v = i + 1 < code_points.size() ? code_points[i + 1] : 0;
 
-      if (is_separator(v))
+      if (unicode::is_separator(v))
       {
         if (!space)
         {
@@ -99,7 +98,7 @@ namespace onmt
             words.push_back(_joiner);
           else
           {
-            if (other || (number && is_letter(next_v, type_letter)))
+            if (other || (number && unicode::is_letter(next_v, type_letter)))
               words.back() += _joiner;
             else
               token = _joiner;
@@ -118,15 +117,15 @@ namespace onmt
 
         if (v > 32 and v != 0xFEFF)
         {
-          cur_letter = is_letter(v, type_letter);
-          cur_number = is_number(v);
+          cur_letter = unicode::is_letter(v, type_letter);
+          cur_number = unicode::is_number(v);
 
           if (_mode == Mode::Conservative)
           {
-            if (is_number(v)
+            if (unicode::is_number(v)
                 || (c == "-" && letter)
                 || (c == "_")
-                || (letter && (c == "." || c == ",") && (is_number(next_v) || is_letter(next_v, type_letter))))
+                || (letter && (c == "." || c == ",") && (unicode::is_number(next_v) || unicode::is_letter(next_v, type_letter))))
               cur_letter = true;
           }
 

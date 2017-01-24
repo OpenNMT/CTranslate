@@ -1,7 +1,8 @@
 #pragma once
 
 #include <string>
-#include <unicode.h>
+
+#include "onmt/unicode/Unicode.h"
 
 namespace onmt
 {
@@ -23,7 +24,7 @@ namespace onmt
       None
     };
 
-    static Type update_type(Type current, _type_letter type);
+    static Type update_type(Type current, unicode::_type_letter type);
 
     static char type_to_char(Type type);
     static Type char_to_type(char feature);

@@ -34,11 +34,9 @@ else()
 endif()
 
 add_subdirectory(lib/TH)
-add_subdirectory(lib/unicode)
 
 set(INCLUDE_DIRECTORIES
   ${CMAKE_CURRENT_SOURCE_DIR}/lib/TH
-  ${CMAKE_CURRENT_SOURCE_DIR}/lib/unicode
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${EIGEN_ROOT}/include/eigen3
   ${Boost_INCLUDE_DIRS}
@@ -46,6 +44,8 @@ set(INCLUDE_DIRECTORIES
 include_directories(${INCLUDE_DIRECTORIES})
 
 add_library(${PROJECT_NAME} SHARED
+  src/unicode/Unicode.cc
+  src/unicode/Data.cc
   src/th/Env.cc
   src/th/Obj.cc
   src/th/Utils.cc
@@ -62,7 +62,6 @@ add_library(${PROJECT_NAME} SHARED
   )
 
 target_link_libraries(${PROJECT_NAME}
-  unicode
   TH)
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIRECTORIES})
