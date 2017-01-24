@@ -10,6 +10,7 @@
 #include "onmt/nn/Tanh.h"
 #include "onmt/nn/SplitTable.h"
 #include "onmt/nn/JoinTable.h"
+#include "onmt/nn/SelectTable.h"
 #include "onmt/nn/Reshape.h"
 #include "onmt/nn/Replicate.h"
 #include "onmt/nn/Identity.h"
@@ -96,6 +97,8 @@ namespace onmt
         mod = new SplitTable<MatFwd>();
       else if (name == "nn.JoinTable")
         mod = new JoinTable<MatFwd>();
+      else if (name == "nn.SelectTable")
+        mod = new SelectTable<MatFwd>(data);
       else if (name == "nn.Reshape")
         mod = new Reshape<MatFwd>();
       else if (name == "nn.Replicate")
@@ -125,10 +128,7 @@ namespace onmt
         if (net)
           return build(net);
         else
-        {
-          std::cerr << name << " module not implemented. Using Identity." << std::endl;
-          mod = new Identity<MatFwd>();
-        }
+          throw std::runtime_error(name + " is not supported yet");
       }
 
       if (custom_name)

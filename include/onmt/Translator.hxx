@@ -275,18 +275,14 @@ namespace onmt
     for (size_t l = 0; l < rnn_state_enc.size(); ++l)
       input.push_back(rnn_state_enc[l]);
 
-    // Words
-    input.emplace_back(batch_size, 1);
+    // Words and features
+    input.emplace_back(batch_size, 1 + _src_feat_dicts.size());
     for (size_t b = 0; b < batch_size; ++b)
+    {
       input.back()(b, 0) = batch_ids[b][t];
 
-    // Features
-    for (size_t j = 0; j < _src_feat_dicts.size(); ++j)
-    {
-      input.emplace_back(batch_size, _src_feat_dicts[j].get_size());
-      input.back().setZero();
-      for (size_t b = 0; b < batch_size; ++b)
-        input.back()(b, batch_feat_ids[b][j][t]) = 1;
+      for (size_t j = 0; j < _src_feat_dicts.size(); ++j)
+        input.back()(b, j + 1) = batch_feat_ids[b][j][t];
     }
 
     return input;
@@ -452,11 +448,12 @@ namespace onmt
       if (_tgt_feat_dicts.size() > 0)
       {
         next_features.emplace_back();
+        next_features.back().emplace_back();
         for (size_t j = 0; j < _tgt_feat_dicts.size(); ++j)
         {
           std::vector<size_t> in_feat1(_beam_size, Dictionary::pad_id);
-          in_feat1[0] = Dictionary::unk_id;
-          next_features.back().emplace_back(1, in_feat1);
+          in_feat1[0] = Dictionary::eos_id;
+          next_features.back().back().push_back(in_feat1);
         }
       }
 
@@ -485,31 +482,31 @@ namespace onmt
     {
       // Prepare decoder input at timestep i.
       std::vector<MatFwd> input;
+
+      // States.
       for (size_t l = 0; l < rnn_state_dec.size(); ++l)
         input.push_back(rnn_state_dec[l]);
-      input.emplace_back(_beam_size * remaining_sents, 1);
+
+      // Words and features.
+      input.emplace_back(_beam_size * remaining_sents, 1 + _tgt_feat_dicts.size());
       for (size_t b = 0; b < batch_size; ++b)
       {
         if (done[b])
           continue;
 
         int idx = batch_idx[b];
+
         for (size_t k = 0; k < _beam_size; ++k)
-          input.back()(get_offset(idx, k, remaining_sents), 0) = next_ys[b][i-1][k];
-      }
-      for (size_t j = 0; j < _tgt_feat_dicts.size(); ++j)
-      {
-        input.emplace_back(_beam_size * remaining_sents, _tgt_feat_dicts[j].get_size());
-        input.back().setZero();
-        for (size_t b = 0; b < batch_size; ++b)
         {
-          if (done[b])
-            continue;
-          int idx = batch_idx[b];
-          for (size_t k = 0; k < _beam_size; ++k)
-            input.back()(get_offset(idx, k, remaining_sents), next_features[b][i-1][j][k]) = 1;
+          input.back()(get_offset(idx, k, remaining_sents), 0) = next_ys[b][i-1][k];
+
+          for (size_t j = 0; j < _tgt_feat_dicts.size(); ++j)
+            input.back()(get_offset(idx, k, remaining_sents), j + 1) = next_features[b][i-1][j][k];
         }
+
       }
+
+      // Context and input feed.
       input.push_back(context_dec);
       if (with_input_feeding)
         input.push_back(input_feed);
