@@ -3,8 +3,6 @@ language: cpp
 compiler:
   - gcc
   - clang
-install:
-- if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
 addons:
   apt:
     sources:
@@ -17,7 +15,8 @@ addons:
       - cmake-data
       - libboost-dev
       - libboost-program-options-dev
-before_script:
+before_install:
+  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
   - export ROOT_TRAVIS_DIR=$(pwd)
   - wget http://bitbucket.org/eigen/eigen/get/3.3.2.tar.bz2
   - tar xf 3.3.2.tar.bz2
@@ -26,8 +25,9 @@ before_script:
   - cmake -DCMAKE_INSTALL_PREFIX=~/lib/eigen ..
   - make install
   - cd $ROOT_TRAVIS_DIR
-script:
+install:
   - mkdir build && cd build
   - cmake -DEIGEN_ROOT=~/lib/eigen -DCMAKE_BUILD_TYPE=Release ..
   - make
+script:
   - make check
