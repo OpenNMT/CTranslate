@@ -11,7 +11,7 @@ addons:
 before_install:
   - sudo add-apt-repository ppa:george-edison55/cmake-3.x -y
   - sudo apt-get update -q
-  - sudo apt-get install cmake -y
+  - sudo apt-get upgrade -y
 before_script:
   - export ROOT_TRAVIS_DIR=$(pwd)
   - wget http://bitbucket.org/eigen/eigen/get/3.3.2.tar.bz2
