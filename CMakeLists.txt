@@ -44,17 +44,25 @@ set(INCLUDE_DIRECTORIES
 include_directories(${INCLUDE_DIRECTORIES})
 
 add_library(${PROJECT_NAME} SHARED
+  src/unicode/Unicode.cc
+  src/unicode/Data.cc
   src/th/Env.cc
   src/th/Obj.cc
   src/th/Utils.cc
   src/Dictionary.cc
   src/PhraseTable.cc
+  src/ITranslator.cc
   src/TranslatorFactory.cc
   src/TranslationResult.cc
   src/Threads.cc
+  src/CaseModifier.cc
+  src/ITokenizer.cc
+  src/Tokenizer.cc
+  src/SpaceTokenizer.cc
   )
 
-target_link_libraries(${PROJECT_NAME} TH)
+target_link_libraries(${PROJECT_NAME}
+  TH)
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIRECTORIES})
 

@@ -3,68 +3,9 @@
 #include <algorithm>
 #include <iostream>
 #include <limits>
-#include <sstream>
-
-#include <boost/algorithm/string.hpp>
 
 namespace onmt
 {
-
-  static const std::string features_separator = "￨";
-  static const std::string words_separator = " ";
-
-  static void tokenize(const std::string& text,
-                       std::vector<std::string>& tokens,
-                       std::vector<std::vector<std::string> >& features)
-  {
-    std::vector<std::string> chunks;
-    boost::split(chunks, text, boost::is_any_of(words_separator));
-
-    for (const auto& chunk: chunks)
-    {
-      size_t i = 0;
-      int sep_offset = -features_separator.length();
-
-      do {
-        int start = sep_offset + features_separator.length();
-        sep_offset = chunk.find(features_separator, start);
-        std::string sub = chunk.substr(start, sep_offset);
-
-        if (i == 0)
-          tokens.push_back(sub);
-        else
-        {
-          if (features.size() < i)
-            features.emplace_back(1, sub);
-          else
-            features[i-1].push_back(sub);
-        }
-
-        i++;
-      } while (static_cast<size_t>(sep_offset) != std::string::npos);
-    }
-  }
-
-  static std::string detokenize(const std::vector<std::string>& tokens,
-                                const std::vector<std::vector<std::string> >& features = {})
-  {
-    std::ostringstream oss;
-
-    for (size_t i = 0; i < tokens.size(); ++i)
-    {
-      if (i > 0)
-        oss << words_separator;
-      oss << tokens[i];
-
-      if (!features.empty())
-      {
-        for (size_t j = 0; j < features.size(); ++j)
-          oss << features_separator << features[j][i];
-      }
-    }
-
-    return oss.str();
-  }
 
   static std::vector<std::string> ids_to_words(const Dictionary& dict, const std::vector<size_t>& ids)
   {
@@ -220,15 +161,17 @@ namespace onmt
   }
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-  std::string Translator<MatFwd, MatIn, MatEmb, ModelT>::translate(const std::string& text)
+  std::string Translator<MatFwd, MatIn, MatEmb, ModelT>::translate(const std::string& text,
+                                                                   ITokenizer& tokenizer)
   {
     std::vector<std::string> src_tokens;
     std::vector<std::vector<std::string> > src_features;
-    tokenize(text, src_tokens, src_features);
+
+    tokenizer.tokenize(text, src_tokens, src_features);
 
     TranslationResult res = translate(src_tokens, src_features);
 
-    return detokenize(res.get_words(), res.get_features());
+    return tokenizer.detokenize(res.get_words(), res.get_features());
   }
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
@@ -244,7 +187,8 @@ namespace onmt
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
   std::vector<std::string>
-  Translator<MatFwd, MatIn, MatEmb, ModelT>::translate_batch(const std::vector<std::string>& texts)
+  Translator<MatFwd, MatIn, MatEmb, ModelT>::translate_batch(const std::vector<std::string>& texts,
+                                                             ITokenizer& tokenizer)
   {
     std::vector<std::vector<std::string> > batch_tokens;
     std::vector<std::vector<std::vector<std::string> > > batch_features;
@@ -253,7 +197,7 @@ namespace onmt
     {
       std::vector<std::string> tokens;
       std::vector<std::vector<std::string> > features;
-      tokenize(text, tokens, features);
+      tokenizer.tokenize(text, tokens, features);
       batch_tokens.push_back(tokens);
       batch_features.push_back(features);
     }
@@ -266,9 +210,9 @@ namespace onmt
     for (size_t i = 0; i < res.count(); ++i)
     {
       if (res.has_features())
-        tgt_texts.push_back(detokenize(res.get_words(i), res.get_features(i)));
+        tgt_texts.push_back(tokenizer.detokenize(res.get_words(i), res.get_features(i)));
       else
-        tgt_texts.push_back(detokenize(res.get_words(i)));
+        tgt_texts.push_back(tokenizer.detokenize(res.get_words(i), {}));
     }
 
     return tgt_texts;

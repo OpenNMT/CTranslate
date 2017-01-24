@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+### New features
+
+* Tokenization and detokenization
+
 ### Fixes and improvements
 
 * Fix errors when using models with word features
