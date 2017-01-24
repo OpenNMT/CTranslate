@@ -2,11 +2,35 @@ cmake_minimum_required(VERSION 3.1.0)
 project(onmt)
 
 option(LIB_ONLY "Do not compile clients" OFF)
+option(WITH_OPENMP "Use OpenMP if available" ON)
 
 set(CMAKE_CXX_STANDARD 11)
 
 if(NOT Boost_FOUND)
   find_package(Boost)
+endif()
+
+if(WITH_OPENMP)
+  find_package(OpenMP)
+  if(OPENMP_FOUND)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  else()
+    message(WARNING "OpenMP not found: Compilation will not use OpenMP")
+  endif()
+endif()
+
+if(ANDROID)
+  set(LIB_ONLY ON)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  if(ANDROID_STL MATCHES "gnustl")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DANDROID_GNUSTL_COMPAT")
+  endif()
+endif()
+
+if(MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Wall")
+else()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 endif()
 
 add_subdirectory(lib/TH)
@@ -19,7 +43,6 @@ set(INCLUDE_DIRECTORIES
   )
 include_directories(${INCLUDE_DIRECTORIES})
 
-
 add_library(${PROJECT_NAME} SHARED
   src/th/Env.cc
   src/th/Obj.cc
@@ -30,20 +53,6 @@ add_library(${PROJECT_NAME} SHARED
   src/TranslationResult.cc
   src/Threads.cc
   )
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -Wextra -fopenmp -DNDEBUG")
-
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  string(REPLACE "-fopenmp" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-endif()
-
-if(ANDROID)
-  set(LIB_ONLY ON)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-  if (ANDROID_STL MATCHES "gnustl")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DANDROID_GNUSTL_COMPAT")
-  endif()
-endif()
 
 target_link_libraries(${PROJECT_NAME} TH)
 

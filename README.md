@@ -13,14 +13,18 @@ It supports CPU OpenNMT models. You can convert GPU trained models with the [`re
 
 *CMake and a compiler that supports the C++11 standard are required to compile the project.*
 
+*Instructions below are given for a Linux system. On MacOS, generated library will be a .dylib, on Windows a .dll.*
+
 ```
 mkdir build
 cd build
-cmake -DEIGEN_ROOT=<path to Eigen library> ..
+cmake -DEIGEN_ROOT=<path to Eigen library> -DCMAKE_BUILD_TYPE=<Release or Debug> ..
 make
 ```
 
 It will produce the dynamic library `libonmt.so` and the translation client `cli/translate`. To compile only the library, use the `-DLIB_ONLY=ON` flag.
+
+By default, if the compiler is compatible, compilation is done using [OpenMP](http://www.openmp.org). To disable OpenMP, use the `-DWITH_OPENMP=OFF` flag.
 
 ### Performance tips
 
