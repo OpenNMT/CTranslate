@@ -25,9 +25,12 @@ cmake -DEIGEN_ROOT=<path to Eigen library> -DCMAKE_BUILD_TYPE=<Release or Debug>
 make
 ```
 
-It will produce the dynamic library `libonmt.so` and the translation client `cli/translate`. To compile only the library, use the `-DLIB_ONLY=ON` flag.
+It will produce the dynamic library `libonmt.so`, the translation client `cli/translate` and tokenization tools `cli/tokenize` and `cli/detokenize`.
 
-By default, if the compiler is compatible, compilation is done using [OpenMP](http://www.openmp.org). To disable OpenMP, use the `-DWITH_OPENMP=OFF` flag.
+### Options
+
+* To compile only the library, use the `-DLIB_ONLY=ON` flag.
+* To disable [OpenMP](http://www.openmp.org), use the `-DWITH_OPENMP=OFF` flag.
 
 ### Performance tips
 
