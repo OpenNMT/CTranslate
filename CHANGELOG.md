@@ -7,6 +7,7 @@
 ### Fixes and improvements
 
 * Fix errors when using models with word features
+* Remove Boost dependency when compiling as a library
 
 ## [v0.2.0](https://github.com/OpenNMT/CTranslate/releases/tag/v0.2.0) (2017-01-19)
 

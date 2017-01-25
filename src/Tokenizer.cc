@@ -1,7 +1,5 @@
 #include "onmt/Tokenizer.h"
 
-#include <boost/algorithm/string.hpp>
-
 #include "onmt/CaseModifier.h"
 
 namespace onmt

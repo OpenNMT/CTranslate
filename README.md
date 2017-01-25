@@ -8,14 +8,15 @@ It supports CPU OpenNMT models. You can convert GPU trained models with the [`re
 
 ## Dependencies
 
-* `Boost`
 * `Eigen` > 3.3
+
+Compiling executables additionally requires:
+
+* `Boost` (`program_options`)
 
 ## Compiling
 
-*CMake and a compiler that supports the C++11 standard are required to compile the project.*
-
-*Instructions below are given for a Linux system. On MacOS, generated library will be a .dylib, on Windows a .dll.*
+*CMake and a compiler that supports the C++11 standard are required to compile the project. Instructions below are given for a Linux system. On Mac OS, generated library will be a .dylib, on Windows a .dll.*
 
 ```
 mkdir build

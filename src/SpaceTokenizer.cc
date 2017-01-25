@@ -1,7 +1,8 @@
 #include "onmt/SpaceTokenizer.h"
 
 #include <sstream>
-#include <boost/algorithm/string.hpp>
+
+#include "onmt/unicode/Unicode.h"
 
 namespace onmt
 {
@@ -16,8 +17,7 @@ namespace onmt
                                 std::vector<std::string>& words,
                                 std::vector<std::vector<std::string> >& features)
   {
-    std::vector<std::string> chunks;
-    boost::split(chunks, text, boost::is_any_of(" "));
+    std::vector<std::string> chunks = unicode::split_utf8(text, " ");
 
     for (const auto& chunk: chunks)
     {

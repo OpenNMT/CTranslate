@@ -6,10 +6,6 @@ option(WITH_OPENMP "Use OpenMP if available" ON)
 
 set(CMAKE_CXX_STANDARD 11)
 
-if(NOT Boost_FOUND)
-  find_package(Boost)
-endif()
-
 if(WITH_OPENMP)
   find_package(OpenMP)
   if(OPENMP_FOUND)
@@ -39,7 +35,6 @@ set(INCLUDE_DIRECTORIES
   ${CMAKE_CURRENT_SOURCE_DIR}/lib/TH
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${EIGEN_ROOT}/include/eigen3
-  ${Boost_INCLUDE_DIRS}
   )
 include_directories(${INCLUDE_DIRECTORIES})
 
