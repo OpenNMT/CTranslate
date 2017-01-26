@@ -8,11 +8,13 @@ namespace onmt
   const std::string Tokenizer::joiner_marker("￭");
 
   Tokenizer::Tokenizer(Mode mode,
+                       const std::string& bpe_model,
                        bool case_feature,
                        bool joiner_annotate,
                        bool joiner_new,
                        const std::string& joiner)
     : _mode(mode)
+    , _bpe(bpe_model.empty() ? nullptr : new BPE(bpe_model))
     , _case_feature(case_feature)
     , _joiner_annotate(joiner_annotate)
     , _joiner_new(joiner_new)
@@ -213,6 +215,9 @@ namespace onmt
     if (!token.empty())
       words.push_back(token);
 
+    if (_bpe)
+      words = bpe_segment(words);
+
     if (_case_feature)
     {
       std::vector<std::string> case_feat;
@@ -227,6 +232,60 @@ namespace onmt
       features.push_back(case_feat);
     }
   }
+
+  std::vector<std::string> Tokenizer::bpe_segment(const std::vector<std::string>& tokens)
+  {
+    std::vector<std::string> segments;
+
+    for (size_t i = 0; i < tokens.size(); ++i)
+    {
+      std::string token = tokens[i];
+
+      bool left_sep = false;
+      bool right_sep = false;
+
+      if (_joiner_annotate)
+      {
+        if (has_left_join(token))
+        {
+          token.erase(0, _joiner.size());
+          left_sep = true;
+        }
+
+        if (has_right_join(token))
+        {
+          token.erase(token.size() - _joiner.size());
+          right_sep = true;
+        }
+      }
+
+      auto encoded = _bpe->encode(token);
+
+      if (_joiner_annotate)
+      {
+        if (left_sep)
+          encoded.front().insert(0, _joiner);
+        if (right_sep)
+          encoded.back().append(_joiner);
+      }
+
+      for (size_t j = 0; j < encoded.size(); ++j)
+      {
+        segments.push_back(encoded[j]);
+
+        if (_joiner_annotate && j + 1 < encoded.size())
+        {
+          if (_joiner_new)
+            segments.push_back(_joiner);
+          else
+            segments.back().append(_joiner);
+        }
+      }
+    }
+
+    return segments;
+  }
+
 
   bool Tokenizer::has_left_join(const std::string& word)
   {

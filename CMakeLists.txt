@@ -50,6 +50,7 @@ add_library(${PROJECT_NAME} SHARED
   src/TranslatorFactory.cc
   src/TranslationResult.cc
   src/Threads.cc
+  src/BPE.cc
   src/CaseModifier.cc
   src/ITokenizer.cc
   src/Tokenizer.cc

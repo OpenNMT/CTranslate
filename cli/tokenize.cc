@@ -16,6 +16,7 @@ int main(int argc, char* argv[])
     ("joiner", po::value<std::string>()->default_value(onmt::Tokenizer::joiner_marker), "character used to annotate joiners")
     ("joiner_new", po::bool_switch()->default_value(false), "in joiner_annotate mode, 'joiner' is an independent token")
     ("case_feature", po::bool_switch()->default_value(false), "lowercase corpus and generate case feature")
+    ("bpe_model", po::value<std::string>()->default_value(""), "path to the BPE model")
     ;
 
   po::variables_map vm;
@@ -31,6 +32,7 @@ int main(int argc, char* argv[])
   onmt::ITokenizer* tokenizer = new onmt::Tokenizer(vm["mode"].as<std::string>() == "aggressive"
                                                     ? onmt::Tokenizer::Mode::Aggressive
                                                     : onmt::Tokenizer::Mode::Conservative,
+                                                    vm["bpe_model"].as<std::string>(),
                                                     vm["case_feature"].as<bool>(),
                                                     vm["joiner_annotate"].as<bool>(),
                                                     vm["joiner_new"].as<bool>(),

@@ -4,6 +4,8 @@ delim="_"
 file=$1
 bindir=$2
 
+bpe_dir=bpe-models
+
 filename=$(basename "$file")
 dir=$(dirname "$file")
 test="${filename%.*}"
@@ -13,6 +15,7 @@ name=$(echo $test | cut -f1 -d$delim)
 mode=$(echo $test | cut -f2 -d$delim)
 joiner_annotate=$(echo $test | cut -f3 -d$delim)
 case=$(echo $test | cut -f4 -d$delim)
+bpe=$(echo $test | cut -f5 -d$delim)
 
 tokenize_opts="--mode $mode"
 detokenize_opts=""
@@ -24,6 +27,10 @@ fi
 
 if [ $joiner_annotate = "marker" ]; then
     tokenize_opts="$tokenize_opts --joiner_annotate"
+fi
+
+if [ $bpe ]; then
+    tokenize_opts="$tokenize_opts --bpe_model $dir/$bpe_dir/$bpe"
 fi
 
 # Test tokenization.
