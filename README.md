@@ -74,7 +74,3 @@ For a more advanced usage, see:
 * `include/onmt/TranslationResult.h` to retrieve results and attention vectors
 * `include/onmt/Tokenizer.h` to apply OpenNMT's tokenization and detokenization
 * `include/onmt/Threads.h` to programmatically control the number of threads to use
-
-## Missing features
-
-* BPE support in tokenization

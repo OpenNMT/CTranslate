@@ -1,6 +1,9 @@
 #pragma once
 
+#include <memory>
+
 #include "onmt/ITokenizer.h"
+#include "onmt/BPE.h"
 
 namespace onmt
 {
@@ -18,6 +21,7 @@ namespace onmt
     static const std::string joiner_marker;
 
     Tokenizer(Mode mode = Mode::Conservative,
+              const std::string& bpe_model = "",
               bool case_feature = false,
               bool joiner_annotate = false,
               bool joiner_new = false,
@@ -34,10 +38,13 @@ namespace onmt
 
   private:
     Mode _mode;
+    std::unique_ptr<BPE> _bpe;
     bool _case_feature;
     bool _joiner_annotate;
     bool _joiner_new;
     std::string _joiner;
+
+    std::vector<std::string> bpe_segment(const std::vector<std::string>& tokens);
 
     bool has_left_join(const std::string& word);
     bool has_right_join(const std::string& word);
