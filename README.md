@@ -34,7 +34,8 @@ It will produce the dynamic library `libonmt.so`, the translation client `cli/tr
 
 ### Performance tips
 
-* Unless you are cross-compiling for a different architecture, you can add `-DCMAKE_CXX_FLAGS="-march=native"` to the `cmake` command above to optimize for speed.
+* Compile in release mode (`-DCMAKE_BUILD_TYPE=Release`)
+* Unless you are cross-compiling for a different architecture, add `-DCMAKE_CXX_FLAGS="-march=native"` to the `cmake` command above to optimize for speed.
 * Consider using [Intel® MKL](https://software.intel.com/en-us/intel-mkl) if available. You should follow [Eigen instructions](https://eigen.tuxfamily.org/dox/TopicUsingIntelMKL.html) to link against it.
 
 ## Using
