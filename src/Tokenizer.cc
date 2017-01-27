@@ -244,7 +244,7 @@ namespace onmt
       bool left_sep = false;
       bool right_sep = false;
 
-      if (_joiner_annotate)
+      if (_joiner_annotate && !_joiner_new)
       {
         if (has_left_join(token))
         {
@@ -261,7 +261,7 @@ namespace onmt
 
       auto encoded = _bpe->encode(token);
 
-      if (_joiner_annotate)
+      if (_joiner_annotate && !_joiner_new)
       {
         if (left_sep)
           encoded.front().insert(0, _joiner);

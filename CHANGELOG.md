@@ -1,3 +1,9 @@
+## [Unreleased]
+
+### Fixes and improvements
+
+* Fix `--joiner_new` option when using BPE
+
 ## [v0.3.0](https://github.com/OpenNMT/CTranslate/releases/tag/v0.3.0) (2017-01-26)
 
 ### New features
