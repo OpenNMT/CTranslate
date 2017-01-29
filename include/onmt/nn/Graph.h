@@ -1,6 +1,7 @@
 #pragma once
 
 #include "onmt/nn/Node.h"
+#include "onmt/nn/ModuleFactory.h"
 #include "onmt/th/Obj.h"
 
 namespace onmt
@@ -12,7 +13,9 @@ namespace onmt
     class Graph: public Module<MatFwd>
     {
     public:
-      Graph(th::Class* module, const std::string& name);
+      Graph(th::Class* module,
+            const std::string& name,
+            ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory);
 
       virtual std::vector<MatFwd> forward(std::vector<MatFwd>& input) const override;
 
@@ -25,7 +28,7 @@ namespace onmt
       std::map<size_t, Node<MatFwd> > _node_map;
       Node<MatFwd>& _root;
 
-      Node<MatFwd>& build_graph(th::Obj* root);
+      Node<MatFwd>& build_graph(th::Obj* root, ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory);
     };
 
   }

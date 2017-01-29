@@ -3,7 +3,7 @@
 #include <unordered_map>
 
 #include "onmt/Dictionary.h"
-#include "onmt/nn/Module.h"
+#include "onmt/nn/ModuleFactory.h"
 #include "onmt/th/Env.h"
 
 namespace onmt
@@ -14,7 +14,6 @@ namespace onmt
   {
   public:
     Model(const std::string& filename);
-    ~Model();
 
     nn::Module<MatFwd>* get_encoder_module(size_t index);
     nn::Module<MatFwd>* get_decoder_module(size_t index);
@@ -40,6 +39,7 @@ namespace onmt
     void load_networks(th::Table* obj);
 
     th::Env _env;
+    nn::ModuleFactory<MatFwd, MatIn, MatEmb, ModelT> _module_factory;
 
     std::vector<nn::Module<MatFwd>*> _encoder_modules;
     std::vector<nn::Module<MatFwd>*> _decoder_modules;

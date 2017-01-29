@@ -9,12 +9,15 @@ namespace onmt
   {
 
     template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-    Graph<MatFwd, MatIn, MatEmb, ModelT>::Graph(th::Class* module, const std::string& name)
+    Graph<MatFwd, MatIn, MatEmb, ModelT>::Graph(th::Class* module,
+                                                const std::string& name,
+                                                ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory)
       : Module<MatFwd>(name)
       , _root(build_graph(dynamic_cast<th::Table*>(
                             dynamic_cast<th::Table*>(module->get_data())
                             ->get_object().at("forwardnodes"))
-                          ->get_array()[0]))
+                          ->get_array()[0],
+                          factory))
     {
     }
 
@@ -45,7 +48,9 @@ namespace onmt
     }
 
     template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-    Node<MatFwd>& Graph<MatFwd, MatIn, MatEmb, ModelT>::build_graph(th::Obj* root)
+    Node<MatFwd>&
+    Graph<MatFwd, MatIn, MatEmb, ModelT>::build_graph(th::Obj* root,
+                                                      ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory)
     {
       th::Class* root_class = dynamic_cast<th::Class*>(root);
       th::Table* root_fields = dynamic_cast<th::Table*>(root_class->get_data());
@@ -64,7 +69,7 @@ namespace onmt
       if (!module_class)
         root_node.set_module(nullptr);
       else
-        root_node.set_module(ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>::build(module_class));
+        root_node.set_module(factory.build(module_class));
       th::Number* selectindex = th::get_field<th::Number*>(root_data, "selectindex");
       if (selectindex)
         root_node.set_select_index(static_cast<int>(selectindex->get_value())-1);
@@ -89,7 +94,7 @@ namespace onmt
         {
           if ((*it)->type() == th::ObjType::TORCH)
           {
-            Node<MatFwd>& child = build_graph(*it);
+            Node<MatFwd>& child = build_graph(*it, factory);
             root_node.add_child(child);
           }
         }

@@ -6,8 +6,9 @@ namespace onmt
   {
 
     template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-    Sequential<MatFwd, MatIn, MatEmb, ModelT>::Sequential(th::Table* data)
-      : Container<MatFwd, MatIn, MatEmb, ModelT>("nn.Sequential", data)
+    Sequential<MatFwd, MatIn, MatEmb, ModelT>::Sequential(th::Table* data,
+                                                          ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory)
+      : Container<MatFwd, MatIn, MatEmb, ModelT>("nn.Sequential", data, factory)
     {
     }
 

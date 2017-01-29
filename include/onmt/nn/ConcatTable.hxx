@@ -6,8 +6,9 @@ namespace onmt
   {
 
     template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-    ConcatTable<MatFwd, MatIn, MatEmb, ModelT>::ConcatTable(th::Table* data)
-      : Container<MatFwd, MatIn, MatEmb, ModelT>("nn.ConcatTable", data)
+    ConcatTable<MatFwd, MatIn, MatEmb, ModelT>::ConcatTable(th::Table* data,
+                                                            ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory)
+      : Container<MatFwd, MatIn, MatEmb, ModelT>("nn.ConcatTable", data, factory)
     {
     }
 
