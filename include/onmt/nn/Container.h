@@ -1,6 +1,6 @@
 #pragma once
 
-#include "onmt/nn/Module.h"
+#include "onmt/nn/ModuleFactory.h"
 #include "onmt/th/Obj.h"
 
 namespace onmt
@@ -12,7 +12,9 @@ namespace onmt
     class Container: public Module<MatFwd>
     {
     public:
-      Container(const std::string& name, th::Table* data);
+      Container(const std::string& name,
+                th::Table* data,
+                ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory);
 
       virtual std::vector<MatFwd> forward(std::vector<MatFwd>& input) const = 0;
 

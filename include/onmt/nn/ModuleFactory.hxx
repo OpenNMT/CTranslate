@@ -30,16 +30,12 @@ namespace onmt
   namespace nn
   {
 
-    template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-    std::unordered_map<std::string, Module<MatFwd>*> ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>::_stateless_storage;
 
     template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-    std::vector<Module<MatFwd>*> ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>::_storage;
-
-
-    template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-    void ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>::init()
+    ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>::ModuleFactory()
     {
+      // These modules are stateless so we can reuse the same instance for different
+      // nodes in the graph.
       _stateless_storage["nn.CAddTable"] = new CAddTable<MatFwd>();
       _stateless_storage["nn.CMulTable"] = new CMulTable<MatFwd>();
       _stateless_storage["nn.Sigmoid"] = new Sigmoid<MatFwd>();
@@ -53,7 +49,7 @@ namespace onmt
     }
 
     template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-    void ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>::destroy()
+    ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>::~ModuleFactory()
     {
       for (const auto& mod: _stateless_storage)
         delete mod.second;
@@ -112,15 +108,15 @@ namespace onmt
       else if (name == "nn.Sum")
         mod = new Sum<MatFwd>(data);
       else if (name == "nn.Sequential")
-        mod = new Sequential<MatFwd, MatIn, MatEmb, ModelT>(data);
+        mod = new Sequential<MatFwd, MatIn, MatEmb, ModelT>(data, *this);
       else if (name == "nn.ConcatTable")
-        mod = new ConcatTable<MatFwd, MatIn, MatEmb, ModelT>(data);
+        mod = new ConcatTable<MatFwd, MatIn, MatEmb, ModelT>(data, *this);
       else if (name == "nn.ParallelTable")
-        mod = new ParallelTable<MatFwd, MatIn, MatEmb, ModelT>(data);
+        mod = new ParallelTable<MatFwd, MatIn, MatEmb, ModelT>(data, *this);
       else if (name == "nn.Identity" || name == "nn.Dropout")
         mod = new Identity<MatFwd>();
       else if (name == "nn.gModule")
-        mod = new Graph<MatFwd, MatIn, MatEmb, ModelT>(obj, name);
+        mod = new Graph<MatFwd, MatIn, MatEmb, ModelT>(obj, name, *this);
       else
       {
         auto net = th::get_field<th::Class*>(data, "net");

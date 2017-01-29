@@ -11,7 +11,7 @@ namespace onmt
     class ParallelTable: public Container<MatFwd, MatIn, MatEmb, ModelT>
     {
     public:
-      ParallelTable(th::Table* data);
+      ParallelTable(th::Table* data, ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory);
 
       virtual std::vector<MatFwd> forward(std::vector<MatFwd>& input) const override;
     };

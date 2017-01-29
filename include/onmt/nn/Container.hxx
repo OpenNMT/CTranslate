@@ -9,7 +9,9 @@ namespace onmt
   {
 
     template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-    Container<MatFwd, MatIn, MatEmb, ModelT>::Container(const std::string& name, th::Table* data)
+    Container<MatFwd, MatIn, MatEmb, ModelT>::Container(const std::string& name,
+                                                        th::Table* data,
+                                                        ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory)
       : Module<MatFwd>(name)
     {
       th::Table* modules = th::get_field<th::Table*>(data, "modules");
@@ -18,7 +20,7 @@ namespace onmt
       for (auto module_obj: modules->get_array())
       {
         th::Class* module = dynamic_cast<th::Class*>(module_obj);
-        _sequence.push_back(ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>::build(module));
+        _sequence.push_back(factory.build(module));
       }
     }
 

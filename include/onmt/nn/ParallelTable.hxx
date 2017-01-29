@@ -6,8 +6,9 @@ namespace onmt
   {
 
     template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-    ParallelTable<MatFwd, MatIn, MatEmb, ModelT>::ParallelTable(th::Table* data)
-      : Container<MatFwd, MatIn, MatEmb, ModelT>("nn.ParallelTable", data)
+    ParallelTable<MatFwd, MatIn, MatEmb, ModelT>::ParallelTable(th::Table* data,
+                                                                ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory)
+      : Container<MatFwd, MatIn, MatEmb, ModelT>("nn.ParallelTable", data, factory)
     {
     }
 

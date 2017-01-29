@@ -2,8 +2,6 @@
 
 #include "onmt/th/Obj.h"
 
-#include "onmt/nn/ModuleFactory.h"
-
 namespace onmt
 {
 
@@ -87,7 +85,7 @@ namespace onmt
       th::Class* mod = dynamic_cast<th::Class*>(module);
 
       if (mod)
-        modules.push_back(nn::ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>::build(mod));
+        modules.push_back(_module_factory.build(mod));
       else if (dynamic_cast<th::Table*>(module))
         load_networks(dynamic_cast<th::Table*>(module), modules);
     }
@@ -96,16 +94,8 @@ namespace onmt
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
   void Model<MatFwd, MatIn, MatEmb, ModelT>::load_networks(th::Table* obj)
   {
-    nn::ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>::init();
-
     load_networks(th::get_field<th::Table*>(obj, "encoder"), _encoder_modules);
     load_networks(th::get_field<th::Table*>(obj, "decoder"), _decoder_modules);
-  }
-
-  template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-  Model<MatFwd, MatIn, MatEmb, ModelT>::~Model()
-  {
-    nn::ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>::destroy();
   }
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>

@@ -11,7 +11,7 @@ namespace onmt
     class Sequential: public Container<MatFwd, MatIn, MatEmb, ModelT>
     {
     public:
-      Sequential(th::Table* data);
+      Sequential(th::Table* data, ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory);
 
       virtual std::vector<MatFwd> forward(std::vector<MatFwd>& input) const override;
     };

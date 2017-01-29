@@ -11,7 +11,7 @@ namespace onmt
     class ConcatTable: public Container<MatFwd, MatIn, MatEmb, ModelT>
     {
     public:
-      ConcatTable(th::Table* data);
+      ConcatTable(th::Table* data, ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory);
 
       virtual std::vector<MatFwd> forward(std::vector<MatFwd>& input) const override;
     };
