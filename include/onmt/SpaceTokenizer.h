@@ -6,7 +6,7 @@ namespace onmt
 {
 
   // This Tokenizer simply splits on spaces. Useful when the text was tokenized
-  // with an external tools.
+  // with an external tool.
   class SpaceTokenizer: public ITokenizer
   {
   public:
