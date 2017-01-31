@@ -2,9 +2,9 @@
 
 # CTranslate
 
-CTranslate is a C++ implementation of OpenNMT's `translate.lua` script, with no Torch/Lua dependencies. It facilitates the use of OpenNMT models in existing products and on various platforms using [Eigen](http://eigen.tuxfamily.org) as a backend.
+CTranslate is a C++ implementation of OpenNMT's `translate.lua` script with no LuaTorch dependencies. It facilitates the use of OpenNMT models in existing products and on various platforms using [Eigen](http://eigen.tuxfamily.org) as a backend.
 
-It supports CPU OpenNMT models. You can convert GPU trained models with the [`release_model.lua`](https://github.com/OpenNMT/OpenNMT/tree/master/tools#release-model) script.
+It only supports CPU translation of OpenNMT models released with the [`release_model.lua`](https://github.com/OpenNMT/OpenNMT/tree/master/tools#release-model) script.
 
 ## Dependencies
 
@@ -16,7 +16,7 @@ Compiling executables additionally requires:
 
 ## Compiling
 
-*CMake and a compiler that supports the C++11 standard are required to compile the project. Instructions below are given for a Linux system. On Mac OS, generated library will be a .dylib, on Windows a .dll.*
+*CMake and a compiler that supports the C++11 standard are required to compile the project.*
 
 ```
 mkdir build
@@ -25,7 +25,7 @@ cmake -DEIGEN_ROOT=<path to Eigen library> -DCMAKE_BUILD_TYPE=<Release or Debug>
 make
 ```
 
-It will produce the dynamic library `libonmt.so`, the translation client `cli/translate` and tokenization tools `cli/tokenize` and `cli/detokenize`.
+It will produce the dynamic library `libonmt.so` (or `.dylib` on Mac OS, `.dll` on Windows), the translation client `cli/translate` and tokenization tools `cli/tokenize` and `cli/detokenize`.
 
 ### Options
 
@@ -40,9 +40,9 @@ It will produce the dynamic library `libonmt.so`, the translation client `cli/tr
 
 ## Using
 
-### Client
+### Clients
 
-See `cli/translate --help`. It has the same interface as the `translate.lua` script in OpenNMT while adding the ability to work with the standard input and output.
+See `--help` on the clients to discover available options and usage. They have the same interface as their Lua counterpart.
 
 ### Library
 
