@@ -31,10 +31,19 @@ endif()
 
 add_subdirectory(lib/TH)
 
+find_path(Eigen_INCLUDE_DIRS Eigen/Eigen
+  ${EIGEN_ROOT}
+  ${EIGEN_ROOT}/include/eigen3
+  )
+
+if(NOT Eigen_INCLUDE_DIRS)
+  message(FATAL_ERROR "Eigen headers not found.")
+endif()
+
 set(INCLUDE_DIRECTORIES
   ${CMAKE_CURRENT_SOURCE_DIR}/lib/TH
   ${CMAKE_CURRENT_SOURCE_DIR}/include
-  ${EIGEN_ROOT}/include/eigen3
+  ${Eigen_INCLUDE_DIRS}
   )
 include_directories(${INCLUDE_DIRECTORIES})
 
