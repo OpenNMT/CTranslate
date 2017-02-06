@@ -738,6 +738,9 @@ namespace onmt
         len = end_finished_at[b] + 1;
       }
 
+      if (len == 1)
+        len = i;
+
       std::vector<size_t> tgt_ids;
       std::vector<std::vector<size_t> > tgt_feat_ids;
       std::vector<std::vector<float> > attention;
