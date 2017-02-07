@@ -515,6 +515,12 @@ namespace onmt
 
       // Mask attention softmax output depending on input sentence size.
       softmax_attn->post_process_fun() = [&] (std::vector<MatFwd>& out) {
+        if (batch_size == 1)
+        {
+          attn_softmax_out = out[0];
+          return;
+        }
+
         MatFwd& soft_out = out[0];
 
         for (size_t b = 0; b < batch_size; ++b)
@@ -578,7 +584,7 @@ namespace onmt
           size_t best_score_id = 0;
           size_t from_beam = 0;
 
-          if (i == 1) // All outputs are the same on the first decoding step.
+          if (i == 1 || _beam_size == 1) // All outputs are the same on the first decoding step.
           {
             best_score_id = 0;
             best_score = out.row(idx).maxCoeff(&best_score_id);
