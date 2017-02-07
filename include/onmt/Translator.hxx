@@ -576,7 +576,7 @@ namespace onmt
         {
           float best_score = -std::numeric_limits<float>::max();
           size_t best_score_id = 0;
-          size_t from_beam_size = 0;
+          size_t from_beam = 0;
 
           if (i == 1) // All outputs are the same on the first decoding step.
           {
@@ -606,22 +606,22 @@ namespace onmt
               {
                 best_score = best_score_per_beam_size[k];
                 best_score_id = best_score_id_per_beam_size[k];
-                from_beam_size = k;
+                from_beam = k;
               }
             }
           }
 
-          prev_ks[b][i][k] = from_beam_size;
+          prev_ks[b][i][k] = from_beam;
           next_ys[b][i][k] = best_score_id;
           scores[b][i][k] = best_score;
 
-          size_t from_beam_size_offset = get_offset(idx, from_beam_size, remaining_sents);
+          size_t from_beam_offset = get_offset(idx, from_beam, remaining_sents);
 
           // Store the attention.
-          all_attention[b][i].row(k) = attn_softmax_out.row(from_beam_size_offset);
+          all_attention[b][i].row(k) = attn_softmax_out.row(from_beam_offset);
 
           // Override the best to ignore it for the next beam.
-          out.row(from_beam_size_offset)(best_score_id) = -std::numeric_limits<float>::max();
+          out.row(from_beam_offset)(best_score_id) = -std::numeric_limits<float>::max();
         }
 
         if (_tgt_feat_dicts.size() > 0)
