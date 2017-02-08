@@ -21,26 +21,17 @@ namespace onmt
 
     for (const auto& chunk: chunks)
     {
-      size_t i = 0;
-      int sep_offset = -ITokenizer::feature_marker.length();
+      std::vector<std::string> fields = unicode::split_utf8(chunk, ITokenizer::feature_marker);
 
-      do {
-        int start = sep_offset + ITokenizer::feature_marker.length();
-        sep_offset = chunk.find(ITokenizer::feature_marker, start);
-        std::string sub = chunk.substr(start, sep_offset);
+      words.push_back(fields[0]);
 
-        if (i == 0)
-          words.push_back(sub);
+      for (size_t i = 1; i < fields.size(); ++i)
+      {
+        if (features.size() < i)
+          features.emplace_back(1, fields[i]);
         else
-        {
-          if (features.size() < i)
-            features.emplace_back(1, sub);
-          else
-            features[i-1].push_back(sub);
-        }
-
-        i++;
-      } while (static_cast<size_t>(sep_offset) != std::string::npos);
+          features[i - 1].push_back(fields[i]);
+      }
     }
   }
 

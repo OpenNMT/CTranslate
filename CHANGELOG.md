@@ -3,6 +3,7 @@
 ### Fixes and improvements
 
 * Fix error when decoded sequences reached `max_sent_length`
+* Fix incorrect extraction of word features
 
 ## [v0.3.1](https://github.com/OpenNMT/CTranslate/releases/tag/v0.3.1) (2017-01-29)
 
