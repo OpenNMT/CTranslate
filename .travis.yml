@@ -25,7 +25,7 @@ before_install:
   - cmake -DCMAKE_INSTALL_PREFIX=~/lib/eigen ..
   - make install
   - cd $ROOT_TRAVIS_DIR
-install:
+script:
   - git submodule update --init
   - mkdir build && cd build
   - cmake -DEIGEN_ROOT=~/lib/eigen -DCMAKE_BUILD_TYPE=Release ..
