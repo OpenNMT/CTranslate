@@ -19,13 +19,14 @@ Compiling executables additionally requires:
 *CMake and a compiler that supports the C++11 standard are required to compile the project.*
 
 ```
+git submodule update --init
 mkdir build
 cd build
 cmake -DEIGEN_ROOT=<path to Eigen library> -DCMAKE_BUILD_TYPE=<Release or Debug> ..
 make
 ```
 
-It will produce the dynamic library `libonmt.so` (or `.dylib` on Mac OS, `.dll` on Windows), the translation client `cli/translate` and tokenization tools `cli/tokenize` and `cli/detokenize`.
+It will produce the dynamic library `libonmt.so` (or `.dylib` on Mac OS, `.dll` on Windows), the translation client `cli/translate`. CTranslate also bundles the OpenNMT's [Tokenizer](https://github.com/OpenNMT/Tokenizer) which provides the tokenization tools `lib/tokenizer/cli/tokenize` and `lib/tokenizer/cli/detokenize`.
 
 ### Options
 
@@ -73,5 +74,6 @@ For a more advanced usage, see:
 * `include/onmt/TranslatorFactory.h` to instantiate a new translator
 * `include/onmt/ITranslator.h` (the `Translator` interface) to translate sequences or batch of sequences
 * `include/onmt/TranslationResult.h` to retrieve results and attention vectors
-* `include/onmt/Tokenizer.h` to apply OpenNMT's tokenization and detokenization
 * `include/onmt/Threads.h` to programmatically control the number of threads to use
+
+Also see the headers available in the [Tokenizer](https://github.com/OpenNMT/Tokenizer) that are accessible when linking against CTranslate.

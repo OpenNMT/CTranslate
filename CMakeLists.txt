@@ -30,6 +30,7 @@ else()
 endif()
 
 add_subdirectory(lib/TH)
+add_subdirectory(lib/tokenizer)
 
 find_path(Eigen_INCLUDE_DIRS Eigen/Eigen
   ${EIGEN_ROOT}
@@ -42,14 +43,13 @@ endif()
 
 set(INCLUDE_DIRECTORIES
   ${CMAKE_CURRENT_SOURCE_DIR}/lib/TH
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib/tokenizer/include
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${Eigen_INCLUDE_DIRS}
   )
 include_directories(${INCLUDE_DIRECTORIES})
 
 add_library(${PROJECT_NAME} SHARED
-  src/unicode/Unicode.cc
-  src/unicode/Data.cc
   src/th/Env.cc
   src/th/Obj.cc
   src/th/Utils.cc
@@ -59,19 +59,14 @@ add_library(${PROJECT_NAME} SHARED
   src/TranslatorFactory.cc
   src/TranslationResult.cc
   src/Threads.cc
-  src/BPE.cc
-  src/CaseModifier.cc
-  src/ITokenizer.cc
-  src/Tokenizer.cc
-  src/SpaceTokenizer.cc
   )
 
 target_link_libraries(${PROJECT_NAME}
+  tokenizer
   TH)
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIRECTORIES})
 
 if (NOT LIB_ONLY)
   add_subdirectory(cli)
-  add_subdirectory(test)
 endif()

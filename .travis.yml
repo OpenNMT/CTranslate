@@ -26,8 +26,7 @@ before_install:
   - make install
   - cd $ROOT_TRAVIS_DIR
 install:
+  - git submodule update --init
   - mkdir build && cd build
   - cmake -DEIGEN_ROOT=~/lib/eigen -DCMAKE_BUILD_TYPE=Release ..
   - make
-script:
-  - make check

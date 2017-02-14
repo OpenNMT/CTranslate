@@ -1,3 +1,9 @@
+## [Unreleased]
+
+### Fixes and improvements
+
+* Tokenization is now an external library
+
 ## [v0.3.2](https://github.com/OpenNMT/CTranslate/releases/tag/v0.3.2) (2017-02-08)
 
 ### Fixes and improvements

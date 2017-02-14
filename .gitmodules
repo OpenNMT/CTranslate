@@ -1,0 +1,3 @@
+[submodule "lib/tokenizer"]
+	path = lib/tokenizer
+	url = https://github.com/OpenNMT/Tokenizer.git
