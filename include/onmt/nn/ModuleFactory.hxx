@@ -77,7 +77,7 @@ namespace onmt
 
       Module<MatFwd>* mod = nullptr;
 
-      if (name == "nn.Linear" || name == "nn.LinearNoBias")
+      if (name == "nn.Linear")
         mod = new Linear<MatFwd, MatIn, ModelT>(data);
       else if (name == "nn.LookupTable")
         mod =  new LookupTable<MatFwd, MatEmb, ModelT>(data);
