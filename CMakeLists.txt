@@ -48,7 +48,6 @@ set(INCLUDE_DIRECTORIES
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${Eigen_INCLUDE_DIRS}
   )
-include_directories(${INCLUDE_DIRECTORIES})
 
 add_library(${PROJECT_NAME}
   src/th/Env.cc
