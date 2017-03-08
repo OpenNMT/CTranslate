@@ -1,3 +1,9 @@
+## [v0.4.1](https://github.com/OpenNMT/CTranslate/releases/tag/v0.4.1) (2017-03-08)
+
+### Fixes and improvements
+
+* Fix install rule for TH dependency
+
 ## [v0.4.0](https://github.com/OpenNMT/CTranslate/releases/tag/v0.4.0) (2017-03-08)
 
 ### New features

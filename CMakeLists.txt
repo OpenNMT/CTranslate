@@ -43,7 +43,7 @@ if(NOT Eigen_INCLUDE_DIRS)
 endif()
 
 set(INCLUDE_DIRECTORIES
-  ${CMAKE_CURRENT_SOURCE_DIR}/lib/TH
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib
   ${CMAKE_CURRENT_SOURCE_DIR}/lib/tokenizer/include
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${Eigen_INCLUDE_DIRS}
@@ -77,7 +77,7 @@ install(
   LIBRARY DESTINATION lib/
   )
 install(
-  DIRECTORY include/onmt lib/TH
+  DIRECTORY include/onmt
   DESTINATION include
   FILES_MATCHING PATTERN "*.h*"
   )

@@ -6,7 +6,7 @@
 #include <list>
 #include <vector>
 
-#include "THDiskFile.h"
+#include "TH/THDiskFile.h"
 
 namespace onmt
 {
