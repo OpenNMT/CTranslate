@@ -2,6 +2,7 @@
 
 ### New features
 
+* Add CMake install rule
 * Add static library compilation support
 
 ### Fixes and improvements

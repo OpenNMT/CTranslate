@@ -13,3 +13,8 @@ target_link_libraries(translate
   ${PROJECT_NAME}
   ${Boost_LIBRARIES}
   )
+
+install(
+  TARGETS translate
+  DESTINATION bin/
+  )

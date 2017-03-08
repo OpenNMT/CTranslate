@@ -70,3 +70,14 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIRECTORIES})
 if (NOT LIB_ONLY)
   add_subdirectory(cli)
 endif()
+
+install(
+  TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION lib/
+  LIBRARY DESTINATION lib/
+  )
+install(
+  DIRECTORY include/onmt lib/TH
+  DESTINATION include
+  FILES_MATCHING PATTERN "*.h*"
+  )
