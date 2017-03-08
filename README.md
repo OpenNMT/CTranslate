@@ -8,7 +8,7 @@ It only supports CPU translation of OpenNMT models released with the [`release_m
 
 ## Dependencies
 
-* `Eigen` > 3.3
+* `Eigen` >= 3.3.0
 
 Compiling executables additionally requires:
 
