@@ -3,6 +3,7 @@ project(onmt)
 
 option(LIB_ONLY "Do not compile clients" OFF)
 option(WITH_OPENMP "Use OpenMP if available" ON)
+option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
 set(CMAKE_CXX_STANDARD 11)
 
@@ -49,7 +50,7 @@ set(INCLUDE_DIRECTORIES
   )
 include_directories(${INCLUDE_DIRECTORIES})
 
-add_library(${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME}
   src/th/Env.cc
   src/th/Obj.cc
   src/th/Utils.cc

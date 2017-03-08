@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+### New features
+
+* Add static library compilation support
+
 ### Fixes and improvements
 
 * Tokenization is now an external library
