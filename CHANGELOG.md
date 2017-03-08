@@ -1,4 +1,4 @@
-## [Unreleased]
+## [v0.4.0](https://github.com/OpenNMT/CTranslate/releases/tag/v0.4.0) (2017-03-08)
 
 ### New features
 
