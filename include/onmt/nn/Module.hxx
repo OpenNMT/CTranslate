@@ -14,13 +14,22 @@ namespace onmt
     template <typename MatFwd>
     std::vector<MatFwd> Module<MatFwd>::forward(std::vector<MatFwd>& input) const
     {
-      std::vector<MatFwd> out;
-      out.push_back(forward(input[0]));
-      return wrap_return(out);
+      auto output = forward_impl(input);
+
+      if (_post_process)
+        _post_process(output);
+
+      return output;
     }
 
     template <typename MatFwd>
-    MatFwd Module<MatFwd>::forward(MatFwd& input) const
+    std::vector<MatFwd> Module<MatFwd>::forward_impl(std::vector<MatFwd>& input) const
+    {
+      return std::vector<MatFwd>(1, forward_impl(input[0]));
+    }
+
+    template <typename MatFwd>
+    MatFwd Module<MatFwd>::forward_impl(MatFwd& input) const
     {
       return input;
     }
@@ -38,15 +47,6 @@ namespace onmt
     std::function<void(std::vector<MatFwd>&)>& Module<MatFwd>::post_process_fun()
     {
       return _post_process;
-    }
-
-    template <typename MatFwd>
-    std::vector<MatFwd>& Module<MatFwd>::wrap_return(std::vector<MatFwd>& output) const
-    {
-      if (_post_process)
-        _post_process(output);
-
-      return output;
     }
 
     template <typename MatFwd>

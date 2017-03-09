@@ -12,7 +12,7 @@ namespace onmt
     }
 
     template <typename MatFwd>
-    MatFwd Sigmoid<MatFwd>::forward(MatFwd& input) const
+    MatFwd Sigmoid<MatFwd>::forward_impl(MatFwd& input) const
     {
       return (1.0 + (-input).array().exp()).inverse().matrix();
     }

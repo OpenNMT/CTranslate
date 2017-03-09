@@ -13,7 +13,7 @@ namespace onmt
     public:
       Tanh();
 
-      virtual MatFwd forward(MatFwd& input) const override;
+      virtual MatFwd forward_impl(MatFwd& input) const override;
     };
 
   }

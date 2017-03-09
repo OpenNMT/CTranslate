@@ -13,7 +13,7 @@ namespace onmt
     }
 
     template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-    std::vector<MatFwd> Sequential<MatFwd, MatIn, MatEmb, ModelT>::forward(std::vector<MatFwd>& input) const
+    std::vector<MatFwd> Sequential<MatFwd, MatIn, MatEmb, ModelT>::forward_impl(std::vector<MatFwd>& input) const
     {
       if (this->_sequence.empty())
         return input;
@@ -26,7 +26,7 @@ namespace onmt
         out = (*it)->forward(out);
       }
 
-      return Module<MatFwd>::wrap_return(out);
+      return out;
     }
 
   }

@@ -12,11 +12,11 @@ namespace onmt
     }
 
     template <typename MatFwd>
-    std::vector<MatFwd> CMulTable<MatFwd>::forward(std::vector<MatFwd>& input) const
+    std::vector<MatFwd> CMulTable<MatFwd>::forward_impl(std::vector<MatFwd>& input) const
     {
       input[0] = input[0].cwiseProduct(input[1]);
       input.pop_back();
-      return Module<MatFwd>::wrap_return(input);
+      return input;
     }
 
   }

@@ -13,7 +13,7 @@ namespace onmt
     public:
       Reshape();
 
-      virtual std::vector<MatFwd> forward(std::vector<MatFwd>& input) const override;
+      virtual std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) const override;
     };
 
   }

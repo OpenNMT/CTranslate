@@ -16,12 +16,14 @@ namespace onmt
       Module(const std::string& name);
       virtual ~Module() {}
 
-      virtual std::vector<MatFwd> forward(std::vector<MatFwd>& input) const;
-      virtual MatFwd forward(MatFwd& input) const;
+      std::vector<MatFwd> forward(std::vector<MatFwd>& input) const;
+
+      virtual std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) const;
+      virtual MatFwd forward_impl(MatFwd& input) const;
+
       virtual Module<MatFwd>* find(const std::string& custom_name);
 
       std::function<void(std::vector<MatFwd>&)>& post_process_fun();
-      std::vector<MatFwd>& wrap_return(std::vector<MatFwd>& output) const;
 
       const std::string& get_name() const;
       const std::string& get_custom_name() const;

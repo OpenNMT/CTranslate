@@ -13,7 +13,7 @@ namespace onmt
     }
 
     template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-    std::vector<MatFwd> ConcatTable<MatFwd, MatIn, MatEmb, ModelT>::forward(std::vector<MatFwd>& input) const
+    std::vector<MatFwd> ConcatTable<MatFwd, MatIn, MatEmb, ModelT>::forward_impl(std::vector<MatFwd>& input) const
     {
       std::vector<MatFwd> out;
       out.reserve(this->_sequence.size());
@@ -24,7 +24,7 @@ namespace onmt
         out.push_back(mod->forward(in)[0]);
       }
 
-      return Module<MatFwd>::wrap_return(out);
+      return out;
     }
 
   }

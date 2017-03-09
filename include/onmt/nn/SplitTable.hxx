@@ -12,10 +12,10 @@ namespace onmt
     }
 
     template <typename MatFwd>
-    std::vector<MatFwd> SplitTable<MatFwd>::forward(std::vector<MatFwd>& input) const
+    std::vector<MatFwd> SplitTable<MatFwd>::forward_impl(std::vector<MatFwd>& input) const
     {
       // it is assumed that the previous reshape did the split
-      return Module<MatFwd>::wrap_return(input);
+      return input;
     }
 
   }

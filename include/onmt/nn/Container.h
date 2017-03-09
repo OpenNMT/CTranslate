@@ -16,7 +16,7 @@ namespace onmt
                 th::Table* data,
                 ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory);
 
-      virtual std::vector<MatFwd> forward(std::vector<MatFwd>& input) const = 0;
+      virtual std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) const = 0;
 
     protected:
       std::vector<Module<MatFwd>*> _sequence;

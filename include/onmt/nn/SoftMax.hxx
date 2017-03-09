@@ -12,7 +12,7 @@ namespace onmt
     }
 
     template <typename MatFwd>
-    MatFwd SoftMax<MatFwd>::forward(MatFwd& input) const
+    MatFwd SoftMax<MatFwd>::forward_impl(MatFwd& input) const
     {
       MatFwd output(input.rows(), input.cols());
 

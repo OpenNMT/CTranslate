@@ -14,7 +14,7 @@ namespace onmt
     public:
       Sum(th::Table* data);
 
-      virtual MatFwd forward(MatFwd& input) const override;
+      virtual MatFwd forward_impl(MatFwd& input) const override;
 
     private:
       int _dimension;

@@ -15,7 +15,7 @@ namespace onmt
     }
 
     template <typename MatFwd, typename MatEmb, typename ModelT>
-    MatFwd LookupTable<MatFwd, MatEmb, ModelT>::forward(MatFwd& input) const
+    MatFwd LookupTable<MatFwd, MatEmb, ModelT>::forward_impl(MatFwd& input) const
     {
       MatFwd out(input.rows(), _weight.cols());
 

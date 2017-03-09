@@ -12,11 +12,11 @@ namespace onmt
     }
 
     template <typename MatFwd>
-    std::vector<MatFwd> CAddTable<MatFwd>::forward(std::vector<MatFwd>& input) const
+    std::vector<MatFwd> CAddTable<MatFwd>::forward_impl(std::vector<MatFwd>& input) const
     {
       input[0].noalias() += input[1];
       input.pop_back();
-      return Module<MatFwd>::wrap_return(input);
+      return input;
     }
 
   }

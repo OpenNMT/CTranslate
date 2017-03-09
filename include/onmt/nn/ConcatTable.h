@@ -13,7 +13,7 @@ namespace onmt
     public:
       ConcatTable(th::Table* data, ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory);
 
-      virtual std::vector<MatFwd> forward(std::vector<MatFwd>& input) const override;
+      virtual std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) const override;
     };
 
   }

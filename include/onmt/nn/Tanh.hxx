@@ -12,7 +12,7 @@ namespace onmt
     }
 
     template <typename MatFwd>
-    MatFwd Tanh<MatFwd>::forward(MatFwd& input) const
+    MatFwd Tanh<MatFwd>::forward_impl(MatFwd& input) const
     {
       return input.array().tanh().matrix();
     }

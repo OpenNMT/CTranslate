@@ -12,7 +12,7 @@ namespace onmt
     }
 
     template <typename MatFwd>
-    std::vector<MatFwd> Reshape<MatFwd>::forward(std::vector<MatFwd>& input) const
+    std::vector<MatFwd> Reshape<MatFwd>::forward_impl(std::vector<MatFwd>& input) const
     {
       // also do the SplitTable
       std::vector<MatFwd> out;
@@ -22,7 +22,7 @@ namespace onmt
         out.emplace_back(input[0].block(0, i*(input[0].cols()/4), input[0].rows(), input[0].cols()/4));
       }
 
-      return Module<MatFwd>::wrap_return(out);
+      return out;
     }
 
   }

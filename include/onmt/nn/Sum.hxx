@@ -17,7 +17,7 @@ namespace onmt
     }
 
     template <typename MatFwd>
-    MatFwd Sum<MatFwd>::forward(MatFwd& input) const
+    MatFwd Sum<MatFwd>::forward_impl(MatFwd& input) const
     {
       return input.sum(_dimension);
     }

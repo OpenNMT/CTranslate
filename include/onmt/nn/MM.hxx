@@ -14,7 +14,7 @@ namespace onmt
     }
 
     template <typename MatFwd>
-    std::vector<MatFwd> MM<MatFwd>::forward(std::vector<MatFwd>& input) const
+    std::vector<MatFwd> MM<MatFwd>::forward_impl(std::vector<MatFwd>& input) const
     {
       std::vector<MatFwd> out;
 
@@ -36,7 +36,7 @@ namespace onmt
         out.back().assign(i, res);
       }
 
-      return Module<MatFwd>::wrap_return(out);
+      return out;
     }
 
   }

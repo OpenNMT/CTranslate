@@ -13,7 +13,7 @@ namespace onmt
     public:
       SoftMax();
 
-      virtual MatFwd forward(MatFwd& input) const;
+      virtual MatFwd forward_impl(MatFwd& input) const;
     };
 
   }

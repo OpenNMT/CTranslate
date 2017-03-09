@@ -17,7 +17,7 @@ namespace onmt
             const std::string& name,
             ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory);
 
-      virtual std::vector<MatFwd> forward(std::vector<MatFwd>& input) const override;
+      virtual std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) const override;
 
       Module<MatFwd>* find(const std::string& custom_name) override;
 

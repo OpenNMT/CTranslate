@@ -16,7 +16,7 @@ namespace onmt
     }
 
     template <typename MatFwd>
-    MatFwd Replicate<MatFwd>::forward(MatFwd& input) const
+    MatFwd Replicate<MatFwd>::forward_impl(MatFwd& input) const
     {
       MatFwd output(input);
 

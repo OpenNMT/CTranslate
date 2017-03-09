@@ -14,7 +14,7 @@ namespace onmt
     public:
       SelectTable(th::Table* data);
 
-      virtual std::vector<MatFwd> forward(std::vector<MatFwd>& input) const override;
+      virtual std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) const override;
 
     private:
       int _index;

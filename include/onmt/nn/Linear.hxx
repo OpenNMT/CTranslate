@@ -20,7 +20,7 @@ namespace onmt
     }
 
     template <typename MatFwd, typename MatIn, typename ModelT>
-    MatFwd Linear<MatFwd, MatIn, ModelT>::forward(MatFwd& input) const
+    MatFwd Linear<MatFwd, MatIn, ModelT>::forward_impl(MatFwd& input) const
     {
       input *= _weight.transpose();
 

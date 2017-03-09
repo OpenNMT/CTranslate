@@ -12,9 +12,9 @@ namespace onmt
     }
 
     template <typename MatFwd>
-    std::vector<MatFwd> Identity<MatFwd>::forward(std::vector<MatFwd>& input) const
+    std::vector<MatFwd> Identity<MatFwd>::forward_impl(std::vector<MatFwd>& input) const
     {
-      return Module<MatFwd>::wrap_return(input);
+      return input;
     }
 
   }

@@ -15,7 +15,7 @@ namespace onmt
     }
 
     template <typename MatFwd>
-    std::vector<MatFwd> SelectTable<MatFwd>::forward(std::vector<MatFwd>& input) const
+    std::vector<MatFwd> SelectTable<MatFwd>::forward_impl(std::vector<MatFwd>& input) const
     {
       int index;
       if (_index < 0)
@@ -25,7 +25,7 @@ namespace onmt
 
       std::vector<MatFwd> out;
       out.push_back(input[index]);
-      return Module<MatFwd>::wrap_return(out);
+      return out;
     }
 
   }

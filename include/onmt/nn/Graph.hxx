@@ -40,11 +40,11 @@ namespace onmt
     }
 
     template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-    std::vector<MatFwd> Graph<MatFwd, MatIn, MatEmb, ModelT>::forward(std::vector<MatFwd>& input) const
+    std::vector<MatFwd> Graph<MatFwd, MatIn, MatEmb, ModelT>::forward_impl(std::vector<MatFwd>& input) const
     {
       std::vector<MatFwd> output;
       _root.forward(input, output, nullptr);
-      return Module<MatFwd>::wrap_return(output);
+      return output;
     }
 
     template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
