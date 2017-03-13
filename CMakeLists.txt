@@ -33,6 +33,8 @@ endif()
 add_subdirectory(lib/TH)
 add_subdirectory(lib/tokenizer)
 
+find_package(CUDA 6.5)
+
 find_path(Eigen_INCLUDE_DIRS Eigen/Eigen
   ${EIGEN_ROOT}
   ${EIGEN_ROOT}/include/eigen3
@@ -48,8 +50,7 @@ set(INCLUDE_DIRECTORIES
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${Eigen_INCLUDE_DIRS}
   )
-
-add_library(${PROJECT_NAME}
+set(SOURCES
   src/th/Env.cc
   src/th/Obj.cc
   src/th/Utils.cc
@@ -61,6 +62,17 @@ add_library(${PROJECT_NAME}
   src/TranslationResult.cc
   src/Threads.cc
   )
+
+if (CUDA_FOUND)
+  add_definitions(-DWITH_CUDA)
+  cuda_add_library(${PROJECT_NAME}
+    ${SOURCES}
+    src/cuda/Utils.cc
+    )
+  cuda_add_cublas_to_target(${PROJECT_NAME})
+else()
+  add_library(${PROJECT_NAME} ${SOURCES})
+endif()
 
 target_link_libraries(${PROJECT_NAME}
   OpenNMTTokenizer

@@ -23,6 +23,34 @@ namespace onmt
       MatIn _bias;
     };
 
+
+#ifdef WITH_CUDA
+    template <typename MatFwd, typename ModelT>
+    class Linear<MatFwd, float*, ModelT>: public Module<MatFwd>
+    {
+    public:
+      Linear(th::Table* data);
+      virtual ~Linear();
+
+      virtual MatFwd forward_impl(MatFwd& input) const override;
+
+      virtual std::string get_details() const override;
+
+    private:
+      void realloc_output(int num_batches) const;
+
+      int _input_size;
+      int _output_size;
+
+      float* _bias;
+      float* _weight;
+
+      // Reuse allocated gemm output.
+      mutable float* _output;
+      mutable size_t _allocated_batches;
+    };
+#endif
+
   }
 }
 

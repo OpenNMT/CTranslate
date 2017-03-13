@@ -27,6 +27,7 @@ int main(int argc, char* argv[])
     ("time", po::bool_switch()->default_value(false), "output average translation time")
     ("profiler", po::bool_switch()->default_value(false), "output per module computation time")
     ("threads", po::value<size_t>()->default_value(0), "number of threads to use (set to 0 to use the number defined by OpenMP)")
+    ("cuda", po::bool_switch()->default_value(false), "use cuda when available")
     ;
 
   po::variables_map vm;
@@ -53,6 +54,7 @@ int main(int argc, char* argv[])
                                                    vm["replace_unk"].as<bool>(),
                                                    vm["max_sent_length"].as<size_t>(),
                                                    vm["beam_size"].as<size_t>(),
+                                                   vm["cuda"].as<bool>(),
                                                    vm["profiler"].as<bool>());
 
   std::unique_ptr<BatchReader> reader;

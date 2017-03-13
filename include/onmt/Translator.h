@@ -82,6 +82,12 @@ namespace onmt
                                        T>;
 
   template <typename T>
+  using DefaultCUDATranslator = Translator<Eigen::MatrixBatch<T>,
+                                           T*,
+                                           Eigen::Map<const Eigen::RowMajorMat<T> >,
+                                           T>;
+
+  template <typename T>
   using SparseTranslator = Translator<Eigen::MatrixBatch<T>,
                                       const Eigen::RowMajorSparseMat<T>,
                                       Eigen::Map<const Eigen::RowMajorMat<T> >,
