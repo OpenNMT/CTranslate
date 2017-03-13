@@ -29,6 +29,8 @@ namespace onmt
     template <typename T = double>
     T get_option_value(const std::string& key, T default_value = 0) const;
 
+    void enable_profiling();
+
   private:
     nn::Module<MatFwd>* get_module(size_t index, std::vector<nn::Module<MatFwd>*>& modules);
 
@@ -39,6 +41,7 @@ namespace onmt
     void load_networks(th::Table* obj);
 
     th::Env _env;
+    Profiler _profiler;
     nn::ModuleFactory<MatFwd, MatIn, MatEmb, ModelT> _module_factory;
 
     std::vector<nn::Module<MatFwd>*> _encoder_modules;

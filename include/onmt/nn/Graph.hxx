@@ -12,7 +12,7 @@ namespace onmt
     Graph<MatFwd, MatIn, MatEmb, ModelT>::Graph(th::Class* module,
                                                 const std::string& name,
                                                 ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory)
-      : Module<MatFwd>(name)
+      : Module<MatFwd>(name, false)
       , _root(build_graph(dynamic_cast<th::Table*>(
                             dynamic_cast<th::Table*>(module->get_data())
                             ->get_object().at("forwardnodes"))

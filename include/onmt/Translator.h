@@ -35,7 +35,8 @@ namespace onmt
                const std::string& phrase_table,
                bool replace_unk,
                size_t max_sent_length,
-               size_t beam_size);
+               size_t beam_size,
+               bool profiling);
 
     Model<MatFwd, MatIn, MatEmb, ModelT> _model;
     const Dictionary& _src_dict;

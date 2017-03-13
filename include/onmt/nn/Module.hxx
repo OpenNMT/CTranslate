@@ -8,13 +8,29 @@ namespace onmt
     template <typename MatFwd>
     Module<MatFwd>::Module(const std::string& name)
       : _name(name)
+      , _profile(true)
+      , _profiler(nullptr)
+    {
+    }
+
+    template <typename MatFwd>
+    Module<MatFwd>::Module(const std::string& name, bool profile)
+      : _name(name)
+      , _profile(profile)
+      , _profiler(nullptr)
     {
     }
 
     template <typename MatFwd>
     std::vector<MatFwd> Module<MatFwd>::forward(std::vector<MatFwd>& input) const
     {
+      if (_profile && _profiler)
+        _profiler->start();
+
       auto output = forward_impl(input);
+
+      if (_profile && _profiler)
+        _profiler->stop(!_custom_name.empty() ? _custom_name : _name);
 
       if (_post_process)
         _post_process(output);
@@ -71,6 +87,12 @@ namespace onmt
     void Module<MatFwd>::set_custom_name(const std::string& custom_name)
     {
       _custom_name = custom_name;
+    }
+
+    template <typename MatFwd>
+    void Module<MatFwd>::set_profiler(Profiler& profiler)
+    {
+      _profiler = &profiler;
     }
 
   }

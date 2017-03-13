@@ -32,7 +32,8 @@ namespace onmt
 
 
     template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-    ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>::ModuleFactory()
+    ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>::ModuleFactory(Profiler& profiler)
+      : _profiler(profiler)
     {
       // These modules are stateless so we can reuse the same instance for different
       // nodes in the graph.
@@ -72,7 +73,10 @@ namespace onmt
         auto it = _stateless_storage.find(name);
 
         if (it != _stateless_storage.end())
+        {
+          it->second->set_profiler(_profiler);
           return it->second;
+        }
       }
 
       Module<MatFwd>* mod = nullptr;
@@ -129,6 +133,8 @@ namespace onmt
 
       if (custom_name)
         mod->set_custom_name(custom_name->get_value());
+
+      mod->set_profiler(_profiler);
 
       _storage.push_back(mod);
 

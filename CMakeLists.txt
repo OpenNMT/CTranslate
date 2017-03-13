@@ -55,6 +55,7 @@ add_library(${PROJECT_NAME}
   src/th/Utils.cc
   src/Dictionary.cc
   src/PhraseTable.cc
+  src/Profiler.cc
   src/ITranslator.cc
   src/TranslatorFactory.cc
   src/TranslationResult.cc

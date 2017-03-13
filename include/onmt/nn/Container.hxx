@@ -12,7 +12,7 @@ namespace onmt
     Container<MatFwd, MatIn, MatEmb, ModelT>::Container(const std::string& name,
                                                         th::Table* data,
                                                         ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory)
-      : Module<MatFwd>(name)
+      : Module<MatFwd>(name, false)
     {
       th::Table* modules = th::get_field<th::Table*>(data, "modules");
       _sequence.reserve(modules->get_array().size());

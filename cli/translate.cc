@@ -25,6 +25,7 @@ int main(int argc, char* argv[])
     ("beam_size", po::value<size_t>()->default_value(5), "beam size")
     ("max_sent_length", po::value<size_t>()->default_value(250), "maximum sentence length to produce")
     ("time", po::bool_switch()->default_value(false), "output average translation time")
+    ("profiler", po::bool_switch()->default_value(false), "output per module computation time")
     ("threads", po::value<size_t>()->default_value(0), "number of threads to use (set to 0 to use the number defined by OpenMP)")
     ;
 
@@ -51,7 +52,8 @@ int main(int argc, char* argv[])
                                                    vm["phrase_table"].as<std::string>(),
                                                    vm["replace_unk"].as<bool>(),
                                                    vm["max_sent_length"].as<size_t>(),
-                                                   vm["beam_size"].as<size_t>());
+                                                   vm["beam_size"].as<size_t>(),
+                                                   vm["profiler"].as<bool>());
 
   std::unique_ptr<BatchReader> reader;
   if (vm.count("src"))

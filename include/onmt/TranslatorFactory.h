@@ -14,7 +14,8 @@ namespace onmt
                                               const std::string& phrase_table = "",
                                               bool replace_unk = true,
                                               size_t max_sent_length = 250,
-                                              size_t beam_size = 5);
+                                              size_t beam_size = 5,
+                                              bool profiling = false);
   };
 
 }

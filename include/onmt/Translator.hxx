@@ -143,7 +143,8 @@ namespace onmt
                                                         const std::string& phrase_table,
                                                         bool replace_unk,
                                                         size_t max_sent_length,
-                                                        size_t beam_size)
+                                                        size_t beam_size,
+                                                        bool profiling)
     : _model(model)
     , _src_dict(_model.get_src_dict())
     , _tgt_dict(_model.get_tgt_dict())
@@ -158,6 +159,8 @@ namespace onmt
     , _decoder(_model.get_decoder_module(0))
     , _generator(_model.get_decoder_module(1))
   {
+    if (profiling)
+      _model.enable_profiling();
   }
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
