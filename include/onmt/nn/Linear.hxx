@@ -8,6 +8,7 @@
 
 #ifdef WITH_CUDA
 #  include "onmt/cuda/Utils.h"
+#  include "onmt/cuda/Kernels.cuh"
 #endif
 
 namespace onmt
@@ -94,22 +95,14 @@ namespace onmt
       float alpha = 1;
       float beta = 0;
 
-      cublasStatus_t status;
-
       // Use c to add bias.
       if (_bias)
       {
         beta = 1;
-
-        for (size_t i = 0; i < m; ++i)
-        {
-          status = cublasScopy(*cuda::get_handle(), n, _bias, 1, c + i, m);
-
-          if (status != CUBLAS_STATUS_SUCCESS)
-            throw std::runtime_error("cublasScopy failed");
-        }
+        cuda::replicate(_bias, n, c, m);
       }
 
+      cublasStatus_t status;
       status = cublasSgemm(*cuda::get_handle(),
                            CUBLAS_OP_T, CUBLAS_OP_N,
                            m, n, k,
