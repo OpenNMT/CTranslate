@@ -25,15 +25,15 @@ namespace onmt
     template <typename MatFwd, typename MatIn, typename ModelT>
     LinearGPU<MatFwd, MatIn, ModelT>::~LinearGPU()
     {
-      cudaFree(_weight_device);
-      cudaFree(_bias_device);
-      cudaFree(_output_device);
+      CUDA_CHECK(cudaFree(_weight_device));
+      CUDA_CHECK(cudaFree(_bias_device));
+      CUDA_CHECK(cudaFree(_output_device));
     }
 
     template <typename MatFwd, typename MatIn, typename ModelT>
     void LinearGPU<MatFwd, MatIn, ModelT>::realloc_output(int num_batches) const
     {
-      cudaFree(_output_device);
+      CUDA_CHECK(cudaFree(_output_device));
       _output_device = cuda::to_device<float>(nullptr, num_batches, this->_weight.rows());
       _allocated_batches = num_batches;
     }
@@ -65,24 +65,20 @@ namespace onmt
         cuda::replicate(_bias_device, n, c, m);
       }
 
-      cublasStatus_t status;
-      status = cublasSgemm(*cuda::get_handle(),
-                           CUBLAS_OP_T, CUBLAS_OP_N,
-                           m, n, k,
-                           &alpha,
-                           a, k,
-                           b, k,
-                           &beta,
-                           c, m);
-
-      if (status != CUBLAS_STATUS_SUCCESS)
-        throw std::runtime_error("cublasSgemm failed");
+      CUBLAS_CHECK(cublasSgemm(*cuda::get_handle(),
+                               CUBLAS_OP_T, CUBLAS_OP_N,
+                               m, n, k,
+                               &alpha,
+                               a, k,
+                               b, k,
+                               &beta,
+                               c, m));
 
       MatFwd output(n, m);
       cuda::to_host<float>(c, output.data(), m, n);
       output.transposeInPlace();
 
-      cudaFree(a);
+      CUDA_CHECK(cudaFree(a));
 
       return output;
     }

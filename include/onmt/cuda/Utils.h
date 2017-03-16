@@ -5,6 +5,9 @@
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 
+#define CUDA_CHECK(ans) { onmt::cuda::cudaAssert((ans), __FILE__, __LINE__); }
+#define CUBLAS_CHECK(ans) { onmt::cuda::cublasAssert((ans), __FILE__, __LINE__); }
+
 namespace onmt
 {
   namespace cuda
@@ -12,26 +15,32 @@ namespace onmt
 
     cublasHandle_t* get_handle();
 
+    std::string cublasGetStatusString(cublasStatus_t status);
+
+    inline
+    void cudaAssert(cudaError_t code, const std::string& file, int line)
+    {
+      if (code != cudaSuccess)
+        throw std::runtime_error("CUDA failed with error " + std::string(cudaGetErrorString(code)) + " at " + file + ":" + std::to_string(line));
+    }
+
+    inline
+    void cublasAssert(cublasStatus_t status, const std::string& file, int line)
+    {
+      if (status != CUBLAS_STATUS_SUCCESS)
+        throw std::runtime_error("cuBLAS failed with status " + cublasGetStatusString(status) + " at " + file + ":" + std::to_string(line));
+    }
+
+
     template <typename T>
     T* to_device(const T* host, int rows, int cols)
     {
       T* device = nullptr;
 
-      cudaError_t cudaStatus = cudaMalloc(&device, rows * cols * sizeof (T));
-
-      if (cudaStatus != cudaSuccess)
-        throw std::runtime_error("cudaMalloc failed");
+      CUDA_CHECK(cudaMalloc(&device, rows * cols * sizeof (T)));
 
       if (host)
-      {
-        cublasStatus_t cublasStatus = cublasSetMatrix(rows, cols, sizeof (T), host, rows, device, rows);
-
-        if (cublasStatus != CUBLAS_STATUS_SUCCESS)
-        {
-          cudaFree(device);
-          throw std::runtime_error("cublasSetMatrix failed");
-        }
-      }
+        CUBLAS_CHECK(cublasSetMatrix(rows, cols, sizeof (T), host, rows, device, rows));
 
       return device;
     }
@@ -41,21 +50,10 @@ namespace onmt
     {
       T* device = nullptr;
 
-      cudaError_t cudaStatus = cudaMalloc(&device, n * sizeof (T));
-
-      if (cudaStatus != cudaSuccess)
-        throw std::runtime_error("cudaMalloc failed");
+      CUDA_CHECK(cudaMalloc(&device, n * sizeof (T)));
 
       if (host)
-      {
-        cublasStatus_t cublasStatus = cublasSetVector(n, sizeof (T), host, 1, device, 1);
-
-        if (cublasStatus != CUBLAS_STATUS_SUCCESS)
-        {
-          cudaFree(device);
-          throw std::runtime_error("cublasSetVector failed");
-        }
-      }
+        CUBLAS_CHECK(cublasSetVector(n, sizeof (T), host, 1, device, 1));
 
       return device;
     }
@@ -63,21 +61,10 @@ namespace onmt
     template <typename T>
     T* to_host(const T* device, T* host, int rows, int cols)
     {
-      bool allocate = !host;
-
-      if (allocate)
-      {
+      if (!host)
         host = (T*) malloc(rows * cols * sizeof (T));
-      }
 
-      cublasStatus_t cublasStatus = cublasGetMatrix(rows, cols, sizeof (T), device, rows, host, rows);
-
-      if (cublasStatus != CUBLAS_STATUS_SUCCESS)
-      {
-        if (allocate)
-          free(host);
-        throw std::runtime_error("cublasGetMatrix failed");
-      }
+      CUBLAS_CHECK(cublasGetMatrix(rows, cols, sizeof (T), device, rows, host, rows));
 
       return host;
     }
