@@ -5,6 +5,8 @@ namespace onmt
   namespace cuda
   {
 
+    // This kernel replicates the vector `vector` `dim` times in the matrix `matrix`.
+    // The storage order is assumed to be col-major.
     template <typename T>
     __global__ void replicate_kernel(const T* vector, int len, T* matrix, int dim)
     {
@@ -20,6 +22,7 @@ namespace onmt
     template <typename T>
     void replicate(const T* vector, int len, T* matrix, int dim)
     {
+      // TODO: optimize kernel parameters?
       replicate_kernel<<<len, 256>>>(vector, len, matrix, dim);
     }
 
