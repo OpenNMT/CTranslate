@@ -144,8 +144,9 @@ namespace onmt
                                                         bool replace_unk,
                                                         size_t max_sent_length,
                                                         size_t beam_size,
+                                                        bool cuda,
                                                         bool profiling)
-    : _model(model)
+    : _model(model, cuda)
     , _src_dict(_model.get_src_dict())
     , _tgt_dict(_model.get_tgt_dict())
     , _src_feat_dicts(_model.get_src_feat_dicts())

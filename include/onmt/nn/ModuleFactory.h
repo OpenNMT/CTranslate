@@ -14,7 +14,7 @@ namespace onmt
     class ModuleFactory
     {
     public:
-      ModuleFactory(Profiler& profiler);
+      ModuleFactory(Profiler& profiler, bool cuda);
       ~ModuleFactory();
 
       Module<MatFwd>* build(th::Class* obj);
@@ -23,6 +23,7 @@ namespace onmt
       std::unordered_map<std::string, Module<MatFwd>*> _stateless_storage;
       std::vector<Module<MatFwd>*> _storage;
       Profiler& _profiler;
+      bool _cuda;
     };
 
   }

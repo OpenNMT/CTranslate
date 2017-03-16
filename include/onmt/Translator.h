@@ -36,6 +36,7 @@ namespace onmt
                bool replace_unk,
                size_t max_sent_length,
                size_t beam_size,
+               bool cuda,
                bool profiling);
 
     Model<MatFwd, MatIn, MatEmb, ModelT> _model;
@@ -80,12 +81,6 @@ namespace onmt
                                        Eigen::Map<const Eigen::RowMajorMat<T> >,
                                        Eigen::Map<const Eigen::RowMajorMat<T> >,
                                        T>;
-
-  template <typename T>
-  using DefaultCUDATranslator = Translator<Eigen::MatrixBatch<T>,
-                                           T*,
-                                           Eigen::Map<const Eigen::RowMajorMat<T> >,
-                                           T>;
 
   template <typename T>
   using SparseTranslator = Translator<Eigen::MatrixBatch<T>,

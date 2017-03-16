@@ -5,10 +5,6 @@
 #include "onmt/th/Utils.h"
 #include "onmt/th/Obj.h"
 
-#ifdef WITH_CUDA
-#  include "onmt/cuda/Utils.h"
-#endif
-
 namespace onmt
 {
 
@@ -43,34 +39,6 @@ namespace onmt
       return Eigen::Map<const Eigen::RowMajorMat<T> >(storage_data, rows, cols);
     }
   };
-
-#ifdef WITH_CUDA
-  template <typename T>
-  class StorageLoader<T*, T>
-  {
-  public:
-    static T* get_matrix(th::Table* module_data, const std::string& name, int& rows, int& cols)
-    {
-      th::Tensor<T>* tensor = th::get_field<th::Tensor<T>*>(module_data, name);
-
-      if (!tensor)
-        return nullptr;
-
-      rows = tensor->get_size()[0];
-      cols = tensor->get_dimension() == 1 ? 1 : tensor->get_size()[1];
-
-      const T* data = get_tensor_data(tensor);
-      T* data_device = nullptr;
-
-      if (cols == 1)
-        data_device = cuda::to_device<T>(data, rows);
-      else
-        data_device = cuda::to_device<T>(data, cols, rows);
-
-      return data_device;
-    }
-  };
-#endif
 
   // This specialization creates a sparse matrix from a CSR representation.
   template <typename T>

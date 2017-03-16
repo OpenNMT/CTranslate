@@ -13,7 +13,7 @@ namespace onmt
   class Model
   {
   public:
-    Model(const std::string& filename);
+    Model(const std::string& filename, bool cuda);
 
     nn::Module<MatFwd>* get_encoder_module(size_t index);
     nn::Module<MatFwd>* get_decoder_module(size_t index);

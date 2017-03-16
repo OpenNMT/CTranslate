@@ -25,6 +25,10 @@
 
 #include "onmt/nn/Graph.h"
 
+#ifdef WITH_CUDA
+#  include "onmt/nn/LinearGPU.h"
+#endif
+
 namespace onmt
 {
   namespace nn
@@ -32,8 +36,9 @@ namespace onmt
 
 
     template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-    ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>::ModuleFactory(Profiler& profiler)
+    ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>::ModuleFactory(Profiler& profiler, bool cuda)
       : _profiler(profiler)
+      , _cuda(cuda)
     {
       // These modules are stateless so we can reuse the same instance for different
       // nodes in the graph.
@@ -82,7 +87,14 @@ namespace onmt
       Module<MatFwd>* mod = nullptr;
 
       if (name == "nn.Linear")
-        mod = new Linear<MatFwd, MatIn, ModelT>(data);
+      {
+#ifdef WITH_CUDA
+        if (_cuda)
+          mod = new LinearGPU<MatFwd, MatIn, ModelT>(data);
+        else
+#endif
+          mod = new Linear<MatFwd, MatIn, ModelT>(data);
+      }
       else if (name == "nn.LookupTable")
         mod =  new LookupTable<MatFwd, MatEmb, ModelT>(data);
       else if (name == "nn.CAddTable")
