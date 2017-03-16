@@ -40,10 +40,14 @@ namespace onmt
       : _profiler(profiler)
       , _cuda(cuda)
     {
-#ifdef WITH_CUDA
       if (_cuda)
+      {
+#ifdef WITH_CUDA
         CUBLAS_CHECK(cublasCreate(&_handle));
+#else
+        throw std::runtime_error("CTranslate was not compiled with CUDA support");
 #endif
+      }
 
       // These modules are stateless so we can reuse the same instance for different
       // nodes in the graph.
