@@ -1,7 +1,6 @@
 #pragma once
 
 #include "onmt/cuda/Utils.h"
-#include "onmt/cuda/Kernels.cuh"
 
 namespace onmt
 {
@@ -61,7 +60,11 @@ namespace onmt
       if (_bias_device)
       {
         beta = 1;
-        cuda::replicate(_bias_device, output_size, _output_device, output_size, batch_size);
+        for (int i = 0; i < batch_size; ++i)
+          CUDA_CHECK(cudaMemcpy(_output_device + i * output_size,
+                                _bias_device,
+                                output_size * sizeof (float),
+                                cudaMemcpyDeviceToDevice));
       }
 
       CUBLAS_CHECK(cublasSgemm(_handle,
