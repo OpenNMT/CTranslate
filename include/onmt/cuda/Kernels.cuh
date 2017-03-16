@@ -6,7 +6,7 @@ namespace onmt
   {
 
     template <typename T>
-    void replicate(const T* vector, int len, T* matrix, int dim);
+    void replicate(const T* vector, int len, T* matrix, int rows, int cols);
 
   }
 }

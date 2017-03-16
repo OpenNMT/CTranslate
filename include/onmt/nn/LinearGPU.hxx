@@ -17,6 +17,7 @@ namespace onmt
       , _output_device(nullptr)
       , _allocated_batches(0)
     {
+      // cuBLAS works with col-major matrices.
       _weight_device = cuda::to_device<float>(this->_weight.data(), this->_weight.cols(), this->_weight.rows());
 
       if (this->_bias.rows() > 0)
@@ -35,7 +36,7 @@ namespace onmt
     void LinearGPU<MatFwd, MatIn, ModelT>::realloc_output(int num_batches) const
     {
       CUDA_CHECK(cudaFree(_output_device));
-      _output_device = cuda::to_device<float>(nullptr, num_batches, this->_weight.rows());
+      _output_device = cuda::to_device<float>(nullptr, this->_weight.rows(), num_batches);
       _allocated_batches = num_batches;
     }
 
@@ -43,43 +44,39 @@ namespace onmt
     MatFwd LinearGPU<MatFwd, MatIn, ModelT>::forward_impl(MatFwd& input) const
     {
       // See http://docs.nvidia.com/cuda/cublas/#cublas-lt-t-gt-gemm
-      int m = input.rows();
-      int n = this->_weight.rows();
-      int k = input.cols();
 
-      if (m > _allocated_batches)
-      {
-        this->realloc_output(m);
-      }
+      const int batch_size = input.rows();
+      const int input_size = input.cols();
+      const int output_size = this->_weight.rows();
 
-      float* a = cuda::to_device<float>(input.data(), k, m);
-      float* b = _weight_device;
-      float* c = _output_device;
+      if (batch_size > _allocated_batches)
+        this->realloc_output(batch_size);
+
+      float* input_device = cuda::to_device<float>(input.data(), input_size, batch_size);
 
       float alpha = 1;
       float beta = 0;
 
-      // Use c to add bias.
+      // Use output buffer to add bias.
       if (_bias_device)
       {
         beta = 1;
-        cuda::replicate(_bias_device, n, c, m);
+        cuda::replicate(_bias_device, output_size, _output_device, output_size, batch_size);
       }
 
       CUBLAS_CHECK(cublasSgemm(_handle,
                                CUBLAS_OP_T, CUBLAS_OP_N,
-                               m, n, k,
+                               output_size, batch_size, input_size,
                                &alpha,
-                               a, k,
-                               b, k,
+                               _weight_device, input_size,
+                               input_device, input_size,
                                &beta,
-                               c, m));
+                               _output_device, output_size));
 
-      MatFwd output(n, m);
-      cuda::to_host<float>(c, output.data(), m, n);
-      output.transposeInPlace();
+      MatFwd output(batch_size, output_size);
+      cuda::to_host<float>(_output_device, output.data(), output_size, batch_size);
 
-      CUDA_CHECK(cudaFree(a));
+      CUDA_CHECK(cudaFree(input_device));
 
       return output;
     }
