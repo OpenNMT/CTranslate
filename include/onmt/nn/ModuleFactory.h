@@ -5,6 +5,10 @@
 #include "onmt/nn/Module.h"
 #include "onmt/th/Obj.h"
 
+#ifdef WITH_CUDA
+#  include "onmt/cuda/Utils.h"
+#endif
+
 namespace onmt
 {
   namespace nn
@@ -24,6 +28,9 @@ namespace onmt
       std::vector<Module<MatFwd>*> _storage;
       Profiler& _profiler;
       bool _cuda;
+#ifdef WITH_CUDA
+      cublasHandle_t _handle;
+#endif
     };
 
   }

@@ -13,8 +13,6 @@ namespace onmt
   namespace cuda
   {
 
-    cublasHandle_t* get_handle();
-
     std::string cublasGetStatusString(cublasStatus_t status);
 
     inline

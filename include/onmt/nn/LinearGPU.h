@@ -11,13 +11,15 @@ namespace onmt
     class LinearGPU: public Linear<MatFwd, MatIn, ModelT>
     {
     public:
-      LinearGPU(th::Table* data);
+      LinearGPU(th::Table* data, cublasHandle_t& handle);
       ~LinearGPU();
 
       virtual MatFwd forward_impl(MatFwd& input) const override;
 
     private:
       void realloc_output(int num_batches) const;
+
+      cublasHandle_t& _handle;
 
       float* _bias_device;
       float* _weight_device;

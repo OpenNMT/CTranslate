@@ -9,8 +9,9 @@ namespace onmt
   {
 
     template <typename MatFwd, typename MatIn, typename ModelT>
-    LinearGPU<MatFwd, MatIn, ModelT>::LinearGPU(th::Table* data)
+    LinearGPU<MatFwd, MatIn, ModelT>::LinearGPU(th::Table* data, cublasHandle_t& handle)
       : Linear<MatFwd, MatIn, ModelT>(data)
+      , _handle(handle)
       , _bias_device(nullptr)
       , _weight_device(nullptr)
       , _output_device(nullptr)
@@ -65,7 +66,7 @@ namespace onmt
         cuda::replicate(_bias_device, n, c, m);
       }
 
-      CUBLAS_CHECK(cublasSgemm(*cuda::get_handle(),
+      CUBLAS_CHECK(cublasSgemm(_handle,
                                CUBLAS_OP_T, CUBLAS_OP_N,
                                m, n, k,
                                &alpha,

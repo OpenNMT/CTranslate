@@ -11,11 +11,6 @@ namespace onmt
                                                         bool cuda,
                                                         bool profiling)
   {
-#ifndef WITH_CUDA
-    if (cuda)
-      throw std::runtime_error("CTranslate was not compiled with CUDA support");
-#endif
-
     ITranslator* t = nullptr;
 
     t = new DefaultTranslator<float>(model, phrase_table, replace_unk, max_sent_length, beam_size, cuda, profiling);
