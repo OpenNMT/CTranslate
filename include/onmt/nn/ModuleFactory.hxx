@@ -25,6 +25,10 @@
 
 #include "onmt/nn/Graph.h"
 
+#ifdef WITH_CUDA
+#  include "onmt/nn/LinearGPU.h"
+#endif
+
 namespace onmt
 {
   namespace nn
@@ -32,9 +36,19 @@ namespace onmt
 
 
     template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-    ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>::ModuleFactory(Profiler& profiler)
+    ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>::ModuleFactory(Profiler& profiler, bool cuda)
       : _profiler(profiler)
+      , _cuda(cuda)
     {
+      if (_cuda)
+      {
+#ifdef WITH_CUDA
+        CUBLAS_CHECK(cublasCreate(&_handle));
+#else
+        throw std::runtime_error("CTranslate was not compiled with CUDA support");
+#endif
+      }
+
       // These modules are stateless so we can reuse the same instance for different
       // nodes in the graph.
       _stateless_storage["nn.CAddTable"] = new CAddTable<MatFwd>();
@@ -52,6 +66,11 @@ namespace onmt
     template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
     ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>::~ModuleFactory()
     {
+#ifdef WITH_CUDA
+      if (_cuda)
+        CUBLAS_CHECK(cublasDestroy(_handle));
+#endif
+
       for (const auto& mod: _stateless_storage)
         delete mod.second;
 
@@ -82,7 +101,14 @@ namespace onmt
       Module<MatFwd>* mod = nullptr;
 
       if (name == "nn.Linear")
-        mod = new Linear<MatFwd, MatIn, ModelT>(data);
+      {
+#ifdef WITH_CUDA
+        if (_cuda)
+          mod = new LinearGPU<MatFwd, MatIn, ModelT>(data, _handle);
+        else
+#endif
+          mod = new Linear<MatFwd, MatIn, ModelT>(data);
+      }
       else if (name == "nn.LookupTable")
         mod =  new LookupTable<MatFwd, MatEmb, ModelT>(data);
       else if (name == "nn.CAddTable")

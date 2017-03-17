@@ -5,6 +5,10 @@
 #include "onmt/nn/Module.h"
 #include "onmt/th/Obj.h"
 
+#ifdef WITH_CUDA
+#  include "onmt/cuda/Utils.h"
+#endif
+
 namespace onmt
 {
   namespace nn
@@ -14,7 +18,7 @@ namespace onmt
     class ModuleFactory
     {
     public:
-      ModuleFactory(Profiler& profiler);
+      ModuleFactory(Profiler& profiler, bool cuda);
       ~ModuleFactory();
 
       Module<MatFwd>* build(th::Class* obj);
@@ -23,6 +27,10 @@ namespace onmt
       std::unordered_map<std::string, Module<MatFwd>*> _stateless_storage;
       std::vector<Module<MatFwd>*> _storage;
       Profiler& _profiler;
+      bool _cuda;
+#ifdef WITH_CUDA
+      cublasHandle_t _handle;
+#endif
     };
 
   }

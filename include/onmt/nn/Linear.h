@@ -13,12 +13,13 @@ namespace onmt
     {
     public:
       Linear(th::Table* data);
+      virtual ~Linear() {};
 
       virtual MatFwd forward_impl(MatFwd& input) const override;
 
       virtual std::string get_details() const override;
 
-    private:
+    protected:
       MatIn _weight;
       MatIn _bias;
     };

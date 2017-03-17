@@ -36,6 +36,7 @@ namespace onmt
                bool replace_unk,
                size_t max_sent_length,
                size_t beam_size,
+               bool cuda,
                bool profiling);
 
     Model<MatFwd, MatIn, MatEmb, ModelT> _model;
