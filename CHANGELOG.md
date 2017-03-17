@@ -1,6 +1,9 @@
 ## [Unreleased]
 
+### New features
+
 * Add module profiling
+* [*experimental*] Offload matrix multiplication to the GPU
 
 ## [v0.4.1](https://github.com/OpenNMT/CTranslate/releases/tag/v0.4.1) (2017-03-08)
 
