@@ -47,7 +47,7 @@ if (EIGEN_ROOT)
 endif()
 
 find_package(Eigen3 3.3 REQUIRED)
-find_package(CUDA 6.5)
+find_package(CUDA 6.5 QUIET)
 
 set(INCLUDE_DIRECTORIES
   ${CMAKE_CURRENT_SOURCE_DIR}/lib
