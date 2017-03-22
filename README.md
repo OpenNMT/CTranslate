@@ -26,7 +26,7 @@ Executables additionally require:
 git submodule update --init
 mkdir build
 cd build
-cmake -DEIGEN_ROOT=<path to Eigen library> -DCMAKE_BUILD_TYPE=<Release or Debug> ..
+cmake -DCMAKE_BUILD_TYPE=<Release or Debug> ..
 make
 ```
 
@@ -34,6 +34,7 @@ It will produce the dynamic library `libonmt.so` (or `.dylib` on Mac OS, `.dll` 
 
 ### Options
 
+* To give hints about Eigen location, use the `-DEIGEN_ROOT=<path to Eigen library>` option.
 * To compile only the library, use the `-DLIB_ONLY=ON` flag.
 * To disable [OpenMP](http://www.openmp.org), use the `-DWITH_OPENMP=OFF` flag.
 

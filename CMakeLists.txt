@@ -33,22 +33,20 @@ endif()
 add_subdirectory(lib/TH)
 add_subdirectory(lib/tokenizer)
 
-find_package(CUDA 6.5)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
-find_path(Eigen_INCLUDE_DIRS Eigen/Eigen
-  ${EIGEN_ROOT}
-  ${EIGEN_ROOT}/include/eigen3
-  )
-
-if(NOT Eigen_INCLUDE_DIRS)
-  message(FATAL_ERROR "Eigen headers not found.")
+if (EIGEN_ROOT)
+  set(ENV{EIGEN3_ROOT} ${EIGEN_ROOT})
 endif()
+
+find_package(Eigen3 3.3 REQUIRED)
+find_package(CUDA 6.5)
 
 set(INCLUDE_DIRECTORIES
   ${CMAKE_CURRENT_SOURCE_DIR}/lib
   ${CMAKE_CURRENT_SOURCE_DIR}/lib/tokenizer/include
   ${CMAKE_CURRENT_SOURCE_DIR}/include
-  ${Eigen_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIR}
   )
 set(SOURCES
   src/th/Env.cc

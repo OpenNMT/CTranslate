@@ -5,6 +5,10 @@
 * Add module profiling
 * [*experimental*] Offload matrix multiplication to the GPU
 
+### Fixes and improvements
+
+* Improve Eigen library finder logic
+
 ## [v0.4.1](https://github.com/OpenNMT/CTranslate/releases/tag/v0.4.1) (2017-03-08)
 
 ### Fixes and improvements
