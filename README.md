@@ -8,15 +8,15 @@ CTranslate provides optimized CPU translation and optionally offloads matrix mul
 
 ## Dependencies
 
-* [`Eigen`](http://eigen.tuxfamily.org/index.php?title=Main_Page) >= 3.3.0
+* [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page) >= 3.3
 
 GPU offloading additionally requires:
 
-* [`CUDA`](https://developer.nvidia.com/cuda-toolkit)
+* [CUDA](https://developer.nvidia.com/cuda-toolkit)
 
 Executables additionally require:
 
-* [`Boost`](http://www.boost.org/) (`program_options`)
+* [Boost](http://www.boost.org/) (`program_options`)
 
 ## Compiling
 
@@ -30,7 +30,9 @@ cmake ..
 make
 ```
 
-It will produce the dynamic library `libonmt.so` (or `.dylib` on Mac OS, `.dll` on Windows), the translation client `cli/translate`. CTranslate also bundles the OpenNMT's [Tokenizer](https://github.com/OpenNMT/Tokenizer) which provides the tokenization tools `lib/tokenizer/cli/tokenize` and `lib/tokenizer/cli/detokenize`.
+It will produce the dynamic library `libonmt.so` (or `.dylib` on Mac OS, `.dll` on Windows), the translation client `cli/translate`.
+
+CTranslate also bundles OpenNMT's [Tokenizer](https://github.com/OpenNMT/Tokenizer) which provides the tokenization tools `lib/tokenizer/cli/tokenize` and `lib/tokenizer/cli/detokenize`.
 
 ### Options
 
