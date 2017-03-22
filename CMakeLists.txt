@@ -7,6 +7,13 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
 set(CMAKE_CXX_STANDARD 11)
 
+# Set Release build type by default to get sane performance.
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif(NOT CMAKE_BUILD_TYPE)
+
+message(STATUS "Build type: " ${CMAKE_BUILD_TYPE})
+
 if(WITH_OPENMP)
   find_package(OpenMP)
   if(OPENMP_FOUND)

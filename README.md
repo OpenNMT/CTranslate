@@ -26,7 +26,7 @@ Executables additionally require:
 git submodule update --init
 mkdir build
 cd build
-cmake -DCMAKE_BUILD_TYPE=<Release or Debug> ..
+cmake ..
 make
 ```
 
