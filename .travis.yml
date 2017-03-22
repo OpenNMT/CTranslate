@@ -20,13 +20,15 @@ before_install:
   - export ROOT_TRAVIS_DIR=$(pwd)
   - wget http://bitbucket.org/eigen/eigen/get/3.3.2.tar.bz2
   - tar xf 3.3.2.tar.bz2
-  - mkdir -p ~/lib/eigen
+  - mkdir -p ~/lib/
   - mkdir -p eigen-eigen-da9b4e14c255/build && cd eigen-eigen-da9b4e14c255/build
-  - cmake -DCMAKE_INSTALL_PREFIX=~/lib/eigen ..
+  - cmake -DCMAKE_INSTALL_PREFIX=~/lib/ ..
   - make install
+  - cd ../../ && rm -rf eigen-eigen-da9b4e14c255
   - cd $ROOT_TRAVIS_DIR
 script:
   - git submodule update --init
   - mkdir build && cd build
-  - cmake -DEIGEN_ROOT=~/lib/eigen -DCMAKE_BUILD_TYPE=Release ..
+  - cmake -DCMAKE_INSTALL_PREFIX=~/lib/ ..
   - make
+  - make install
