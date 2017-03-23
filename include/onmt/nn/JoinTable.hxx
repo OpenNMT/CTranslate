@@ -15,8 +15,25 @@ namespace onmt
     std::vector<MatFwd> JoinTable<MatFwd>::forward_impl(std::vector<MatFwd>& input) const
     {
       std::vector<MatFwd> out;
-      out.emplace_back(input[0].rows(), input[0].cols() + input[1].cols());
-      out.back() << input[0], input[1];
+
+      // Compute final size.
+      int rows = input[0].rows();
+      int cols = 0;
+
+      for (size_t i = 0; i < input.size(); ++i)
+        cols += input[i].cols();
+
+      out.emplace_back(rows, cols);
+
+      // Join column-wise by default.
+      int offset = 0;
+
+      for (size_t i = 0; i < input.size(); ++i)
+      {
+        out.back().block(0, offset, rows, input[i].cols()) = input[i];
+        offset += input[i].cols();
+      }
+
       return out;
     }
 
