@@ -30,7 +30,7 @@ cmake ..
 make
 ```
 
-It will produce the dynamic library `libonmt.so` (or `.dylib` on Mac OS, `.dll` on Windows), the translation client `cli/translate`.
+It will produce the dynamic library `libonmt.so` (or `.dylib` on Mac OS, `.dll` on Windows) and the translation client `cli/translate`.
 
 CTranslate also bundles OpenNMT's [Tokenizer](https://github.com/OpenNMT/Tokenizer) which provides the tokenization tools `lib/tokenizer/cli/tokenize` and `lib/tokenizer/cli/detokenize`.
 
