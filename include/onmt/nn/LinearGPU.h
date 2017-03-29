@@ -17,7 +17,7 @@ namespace onmt
       virtual MatFwd forward_impl(MatFwd& input) const override;
 
     private:
-      void realloc_output(int num_batches) const;
+      void realloc_device_buffers(int num_batches) const;
 
       cublasHandle_t& _handle;
 

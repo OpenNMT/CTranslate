@@ -34,7 +34,7 @@ namespace onmt
     }
 
     template <typename MatFwd, typename MatIn, typename ModelT>
-    void LinearGPU<MatFwd, MatIn, ModelT>::realloc_output(int num_batches) const
+    void LinearGPU<MatFwd, MatIn, ModelT>::realloc_device_buffers(int num_batches) const
     {
       CUDA_CHECK(cudaFree(_output_device));
       CUDA_CHECK(cudaFree(_input_device));
@@ -53,7 +53,7 @@ namespace onmt
       const int output_size = this->_weight.rows();
 
       if (batch_size > _allocated_batches)
-        this->realloc_output(batch_size);
+        this->realloc_device_buffers(batch_size);
 
       cuda::to_device<float>(_input_device, input.data(), input_size, batch_size);
 
