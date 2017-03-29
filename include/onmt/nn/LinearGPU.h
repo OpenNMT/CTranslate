@@ -24,7 +24,8 @@ namespace onmt
       float* _bias_device;
       float* _weight_device;
 
-      // Reuse allocated gemm output.
+      // Preallocate device buffers.
+      mutable float* _input_device;
       mutable float* _output_device;
       mutable size_t _allocated_batches;
     };

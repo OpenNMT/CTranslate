@@ -29,6 +29,11 @@ namespace onmt
         throw std::runtime_error("cuBLAS failed with status " + cublasGetStatusString(status) + " at " + file + ":" + std::to_string(line));
     }
 
+    template <typename T>
+    void to_device(T* device, const T* host, int rows, int cols)
+    {
+      CUBLAS_CHECK(cublasSetMatrix(rows, cols, sizeof (T), host, rows, device, rows));
+    }
 
     template <typename T>
     T* to_device(const T* host, int rows, int cols)
@@ -36,9 +41,17 @@ namespace onmt
       T* device = nullptr;
 
       CUDA_CHECK(cudaMalloc(&device, rows * cols * sizeof (T)));
+      CUBLAS_CHECK(cublasSetMatrix(rows, cols, sizeof (T), host, rows, device, rows));
 
-      if (host)
-        CUBLAS_CHECK(cublasSetMatrix(rows, cols, sizeof (T), host, rows, device, rows));
+      return device;
+    }
+
+    template <typename T>
+    T* to_device(int rows, int cols)
+    {
+      T* device = nullptr;
+
+      CUDA_CHECK(cudaMalloc(&device, rows * cols * sizeof (T)));
 
       return device;
     }

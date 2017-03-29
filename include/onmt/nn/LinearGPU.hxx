@@ -13,6 +13,7 @@ namespace onmt
       , _handle(handle)
       , _bias_device(nullptr)
       , _weight_device(nullptr)
+      , _input_device(nullptr)
       , _output_device(nullptr)
       , _allocated_batches(0)
     {
@@ -28,6 +29,7 @@ namespace onmt
     {
       CUDA_CHECK(cudaFree(_weight_device));
       CUDA_CHECK(cudaFree(_bias_device));
+      CUDA_CHECK(cudaFree(_input_device));
       CUDA_CHECK(cudaFree(_output_device));
     }
 
@@ -35,7 +37,9 @@ namespace onmt
     void LinearGPU<MatFwd, MatIn, ModelT>::realloc_output(int num_batches) const
     {
       CUDA_CHECK(cudaFree(_output_device));
-      _output_device = cuda::to_device<float>(nullptr, this->_weight.rows(), num_batches);
+      CUDA_CHECK(cudaFree(_input_device));
+      _output_device = cuda::to_device<float>(this->_weight.rows(), num_batches);
+      _input_device = cuda::to_device<float>(this->_weight.cols(), num_batches);
       _allocated_batches = num_batches;
     }
 
@@ -51,7 +55,7 @@ namespace onmt
       if (batch_size > _allocated_batches)
         this->realloc_output(batch_size);
 
-      float* input_device = cuda::to_device<float>(input.data(), input_size, batch_size);
+      cuda::to_device<float>(_input_device, input.data(), input_size, batch_size);
 
       float alpha = 1;
       float beta = 0;
@@ -72,14 +76,12 @@ namespace onmt
                                output_size, batch_size, input_size,
                                &alpha,
                                _weight_device, input_size,
-                               input_device, input_size,
+                               _input_device, input_size,
                                &beta,
                                _output_device, output_size));
 
       MatFwd output(batch_size, output_size);
       cuda::to_host<float>(_output_device, output.data(), output_size, batch_size);
-
-      CUDA_CHECK(cudaFree(input_device));
 
       return output;
     }
