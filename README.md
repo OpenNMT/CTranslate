@@ -83,3 +83,12 @@ For a more advanced usage, see:
 * `include/onmt/Threads.h` to programmatically control the number of threads to use
 
 Also see the headers available in the [Tokenizer](https://github.com/OpenNMT/Tokenizer) that are accessible when linking against CTranslate.
+
+## Missing features
+
+CTranslate misses some advanced features of `translate.lua`:
+
+* gold data score
+* best N hypotheses
+* hypotheses filtering
+* beam search normalization
