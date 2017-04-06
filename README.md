@@ -84,12 +84,13 @@ For a more advanced usage, see:
 
 Also see the headers available in the [Tokenizer](https://github.com/OpenNMT/Tokenizer) that are accessible when linking against CTranslate.
 
-## Missing features
+## Unsupported features
 
 Some model configurations are currently unsupported:
 
 * deep bidirectional encoder
 * pyramidal deep bidirectional encoder
+* *concat* variant of global attention
 
 Additionally, CTranslate misses some advanced features of `translate.lua`:
 
