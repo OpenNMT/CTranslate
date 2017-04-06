@@ -86,7 +86,12 @@ Also see the headers available in the [Tokenizer](https://github.com/OpenNMT/Tok
 
 ## Missing features
 
-CTranslate misses some advanced features of `translate.lua`:
+Some model configurations are currently unsupported:
+
+* deep bidirectional encoder
+* pyramidal deep bidirectional encoder
+
+Additionally, CTranslate misses some advanced features of `translate.lua`:
 
 * gold data score
 * best N hypotheses
