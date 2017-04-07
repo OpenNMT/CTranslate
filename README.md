@@ -88,6 +88,7 @@ Also see the headers available in the [Tokenizer](https://github.com/OpenNMT/Tok
 
 Some model configurations are currently unsupported:
 
+* GRU
 * deep bidirectional encoder
 * pyramidal deep bidirectional encoder
 * *concat* variant of global attention
