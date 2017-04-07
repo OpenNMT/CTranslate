@@ -7,8 +7,7 @@ namespace onmt
 
     int get_number(Table* module_data, const std::string& name)
     {
-      Number* dim = get_field<Number*>(module_data, name);
-      return dim ? static_cast<int>(dim->get_value()) : -1;
+      return get_scalar<int>(module_data, name);
     }
 
     bool get_boolean(Table* module_data, const std::string& name)

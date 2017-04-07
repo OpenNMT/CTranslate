@@ -27,6 +27,13 @@ namespace onmt
     }
 
     template <typename T>
+    T get_scalar(Table* module_data, const std::string& name)
+    {
+      Number* dim = get_field<Number*>(module_data, name);
+      return dim ? static_cast<T>(dim->get_value()) : -1;
+    }
+
+    template <typename T>
     std::vector<T> get_storage_as_vector(Obj* obj, const std::string& name)
     {
       Storage<T>* storage = get_field<Storage<T>*>(obj, name);
