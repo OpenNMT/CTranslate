@@ -6,8 +6,9 @@ namespace onmt
   {
 
     template <typename MatFwd>
-    Reshape<MatFwd>::Reshape()
+    Reshape<MatFwd>::Reshape(th::Table* data)
       : Module<MatFwd>("nn.Reshape")
+      , _dims(th::get_storage_as_vector<long>(data, "size"))
     {
     }
 
@@ -17,9 +18,14 @@ namespace onmt
       // also do the SplitTable
       std::vector<MatFwd> out;
 
-      for (size_t i = 0; i < 4; ++i)
+      long leading_dim = _dims[0];
+
+      for (long i = 0; i < leading_dim; ++i)
       {
-        out.emplace_back(input[0].block(0, i*(input[0].cols()/4), input[0].rows(), input[0].cols()/4));
+        out.emplace_back(input[0].block(0,
+                                        i * (input[0].cols() / leading_dim),
+                                        input[0].rows(),
+                                        input[0].cols() / leading_dim));
       }
 
       return out;

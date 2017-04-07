@@ -44,7 +44,7 @@ namespace onmt
       std::vector<T> vec;
       vec.reserve(size);
 
-      for (size_t i = 0; i < size; ++i)
+      for (int i = 0; i < size; ++i)
         vec.push_back(data[i]);
 
       return vec;

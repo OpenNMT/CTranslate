@@ -58,7 +58,6 @@ namespace onmt
       _stateless_storage["nn.Tanh"] = new Tanh<MatFwd>();
       _stateless_storage["nn.SplitTable"] = new SplitTable<MatFwd>();
       _stateless_storage["nn.JoinTable"] = new JoinTable<MatFwd>();
-      _stateless_storage["nn.Reshape"] = new Reshape<MatFwd>();
       _stateless_storage["nn.SoftMax"] = new SoftMax<MatFwd>();
       _stateless_storage["nn.LogSoftMax"] = new LogSoftMax<MatFwd>();
       _stateless_storage["nn.Identity"] = new Identity<MatFwd>();
@@ -127,7 +126,7 @@ namespace onmt
       else if (name == "nn.SelectTable")
         mod = new SelectTable<MatFwd>(data);
       else if (name == "nn.Reshape")
-        mod = new Reshape<MatFwd>();
+        mod = new Reshape<MatFwd>(data);
       else if (name == "nn.Replicate")
         mod = new Replicate<MatFwd>(data);
       else if (name == "nn.SoftMax")
