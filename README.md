@@ -92,6 +92,7 @@ Some model configurations are currently unsupported:
 * deep bidirectional encoder
 * pyramidal deep bidirectional encoder
 * *concat* variant of global attention
+* bridges other than *copy*
 
 Additionally, CTranslate misses some advanced features of `translate.lua`:
 
