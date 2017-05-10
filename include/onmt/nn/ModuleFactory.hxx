@@ -27,7 +27,7 @@
 #include "onmt/nn/Graph.h"
 
 #ifdef WITH_CUDA
-#  include "onmt/nn/LinearGPU.h"
+#  include "onmt/nn/cuLinear.h"
 #endif
 
 namespace onmt
@@ -104,7 +104,7 @@ namespace onmt
       {
 #ifdef WITH_CUDA
         if (_cuda)
-          mod = new LinearGPU<MatFwd, MatIn, ModelT>(data, _handle);
+          mod = new cuLinear<MatFwd, MatIn, ModelT>(data, _handle);
         else
 #endif
           mod = new Linear<MatFwd, MatIn, ModelT>(data);

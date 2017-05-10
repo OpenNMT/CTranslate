@@ -8,11 +8,11 @@ namespace onmt
   {
 
     template <typename MatFwd, typename MatIn, typename ModelT>
-    class LinearGPU: public Linear<MatFwd, MatIn, ModelT>
+    class cuLinear: public Linear<MatFwd, MatIn, ModelT>
     {
     public:
-      LinearGPU(th::Table* data, cublasHandle_t& handle);
-      ~LinearGPU();
+      cuLinear(th::Table* data, cublasHandle_t& handle);
+      ~cuLinear();
 
       virtual MatFwd forward_impl(MatFwd& input) const override;
 
@@ -34,4 +34,4 @@ namespace onmt
   }
 }
 
-#include "onmt/nn/LinearGPU.hxx"
+#include "onmt/nn/cuLinear.hxx"

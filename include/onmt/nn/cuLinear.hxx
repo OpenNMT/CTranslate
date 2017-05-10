@@ -9,7 +9,7 @@ namespace onmt
   {
 
     template <typename MatFwd, typename MatIn, typename ModelT>
-    LinearGPU<MatFwd, MatIn, ModelT>::LinearGPU(th::Table* data, cublasHandle_t& handle)
+    cuLinear<MatFwd, MatIn, ModelT>::cuLinear(th::Table* data, cublasHandle_t& handle)
       : Linear<MatFwd, MatIn, ModelT>(data)
       , _handle(handle)
       , _bias_device(nullptr)
@@ -27,7 +27,7 @@ namespace onmt
     }
 
     template <typename MatFwd, typename MatIn, typename ModelT>
-    LinearGPU<MatFwd, MatIn, ModelT>::~LinearGPU()
+    cuLinear<MatFwd, MatIn, ModelT>::~cuLinear()
     {
       CUDA_CHECK(cudaFree(_weight_device));
       CUDA_CHECK(cudaFree(_bias_device));
@@ -37,7 +37,7 @@ namespace onmt
     }
 
     template <typename MatFwd, typename MatIn, typename ModelT>
-    void LinearGPU<MatFwd, MatIn, ModelT>::realloc_device_buffers(int num_batches) const
+    void cuLinear<MatFwd, MatIn, ModelT>::realloc_device_buffers(int num_batches) const
     {
       CUDA_CHECK(cudaFree(_output_device));
       CUDA_CHECK(cudaFree(_input_device));
@@ -61,7 +61,7 @@ namespace onmt
     }
 
     template <typename MatFwd, typename MatIn, typename ModelT>
-    MatFwd LinearGPU<MatFwd, MatIn, ModelT>::forward_impl(MatFwd& input) const
+    MatFwd cuLinear<MatFwd, MatIn, ModelT>::forward_impl(MatFwd& input) const
     {
       // See http://docs.nvidia.com/cuda/cublas/#cublas-lt-t-gt-gemm
 
