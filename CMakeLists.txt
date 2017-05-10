@@ -73,6 +73,7 @@ if (CUDA_FOUND)
   cuda_add_library(${PROJECT_NAME}
     ${SOURCES}
     src/cuda/Utils.cc
+    src/cuda/Kernels.cu
     )
   cuda_add_cublas_to_target(${PROJECT_NAME})
 else()

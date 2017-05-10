@@ -27,6 +27,7 @@ namespace onmt
       // Preallocate device buffers.
       mutable float* _input_device;
       mutable float* _output_device;
+      mutable float* _expanded_bias_device;
       mutable size_t _allocated_batches;
     };
 
