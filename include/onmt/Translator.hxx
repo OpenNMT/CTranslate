@@ -146,7 +146,8 @@ namespace onmt
                                                         size_t beam_size,
                                                         bool cuda,
                                                         bool profiling)
-    : _model(model, cuda)
+    : _profiler(profiling)
+    , _model(model, _profiler, cuda)
     , _src_dict(_model.get_src_dict())
     , _tgt_dict(_model.get_tgt_dict())
     , _src_feat_dicts(_model.get_src_feat_dicts())
@@ -160,8 +161,6 @@ namespace onmt
     , _decoder(_model.get_decoder_module(0))
     , _generator(_model.get_decoder_module(1))
   {
-    if (profiling)
-      _model.enable_profiling();
   }
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
@@ -566,6 +565,8 @@ namespace onmt
 
       size_t new_remaining_sents = remaining_sents;
 
+      _profiler.start();
+
       // Update beam path for all non finished sentences.
       for (size_t b = 0; b < batch_size; ++b)
       {
@@ -675,6 +676,8 @@ namespace onmt
           }
         }
       }
+
+      _profiler.stop("Beam search");
 
       if (new_remaining_sents > 0)
       {

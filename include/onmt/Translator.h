@@ -39,6 +39,7 @@ namespace onmt
                bool cuda,
                bool profiling);
 
+    Profiler _profiler;
     Model<MatFwd, MatIn, MatEmb, ModelT> _model;
     const Dictionary& _src_dict;
     const Dictionary& _tgt_dict;

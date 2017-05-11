@@ -6,8 +6,8 @@ namespace onmt
 {
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-  Model<MatFwd, MatIn, MatEmb, ModelT>::Model(const std::string& filename, bool cuda)
-    : _module_factory(_profiler, cuda)
+  Model<MatFwd, MatIn, MatEmb, ModelT>::Model(const std::string& filename, Profiler& profiler, bool cuda)
+    : _module_factory(profiler, cuda)
   {
     THFile* tf = THDiskFile_new(filename.c_str(), "r", 0);
     THFile_binary(tf);
@@ -169,12 +169,6 @@ namespace onmt
       return default_value;
 
     return static_cast<T>(it->second);
-  }
-
-  template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-  void Model<MatFwd, MatIn, MatEmb, ModelT>::enable_profiling()
-  {
-    _profiler.enable();
   }
 
 }

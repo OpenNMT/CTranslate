@@ -13,7 +13,7 @@ namespace onmt
   class Model
   {
   public:
-    Model(const std::string& filename, bool cuda);
+    Model(const std::string& filename, Profiler& profiler, bool cuda);
 
     nn::Module<MatFwd>* get_encoder_module(size_t index);
     nn::Module<MatFwd>* get_decoder_module(size_t index);
@@ -41,7 +41,6 @@ namespace onmt
     void load_networks(th::Table* obj);
 
     th::Env _env;
-    Profiler _profiler;
     nn::ModuleFactory<MatFwd, MatIn, MatEmb, ModelT> _module_factory;
 
     std::vector<nn::Module<MatFwd>*> _encoder_modules;
