@@ -1,15 +1,11 @@
 #pragma once
 
 #include <Eigen/Dense>
-#include <Eigen/SparseCore>
 
 namespace onmt
 {
   namespace Eigen
   {
-
-    template <typename T>
-    using RowMajorSparseMat = ::Eigen::SparseMatrix<T, ::Eigen::RowMajor>;
 
     template <typename T>
     using RowMajorMat = ::Eigen::Matrix<T, ::Eigen::Dynamic, ::Eigen::Dynamic, ::Eigen::RowMajor>;
