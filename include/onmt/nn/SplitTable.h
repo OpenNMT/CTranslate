@@ -16,7 +16,7 @@ namespace onmt
       {
       }
 
-      virtual std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) override
+      std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) override
       {
         // it is assumed that the previous reshape did the split
         return input;

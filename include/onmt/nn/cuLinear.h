@@ -39,7 +39,7 @@ namespace onmt
         CUDA_CHECK(cudaFree(_expanded_bias_device));
       }
 
-      virtual MatFwd forward_impl(MatFwd& input) override
+      MatFwd forward_impl(MatFwd& input) override
       {
         // See http://docs.nvidia.com/cuda/cublas/#cublas-lt-t-gt-gemm
 

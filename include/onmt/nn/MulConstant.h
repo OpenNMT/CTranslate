@@ -17,7 +17,7 @@ namespace onmt
       {
       }
 
-      virtual MatFwd forward_impl(MatFwd& input)
+      MatFwd forward_impl(MatFwd& input)
       {
         return input * _scalar;
       }

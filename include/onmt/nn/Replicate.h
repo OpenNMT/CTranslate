@@ -20,7 +20,7 @@ namespace onmt
       {
       }
 
-      virtual MatFwd forward_impl(MatFwd& input) override
+      MatFwd forward_impl(MatFwd& input) override
       {
         MatFwd output(input);
 

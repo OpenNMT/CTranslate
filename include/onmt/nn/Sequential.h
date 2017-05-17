@@ -16,7 +16,7 @@ namespace onmt
       {
       }
 
-      virtual std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) override
+      std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) override
       {
         if (this->_sequence.empty())
           return input;

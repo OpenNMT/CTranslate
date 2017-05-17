@@ -19,7 +19,7 @@ namespace onmt
       {
       }
 
-      virtual std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) override
+      std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) override
       {
         int index;
         if (_index < 0)

@@ -41,7 +41,7 @@ namespace onmt
         return input;
       }
 
-      virtual std::string get_details() const override
+      std::string get_details() const override
       {
         std::string details = std::to_string(_weight.cols()) + "->" + std::to_string(_weight.rows());
         if (_bias.rows() == 0)

@@ -16,7 +16,7 @@ namespace onmt
       {
       }
 
-      virtual MatFwd forward_impl(MatFwd& input) override
+      MatFwd forward_impl(MatFwd& input) override
       {
         return (1.0 + (-input).array().exp()).inverse().matrix();
       }
