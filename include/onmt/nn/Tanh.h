@@ -11,12 +11,16 @@ namespace onmt
     class Tanh: public Module<MatFwd>
     {
     public:
-      Tanh();
+      Tanh()
+        : Module<MatFwd>("nn.Tanh")
+      {
+      }
 
-      virtual MatFwd forward_impl(MatFwd& input) const override;
+      virtual MatFwd forward_impl(MatFwd& input) const override
+      {
+        return input.array().tanh().matrix();
+      }
     };
 
   }
 }
-
-#include "onmt/nn/Tanh.hxx"

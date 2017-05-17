@@ -12,9 +12,17 @@ namespace onmt
     class Squeeze: public Module<MatFwd>
     {
     public:
-      Squeeze(th::Table* data);
+      Squeeze(th::Table* data)
+        : Module<MatFwd>("nn.Squeeze")
+        , _dimension(get_number(data, "dimension"))
+      {
+      }
 
-      virtual MatFwd forward_impl(MatFwd& input) const override;
+      void forward_impl(const MatFwd& input) override
+      {
+        this->_output = input;
+        this->_output.squeeze(_dimension);
+      }
 
     private:
       int _dimension;
@@ -22,5 +30,3 @@ namespace onmt
 
   }
 }
-
-#include "onmt/nn/Squeeze.hxx"

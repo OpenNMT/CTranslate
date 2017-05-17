@@ -11,9 +11,16 @@ namespace onmt
     class MulConstant: public Module<MatFwd>
     {
     public:
-      MulConstant(th::Table* data);
+      MulConstant(th::Table* data)
+        : Module<MatFwd>("nn.MulConstant")
+        , _scalar(th::get_scalar<ModelT>(data, "constant_scalar"))
+      {
+      }
 
-      virtual MatFwd forward_impl(MatFwd& input) const;
+      virtual MatFwd forward_impl(MatFwd& input) const
+      {
+        return input * _scalar;
+      }
 
     private:
       ModelT _scalar;
@@ -21,5 +28,3 @@ namespace onmt
 
   }
 }
-
-#include "onmt/nn/MulConstant.hxx"
