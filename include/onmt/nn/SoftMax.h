@@ -16,7 +16,7 @@ namespace onmt
       {
       }
 
-      virtual MatFwd forward_impl(MatFwd& input) const
+      virtual MatFwd forward_impl(MatFwd& input)
       {
         MatFwd output(input.rows(), input.cols());
 

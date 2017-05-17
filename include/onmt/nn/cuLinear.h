@@ -39,7 +39,7 @@ namespace onmt
         CUDA_CHECK(cudaFree(_expanded_bias_device));
       }
 
-      virtual MatFwd forward_impl(MatFwd& input) const override
+      virtual MatFwd forward_impl(MatFwd& input) override
       {
         // See http://docs.nvidia.com/cuda/cublas/#cublas-lt-t-gt-gemm
 
@@ -74,7 +74,7 @@ namespace onmt
       }
 
     private:
-      void realloc_device_buffers(int num_batches) const
+      void realloc_device_buffers(int num_batches)
       {
         CUDA_CHECK(cudaFree(_output_device));
         CUDA_CHECK(cudaFree(_input_device));
@@ -103,10 +103,10 @@ namespace onmt
       float* _weight_device;
 
       // Preallocate device buffers.
-      mutable float* _input_device;
-      mutable float* _output_device;
-      mutable float* _expanded_bias_device;
-      mutable size_t _allocated_batches;
+      float* _input_device;
+      float* _output_device;
+      float* _expanded_bias_device;
+      size_t _allocated_batches;
     };
 
   }

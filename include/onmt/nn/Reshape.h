@@ -17,7 +17,7 @@ namespace onmt
       {
       }
 
-      virtual std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) const override
+      virtual std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) override
       {
         // also do the SplitTable
         std::vector<MatFwd> out;

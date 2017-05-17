@@ -28,7 +28,7 @@ namespace onmt
       {
       }
 
-      virtual MatFwd forward_impl(MatFwd& input) const override
+      virtual MatFwd forward_impl(MatFwd& input) override
       {
         input *= _weight.transpose();
 

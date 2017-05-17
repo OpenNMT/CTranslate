@@ -16,7 +16,7 @@ namespace onmt
       {
       }
 
-      virtual std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) const override
+      virtual std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) override
       {
         for (size_t i = input.size() - 1; i > 0; --i)
         {

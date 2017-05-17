@@ -33,7 +33,7 @@ namespace onmt
       {
       }
 
-      std::vector<MatFwd> forward(std::vector<MatFwd>& input) const
+      std::vector<MatFwd> forward(std::vector<MatFwd>& input)
       {
         if (_profile && _profiler)
           _profiler->start();
@@ -49,12 +49,12 @@ namespace onmt
         return output;
       }
 
-      virtual std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) const
+      virtual std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input)
       {
         return std::vector<MatFwd>(1, forward_impl(input[0]));
       }
 
-      virtual MatFwd forward_impl(MatFwd& input) const
+      virtual MatFwd forward_impl(MatFwd& input)
       {
         return input;
       }
@@ -101,7 +101,7 @@ namespace onmt
       std::string _name;
       std::string _custom_name;
       bool _profile;
-      mutable Profiler* _profiler;
+      Profiler* _profiler;
 
       std::function<void(std::vector<MatFwd>&)> _post_process;
     };

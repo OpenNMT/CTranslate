@@ -18,7 +18,7 @@ namespace onmt
       {
       }
 
-      virtual MatFwd forward_impl(MatFwd& input) const override
+      virtual MatFwd forward_impl(MatFwd& input) override
       {
         return input.sum(_dimension);
       }

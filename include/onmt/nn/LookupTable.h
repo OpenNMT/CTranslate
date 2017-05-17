@@ -19,7 +19,7 @@ namespace onmt
       {
       }
 
-      virtual MatFwd forward_impl(MatFwd& input) const override
+      virtual MatFwd forward_impl(MatFwd& input) override
       {
         MatFwd out(input.rows(), _weight.cols());
 
