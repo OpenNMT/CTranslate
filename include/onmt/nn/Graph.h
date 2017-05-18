@@ -26,11 +26,9 @@ namespace onmt
       {
       }
 
-      std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) override
+      void forward_impl(const std::vector<MatFwd>& inputs) override
       {
-        std::vector<MatFwd> output;
-        _root.forward(input, output, nullptr);
-        return output;
+        _root.forward(inputs, this->_outputs, nullptr);
       }
 
       Module<MatFwd>* find(const std::string& custom_name) override

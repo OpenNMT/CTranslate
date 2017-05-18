@@ -39,7 +39,7 @@ namespace onmt
         CUDA_CHECK(cudaFree(_expanded_bias_device));
       }
 
-      MatFwd forward_impl(MatFwd& input) override
+      void forward_impl(const MatFwd& input) override
       {
         // See http://docs.nvidia.com/cuda/cublas/#cublas-lt-t-gt-gemm
 
@@ -67,10 +67,8 @@ namespace onmt
         if (_expanded_bias_device)
           cuda::kernels::add(_output_device, _expanded_bias_device, batch_size * output_size);
 
-        MatFwd output(batch_size, output_size);
-        cuda::to_host<float>(_output_device, output.data(), output_size, batch_size);
-
-        return output;
+        this->_output.resize(batch_size, this->_weight.rows());
+        cuda::to_host<float>(_output_device, this->_output.data(), output_size, batch_size);
       }
 
     private:

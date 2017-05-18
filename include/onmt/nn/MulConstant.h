@@ -17,9 +17,9 @@ namespace onmt
       {
       }
 
-      MatFwd forward_impl(MatFwd& input)
+      void forward_impl(const MatFwd& input)
       {
-        return input * _scalar;
+        this->_output.noalias() = input * _scalar;
       }
 
     private:

@@ -19,6 +19,8 @@ namespace onmt
         : _name(name)
         , _profile(true)
         , _profiler(nullptr)
+        , _outputs(1)
+        , _output(_outputs.front())
       {
       }
 
@@ -26,6 +28,8 @@ namespace onmt
         : _name(name)
         , _profile(profile)
         , _profiler(nullptr)
+        , _outputs(1)
+        , _output(_outputs.front())
       {
       }
 
@@ -33,30 +37,35 @@ namespace onmt
       {
       }
 
-      std::vector<MatFwd> forward(std::vector<MatFwd>& input)
+      const std::vector<MatFwd>& forward(const std::vector<MatFwd>& inputs)
       {
         if (_profile && _profiler)
           _profiler->start();
 
-        auto output = forward_impl(input);
+        forward_impl(inputs);
 
         if (_profile && _profiler)
           _profiler->stop(!_custom_name.empty() ? _custom_name : _name);
 
         if (_post_process)
-          _post_process(output);
+          _post_process(_outputs);
 
-        return output;
+        return _outputs;
       }
 
-      virtual std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input)
+      const MatFwd& forward_one(const MatFwd& input)
       {
-        return std::vector<MatFwd>(1, forward_impl(input[0]));
+        return forward(std::vector<MatFwd>(1, input))[0];
       }
 
-      virtual MatFwd forward_impl(MatFwd& input)
+      virtual void forward_impl(const std::vector<MatFwd>& inputs)
       {
-        return input;
+        forward_impl(inputs.front());
+      }
+
+      virtual void forward_impl(const MatFwd& input)
+      {
+        _output = input;
       }
 
       virtual Module<MatFwd>* find(const std::string& custom_name)
@@ -70,6 +79,11 @@ namespace onmt
       std::function<void(std::vector<MatFwd>&)>& post_process_fun()
       {
         return _post_process;
+      }
+
+      const std::vector<MatFwd>& get_outputs() const
+      {
+        return _outputs;
       }
 
       const std::string& get_name() const
@@ -102,6 +116,9 @@ namespace onmt
       std::string _custom_name;
       bool _profile;
       Profiler* _profiler;
+
+      std::vector<MatFwd> _outputs;
+      MatFwd& _output;
 
       std::function<void(std::vector<MatFwd>&)> _post_process;
     };

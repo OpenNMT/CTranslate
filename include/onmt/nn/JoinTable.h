@@ -16,29 +16,25 @@ namespace onmt
       {
       }
 
-      std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) override
+      void forward_impl(const std::vector<MatFwd>& inputs) override
       {
-        std::vector<MatFwd> out;
-
         // Compute final size.
-        int rows = input[0].rows();
+        int rows = inputs[0].rows();
         int cols = 0;
 
-        for (size_t i = 0; i < input.size(); ++i)
-          cols += input[i].cols();
+        for (size_t i = 0; i < inputs.size(); ++i)
+          cols += inputs[i].cols();
 
-        out.emplace_back(rows, cols);
+        this->_output.resize(rows, cols);
 
         // Join column-wise by default.
         int offset = 0;
 
-        for (size_t i = 0; i < input.size(); ++i)
+        for (size_t i = 0; i < inputs.size(); ++i)
         {
-          out.back().block(0, offset, rows, input[i].cols()) = input[i];
-          offset += input[i].cols();
+          this->_output.block(0, offset, rows, inputs[i].cols()) = inputs[i];
+          offset += inputs[i].cols();
         }
-
-        return out;
       }
     };
 

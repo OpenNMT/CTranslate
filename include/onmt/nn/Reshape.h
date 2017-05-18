@@ -17,22 +17,20 @@ namespace onmt
       {
       }
 
-      std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) override
+      void forward_impl(const std::vector<MatFwd>& inputs) override
       {
         // also do the SplitTable
-        std::vector<MatFwd> out;
-
         long leading_dim = _dims[0];
+
+        this->_outputs.resize(leading_dim);
 
         for (long i = 0; i < leading_dim; ++i)
         {
-          out.emplace_back(input[0].block(0,
-                                          i * (input[0].cols() / leading_dim),
-                                          input[0].rows(),
-                                          input[0].cols() / leading_dim));
+          this->_outputs[i] = inputs[0].block(0,
+                                             i * (inputs[0].cols() / leading_dim),
+                                             inputs[0].rows(),
+                                             inputs[0].cols() / leading_dim);
         }
-
-        return out;
       }
 
     private:

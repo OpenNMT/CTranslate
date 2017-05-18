@@ -16,15 +16,12 @@ namespace onmt
       {
       }
 
-      std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) override
+      void forward_impl(const std::vector<MatFwd>& inputs) override
       {
-        for (size_t i = input.size() - 1; i > 0; --i)
-        {
-          input[0] += input[i];
-          input.pop_back();
-        }
+        this->_output = inputs[0];
 
-        return input;
+        for (size_t i = 1; i < inputs.size(); ++i)
+          this->_output.noalias() += inputs[i];
       }
 
     };

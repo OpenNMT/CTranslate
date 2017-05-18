@@ -16,42 +16,38 @@ namespace onmt
       {
       }
 
-      std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) override
+      void forward_impl(const std::vector<MatFwd>& inputs) override
       {
-        std::vector<MatFwd> out;
-        size_t idx = 0;
+        this->_outputs.resize(inputs.size());
 
-        for (auto& mod: this->_sequence)
+        for (size_t i = 0; i < this->_sequence.size(); ++i)
         {
-          std::vector<MatFwd> in;
-
-          if (input.size() == 1 && this->_sequence.size() > 1)
+          if (inputs.size() == 1 && this->_sequence.size() > 1)
           {
-            // This is a special case when the input table is actually bundled in a single matrix.
+            // This is a special case when the inputs table is actually bundled in a single matrix.
             // The dimensions that do not have a corresponding module are all forwarded to the
             // last module in the sequence.
-            if (idx == this->_sequence.size() - 1)
+            if (i == this->_sequence.size() - 1)
             {
-              for (int i = idx; i < input[0].cols(); ++i)
-                in.push_back(input[0].col(i));
+              std::vector<MatFwd> in;
+              for (int j = i; j < inputs[0].cols(); ++j)
+                in.push_back(inputs[0].col(j));
 
-              auto res = mod->forward(in);
-              out.insert(out.end(), res.begin(), res.end());
+              auto res = this->_sequence[i]->forward(in);
+
+              for (size_t j = i; j < res.size(); ++j)
+                this->_outputs[j] = res[j - i];
             }
             else
             {
-              in.push_back(input[0].col(idx++));
-              out.push_back(mod->forward(in)[0]);
+              this->_outputs[i] = this->_sequence[i]->forward_one(inputs[0].col(i));
             }
           }
           else
           {
-            in.push_back(input[idx++]);
-            out.push_back(mod->forward(in)[0]);
+            this->_outputs[i] = this->_sequence[i]->forward_one(inputs[i]);
           }
         }
-
-        return out;
       }
     };
 

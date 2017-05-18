@@ -28,7 +28,7 @@ namespace onmt
         }
       }
 
-      virtual std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) = 0;
+      virtual void forward_impl(const std::vector<MatFwd>& inputs) = 0;
 
     protected:
       std::vector<Module<MatFwd>*> _sequence;

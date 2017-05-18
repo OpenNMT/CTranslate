@@ -16,9 +16,9 @@ namespace onmt
       {
       }
 
-      MatFwd forward_impl(MatFwd& input) override
+      void forward_impl(const MatFwd& input) override
       {
-        return (1.0 + (-input).array().exp()).inverse().matrix();
+        this->_output = (1.0 + (-input).array().exp()).inverse();
       }
     };
 

@@ -28,17 +28,16 @@ namespace onmt
       {
       }
 
-      virtual MatFwd forward_impl(MatFwd& input) override
+      virtual void forward_impl(const MatFwd& input) override
       {
-        input *= _weight.transpose();
+        this->_output.resize(input.rows(), _weight.rows());
+        this->_output = input * _weight.transpose();
 
         if (_bias.rows() > 0)
         {
           for (int i = 0; i < input.rows(); ++i)
-            input.row(i) += _bias.transpose();
+            this->_output.row(i).noalias() += _bias.transpose();
         }
-
-        return input;
       }
 
       std::string get_details() const override

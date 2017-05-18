@@ -16,10 +16,10 @@ namespace onmt
       {
       }
 
-      std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) override
+      void forward_impl(const std::vector<MatFwd>& inputs) override
       {
         // it is assumed that the previous reshape did the split
-        return input;
+        this->_outputs = inputs;
       }
     };
 

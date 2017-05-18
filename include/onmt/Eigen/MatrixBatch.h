@@ -59,36 +59,24 @@ namespace onmt
         _ndim = 2;
       }
 
-      MatrixBatchBase<T> batch(size_t b)
+      MatrixBatchBase<T> batch(size_t b) const
       {
         if (_ndim == 3)
-          return Map<MatrixBatchBase<T> >(this->row(b).data(), _rows, _cols);
+          return Map<const MatrixBatchBase<T> >(this->row(b).data(), _rows, _cols);
         else
           return this->row(b);
       }
 
-      MatrixBatchBase<T> sum(int dimension)
+      MatrixBatchBase<T> sum(int dimension) const
       {
         size_t new_cols = 0;
 
         if (dimension == 2)
         {
-          if (_rows == 1)
-          {
-            resetHiddenDim();
-            return *this;
-          }
-
           new_cols = _cols;
         }
         else if (dimension == 3)
         {
-          if (_cols == 1)
-          {
-            resetHiddenDim();
-            return *this;
-          }
-
           new_cols = _rows;
         }
 
@@ -96,7 +84,7 @@ namespace onmt
 
         for (size_t b = 0; b < this->batches(); ++b)
         {
-          Map<MatrixBatchBase<T> > mat(this->row(b).data(), _rows, _cols);
+          Map<const MatrixBatchBase<T> > mat(this->row(b).data(), _rows, _cols);
           if (dimension == 2)
             out.row(b).noalias() = mat.colwise().sum();
           else if (dimension == 3)

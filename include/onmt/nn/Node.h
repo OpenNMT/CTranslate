@@ -50,7 +50,7 @@ namespace onmt
         _index_to_input.push_back(id);
         _input_to_index[id] = index;
 
-        _input.resize(_input.size() + 1);
+        _module_inputs.resize(_module_inputs.size() + 1);
         _expected_inputs += 1;
       }
 
@@ -113,14 +113,16 @@ namespace onmt
         }
       }
 
-      void forward(std::vector<MatFwd>& input, std::vector<MatFwd>& final_output, const Node* from)
+      void forward(const std::vector<MatFwd>& node_inputs,
+                   std::vector<MatFwd>& final_output,
+                   const Node* from)
       {
         if (_select_index >= 0) // Pick input matrix from table.
-          _input[0] = input[_select_index];
+          _module_inputs[0] = node_inputs[_select_index];
         else if (_index_to_input.size() > 1) // Map matrix into input table.
-          _input[_input_to_index.at(from->_id)] = input[0];
-        else // "input" is the actual input of the module.
-          _input = input;
+          _module_inputs[_input_to_index.at(from->_id)] = node_inputs[0];
+        else // node_inputs is also input of the module.
+          _module_inputs = node_inputs;
 
         _expected_inputs--;
 
@@ -128,13 +130,13 @@ namespace onmt
         if (_expected_inputs <= 0)
         {
           if (_module)
-            _output = _module->forward(_input);
+            _output = _module->forward(_module_inputs);
           else
-            _output = _input;
+            _output = _module_inputs;
 
           // Reset input table and count to make the node reentrant.
           _expected_inputs = _index_to_input.size();
-          _input.resize(_expected_inputs);
+          _module_inputs.resize(_expected_inputs);
 
           if (_children.empty()) // No child == graph output.
             final_output = _output;
@@ -156,7 +158,7 @@ namespace onmt
       std::vector<Node*> _children;
       std::map<size_t, size_t> _input_to_index;
       std::vector<size_t> _index_to_input;
-      std::vector<MatFwd> _input;
+      std::vector<MatFwd> _module_inputs;
       std::vector<MatFwd> _output;
     };
 

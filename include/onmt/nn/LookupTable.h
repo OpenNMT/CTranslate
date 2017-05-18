@@ -19,16 +19,12 @@ namespace onmt
       {
       }
 
-      MatFwd forward_impl(MatFwd& input) override
+      void forward_impl(const MatFwd& input) override
       {
-        MatFwd out(input.rows(), _weight.cols());
+        this->_output.resize(input.rows(), _weight.cols());
 
         for (size_t i = 0; i < input.batches(); ++i)
-        {
-          out.row(i).noalias() = _weight.row(input(i, 0));
-        }
-
-        return out;
+          this->_output.row(i).noalias() = _weight.row(input(i, 0));
       }
 
     private:

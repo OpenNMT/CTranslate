@@ -16,9 +16,9 @@ namespace onmt
       {
       }
 
-      std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) override
+      void forward_impl(const std::vector<MatFwd>& inputs) override
       {
-        return input;
+        this->_outputs = inputs;
       }
     };
 

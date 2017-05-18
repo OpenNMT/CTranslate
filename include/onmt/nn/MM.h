@@ -18,17 +18,15 @@ namespace onmt
       {
       }
 
-      std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) override
+      void forward_impl(const std::vector<MatFwd>& inputs) override
       {
-        std::vector<MatFwd> out;
+        this->_output.resize(inputs[0].rows(), inputs[0].virtualRows()*inputs[1].virtualCols());
+        this->_output.setHiddenDim(inputs[0].virtualRows());
 
-        out.emplace_back(input[0].rows(), input[0].virtualRows()*input[1].virtualCols());
-        out.back().setHiddenDim(input[0].virtualRows());
-
-        for (size_t i = 0; i < input[0].batches(); ++i)
+        for (size_t i = 0; i < inputs[0].batches(); ++i)
         {
-          MatFwd m1 = input[0].batch(i);
-          MatFwd m2 = input[1].batch(i);
+          MatFwd m1 = inputs[0].batch(i);
+          MatFwd m2 = inputs[1].batch(i);
 
           if (_transA)
             m1.transposeInPlace();
@@ -37,10 +35,8 @@ namespace onmt
 
           MatFwd res = m1 * m2;
 
-          out.back().assign(i, res);
+          this->_output.assign(i, res);
         }
-
-        return out;
       }
 
     private:

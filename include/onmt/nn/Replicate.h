@@ -20,19 +20,17 @@ namespace onmt
       {
       }
 
-      MatFwd forward_impl(MatFwd& input) override
+      void forward_impl(const MatFwd& input) override
       {
-        MatFwd output(input);
+        this->_output = input;
 
         if (_dimension == 2)
-          output.setHiddenDim(_nfeatures);
+          this->_output.setHiddenDim(_nfeatures);
         else if (_dimension == 3)
-          output.setHiddenDim(input.cols());
+          this->_output.setHiddenDim(input.cols());
 
         if (_nfeatures > 1)
-          output = input.replicate(1, _nfeatures);
-
-        return output;
+          this->_output = input.replicate(1, _nfeatures);
       }
 
     private:

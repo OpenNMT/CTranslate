@@ -16,19 +16,17 @@ namespace onmt
       {
       }
 
-      MatFwd forward_impl(MatFwd& input)
+      void forward_impl(const MatFwd& input)
       {
-        MatFwd output(input.rows(), input.cols());
+        this->_output.resize(input.rows(), input.cols());
 
         for (int i = 0; i < input.rows(); ++i)
         {
           auto v = input.row(i);
           double max = v.maxCoeff();
           double log_z = log((v.array() - max).exp().sum()) + max;
-          output.row(i).noalias() = (v.array() - log_z).matrix();
+          this->_output.row(i) = v.array() - log_z;
         }
-
-        return output;
       }
     };
 
