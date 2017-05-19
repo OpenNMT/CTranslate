@@ -129,7 +129,7 @@ namespace onmt
         // Only forward into the module when all inputs were forwarded into the node.
         if (_expected_inputs <= 0)
         {
-          if (_module)
+          if (_module && _module->get_name() != "nn.Identity")
             _output = _module->forward(_module_inputs);
           else
             _output = _module_inputs;
