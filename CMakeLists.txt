@@ -48,6 +48,7 @@ endif()
 
 find_package(Eigen3 3.3 REQUIRED)
 find_package(CUDA 6.5)
+find_package(MKL)
 
 set(INCLUDE_DIRECTORIES
   ${CMAKE_CURRENT_SOURCE_DIR}/lib
@@ -67,6 +68,15 @@ set(SOURCES
   src/TranslationResult.cc
   src/Threads.cc
   )
+set(LIBRARIES
+  OpenNMTTokenizer
+  TH)
+
+if (MKL_FOUND)
+  add_definitions(-DEIGEN_USE_MKL_ALL)
+  list(APPEND INCLUDE_DIRECTORIES ${MKL_INCLUDE_DIR})
+  list(APPEND LIBRARIES ${MKL_LIBRARIES})
+endif()
 
 if (CUDA_FOUND)
   add_definitions(-DWITH_CUDA)
@@ -80,10 +90,7 @@ else()
   add_library(${PROJECT_NAME} ${SOURCES})
 endif()
 
-target_link_libraries(${PROJECT_NAME}
-  OpenNMTTokenizer
-  TH)
-
+target_link_libraries(${PROJECT_NAME} ${LIBRARIES})
 target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIRECTORIES})
 
 if (NOT LIB_ONLY)
