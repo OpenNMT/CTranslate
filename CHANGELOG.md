@@ -3,6 +3,7 @@
 ### New features
 
 * Add module profiling
+* Link against Intel® MKL if available
 * [*experimental*] Offload matrix multiplication to the GPU
 
 ### Fixes and improvements

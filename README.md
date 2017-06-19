@@ -43,7 +43,7 @@ CTranslate also bundles OpenNMT's [Tokenizer](https://github.com/OpenNMT/Tokeniz
 ### Performance tips
 
 * Unless you are cross-compiling for a different architecture, add `-DCMAKE_CXX_FLAGS="-march=native"` to the `cmake` command above to optimize for speed.
-* Consider using [Intel® MKL](https://software.intel.com/en-us/intel-mkl) if available. You should follow [Eigen instructions](https://eigen.tuxfamily.org/dox/TopicUsingIntelMKL.html) to link against it.
+* Consider installing [Intel® MKL](https://software.intel.com/en-us/intel-mkl) when you are targetting Intel®-powered platforms. If found, the project will automatically link against it.
 
 ## Using
 
