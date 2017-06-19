@@ -110,6 +110,14 @@ namespace onmt
         return out;
       }
 
+      void squeeze(int dimension)
+      {
+        if (dimension == 2 && _rows == 1)
+          resetHiddenDim();
+        else if (dimension == 3 && _cols == 1)
+          resetHiddenDim();
+      }
+
       void assign(size_t b, MatrixBatch& mat)
       {
         this->row(b).noalias() = Map<MatrixBatchBase<T> >(mat.data(), 1, mat.cols() * mat.rows());

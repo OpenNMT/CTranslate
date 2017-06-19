@@ -18,6 +18,7 @@
 #include "onmt/nn/LogSoftMax.h"
 #include "onmt/nn/MM.h"
 #include "onmt/nn/Sum.h"
+#include "onmt/nn/Squeeze.h"
 #include "onmt/nn/MulConstant.h"
 
 #include "onmt/nn/Sequential.h"
@@ -137,6 +138,8 @@ namespace onmt
         mod = new MM<MatFwd>(data);
       else if (name == "nn.Sum")
         mod = new Sum<MatFwd>(data);
+      else if (name == "nn.Squeeze")
+        mod = new Squeeze<MatFwd>(data);
       else if (name == "nn.MulConstant")
         mod = new MulConstant<MatFwd, ModelT>(data);
       else if (name == "nn.Sequential")
