@@ -9,14 +9,12 @@ CTranslate provides optimized CPU translation and optionally offloads matrix mul
 ## Dependencies
 
 * [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page) >= 3.3
+* [Boost](http://www.boost.org/) (`program_options`, when `-DLIB_ONLY=OFF`)
 
-GPU offloading additionally requires:
+### Optional
 
-* [CUDA](https://developer.nvidia.com/cuda-toolkit)
-
-Executables additionally require:
-
-* [Boost](http://www.boost.org/) (`program_options`)
+* [CUDA](https://developer.nvidia.com/cuda-toolkit) for matrix multiplication offloading on a GPU
+* [Intel® MKL](https://software.intel.com/en-us/intel-mkl) for an alternative BLAS backend
 
 ## Compiling
 

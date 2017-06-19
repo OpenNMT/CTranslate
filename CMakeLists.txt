@@ -3,6 +3,8 @@ project(onmt)
 
 option(LIB_ONLY "Do not compile clients" OFF)
 option(WITH_OPENMP "Use OpenMP if available" ON)
+option(WITH_CUDA "Use CUDA if available" ON)
+option(WITH_MKL "Use Intel® MKL if available" ON)
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
 set(CMAKE_CXX_STANDARD 11)
@@ -47,8 +49,12 @@ if (EIGEN_ROOT)
 endif()
 
 find_package(Eigen3 3.3 REQUIRED)
-find_package(CUDA 6.5)
-find_package(MKL)
+if(WITH_CUDA)
+  find_package(CUDA 6.5)
+endif()
+if(WITH_MKL)
+  find_package(MKL)
+endif()
 
 set(INCLUDE_DIRECTORIES
   ${CMAKE_CURRENT_SOURCE_DIR}/lib
