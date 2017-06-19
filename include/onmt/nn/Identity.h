@@ -11,12 +11,16 @@ namespace onmt
     class Identity: public Module<MatFwd>
     {
     public:
-      Identity();
+      Identity()
+        : Module<MatFwd>("nn.Identity")
+      {
+      }
 
-      virtual std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) const override;
+      void forward_impl(const std::vector<MatFwd>& inputs) override
+      {
+        this->_outputs = inputs;
+      }
     };
 
   }
 }
-
-#include "onmt/nn/Identity.hxx"

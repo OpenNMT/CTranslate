@@ -83,12 +83,6 @@ namespace onmt
                                        Eigen::Map<const Eigen::RowMajorMat<T> >,
                                        T>;
 
-  template <typename T>
-  using SparseTranslator = Translator<Eigen::MatrixBatch<T>,
-                                      const Eigen::RowMajorSparseMat<T>,
-                                      Eigen::Map<const Eigen::RowMajorMat<T> >,
-                                      T>;
-
 }
 
 #include "Translator.hxx"

@@ -15,36 +15,113 @@ namespace onmt
     class Module
     {
     public:
-      Module(const std::string& name);
-      Module(const std::string& name, bool profile);
-      virtual ~Module() {}
+      Module(const std::string& name)
+        : _name(name)
+        , _profile(true)
+        , _profiler(nullptr)
+        , _outputs(1)
+        , _output(_outputs.front())
+      {
+      }
 
-      std::vector<MatFwd> forward(std::vector<MatFwd>& input) const;
+      Module(const std::string& name, bool profile)
+        : _name(name)
+        , _profile(profile)
+        , _profiler(nullptr)
+        , _outputs(1)
+        , _output(_outputs.front())
+      {
+      }
 
-      virtual std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) const;
-      virtual MatFwd forward_impl(MatFwd& input) const;
+      virtual ~Module()
+      {
+      }
 
-      virtual Module<MatFwd>* find(const std::string& custom_name);
+      const std::vector<MatFwd>& forward(const std::vector<MatFwd>& inputs)
+      {
+        if (_profile && _profiler)
+          _profiler->start();
 
-      std::function<void(std::vector<MatFwd>&)>& post_process_fun();
+        forward_impl(inputs);
 
-      const std::string& get_name() const;
-      const std::string& get_custom_name() const;
-      virtual std::string get_details() const;
+        if (_profile && _profiler)
+          _profiler->stop(!_custom_name.empty() ? _custom_name : _name);
 
-      void set_custom_name(const std::string& custom_name);
-      void set_profiler(Profiler& profiler);
+        if (_post_process)
+          _post_process(_outputs);
+
+        return _outputs;
+      }
+
+      const MatFwd& forward_one(const MatFwd& input)
+      {
+        return forward(std::vector<MatFwd>(1, input))[0];
+      }
+
+      virtual void forward_impl(const std::vector<MatFwd>& inputs)
+      {
+        forward_impl(inputs.front());
+      }
+
+      virtual void forward_impl(const MatFwd& input)
+      {
+        _output = input;
+      }
+
+      virtual Module<MatFwd>* find(const std::string& custom_name)
+      {
+        if (_custom_name == custom_name)
+          return this;
+
+        return nullptr;
+      }
+
+      std::function<void(std::vector<MatFwd>&)>& post_process_fun()
+      {
+        return _post_process;
+      }
+
+      const std::vector<MatFwd>& get_outputs() const
+      {
+        return _outputs;
+      }
+
+      const std::string& get_name() const
+      {
+        return _name;
+      }
+
+      const std::string& get_custom_name() const
+      {
+        return _custom_name;
+      }
+
+      virtual std::string get_details() const
+      {
+        return "";
+      }
+
+      void set_custom_name(const std::string& custom_name)
+      {
+        _custom_name = custom_name;
+      }
+
+      void set_profiler(Profiler& profiler)
+      {
+        _profiler = &profiler;
+      }
 
     protected:
       std::string _name;
       std::string _custom_name;
       bool _profile;
-      mutable Profiler* _profiler;
+      Profiler* _profiler;
+
+      std::vector<MatFwd> _outputs;
+      MatFwd& _output;
 
       std::function<void(std::vector<MatFwd>&)> _post_process;
     };
 
   }
 }
-
-#include "onmt/nn/Module.hxx"

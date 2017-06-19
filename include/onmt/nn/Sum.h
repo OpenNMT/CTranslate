@@ -12,9 +12,16 @@ namespace onmt
     class Sum: public Module<MatFwd>
     {
     public:
-      Sum(th::Table* data);
+      Sum(th::Table* data)
+        : Module<MatFwd>("nn.Sum")
+        , _dimension(get_number(data, "dimension"))
+      {
+      }
 
-      virtual MatFwd forward_impl(MatFwd& input) const override;
+      void forward_impl(const MatFwd& input) override
+      {
+        this->_output = input.sum(_dimension);
+      }
 
     private:
       int _dimension;
@@ -22,5 +29,3 @@ namespace onmt
 
   }
 }
-
-#include "onmt/nn/Sum.hxx"

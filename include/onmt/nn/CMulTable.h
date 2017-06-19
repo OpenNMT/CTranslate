@@ -11,12 +11,19 @@ namespace onmt
     class CMulTable: public Module<MatFwd>
     {
     public:
-      CMulTable();
+      CMulTable()
+        : Module<MatFwd>("nn.CMulTable")
+      {
+      }
 
-      virtual std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) const override;
+      void forward_impl(const std::vector<MatFwd>& inputs) override
+      {
+        this->_output = inputs[0];
+
+        for (size_t i = 1; i < inputs.size(); ++i)
+          this->_output.noalias() = this->_output.cwiseProduct(inputs[i]);
+      }
     };
 
   }
 }
-
-#include "onmt/nn/CMulTable.hxx"

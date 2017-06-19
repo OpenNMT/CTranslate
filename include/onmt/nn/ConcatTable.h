@@ -11,12 +11,19 @@ namespace onmt
     class ConcatTable: public Container<MatFwd, MatIn, MatEmb, ModelT>
     {
     public:
-      ConcatTable(th::Table* data, ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory);
+      ConcatTable(th::Table* data, ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory)
+        : Container<MatFwd, MatIn, MatEmb, ModelT>("nn.ConcatTable", data, factory)
+      {
+      }
 
-      virtual std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) const override;
+      void forward_impl(const std::vector<MatFwd>& inputs) override
+      {
+        this->_outputs.resize(inputs.size());
+
+        for (size_t i = 0; i < this->_sequence.size(); ++i)
+          this->_outputs[i] = this->_sequence[i]->forward(inputs)[0];
+      }
     };
 
   }
 }
-
-#include "onmt/nn/ConcatTable.hxx"

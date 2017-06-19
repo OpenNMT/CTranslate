@@ -11,12 +11,16 @@ namespace onmt
     class Sigmoid: public Module<MatFwd>
     {
     public:
-      Sigmoid();
+      Sigmoid()
+        : Module<MatFwd>("nn.Sigmoid")
+      {
+      }
 
-      virtual MatFwd forward_impl(MatFwd& input) const override;
+      void forward_impl(const MatFwd& input) override
+      {
+        this->_output = (1.0 + (-input).array().exp()).inverse();
+      }
     };
 
   }
 }
-
-#include "onmt/nn/Sigmoid.hxx"

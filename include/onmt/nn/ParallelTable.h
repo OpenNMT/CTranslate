@@ -11,12 +11,45 @@ namespace onmt
     class ParallelTable: public Container<MatFwd, MatIn, MatEmb, ModelT>
     {
     public:
-      ParallelTable(th::Table* data, ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory);
+      ParallelTable(th::Table* data, ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory)
+        : Container<MatFwd, MatIn, MatEmb, ModelT>("nn.ParallelTable", data, factory)
+      {
+      }
 
-      virtual std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) const override;
+      void forward_impl(const std::vector<MatFwd>& inputs) override
+      {
+        this->_outputs.resize(inputs.size());
+
+        for (size_t i = 0; i < this->_sequence.size(); ++i)
+        {
+          if (inputs.size() == 1 && this->_sequence.size() > 1)
+          {
+            // This is a special case when the inputs table is actually bundled in a single matrix.
+            // The dimensions that do not have a corresponding module are all forwarded to the
+            // last module in the sequence.
+            if (i == this->_sequence.size() - 1)
+            {
+              std::vector<MatFwd> in;
+              for (int j = i; j < inputs[0].cols(); ++j)
+                in.push_back(inputs[0].col(j));
+
+              auto res = this->_sequence[i]->forward(in);
+
+              for (size_t j = i; j < res.size(); ++j)
+                this->_outputs[j] = res[j - i];
+            }
+            else
+            {
+              this->_outputs[i] = this->_sequence[i]->forward_one(inputs[0].col(i));
+            }
+          }
+          else
+          {
+            this->_outputs[i] = this->_sequence[i]->forward_one(inputs[i]);
+          }
+        }
+      }
     };
 
   }
 }
-
-#include "onmt/nn/ParallelTable.hxx"

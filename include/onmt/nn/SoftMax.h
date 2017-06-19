@@ -11,12 +11,23 @@ namespace onmt
     class SoftMax: public Module<MatFwd>
     {
     public:
-      SoftMax();
+      SoftMax()
+        : Module<MatFwd>("nn.SoftMax")
+      {
+      }
 
-      virtual MatFwd forward_impl(MatFwd& input) const;
+      void forward_impl(const MatFwd& input)
+      {
+        this->_output.resizeLike(input);
+
+        for (int i = 0; i < input.rows(); ++i)
+        {
+          auto v = input.row(i);
+          double max = v.maxCoeff();
+          this->_output.row(i) = ((v.array() - (log((v.array() - max).exp().sum()) + max)).exp());
+        }
+      }
     };
 
   }
 }
-
-#include "onmt/nn/SoftMax.hxx"

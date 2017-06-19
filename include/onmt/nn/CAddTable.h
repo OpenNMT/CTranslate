@@ -11,12 +11,20 @@ namespace onmt
     class CAddTable: public Module<MatFwd>
     {
     public:
-      CAddTable();
+      CAddTable()
+        : Module<MatFwd>("nn.CAddTable")
+      {
+      }
 
-      virtual std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) const override;
+      void forward_impl(const std::vector<MatFwd>& inputs) override
+      {
+        this->_output = inputs[0];
+
+        for (size_t i = 1; i < inputs.size(); ++i)
+          this->_output.noalias() += inputs[i];
+      }
+
     };
 
   }
 }
-
-#include "onmt/nn/CAddTable.hxx"

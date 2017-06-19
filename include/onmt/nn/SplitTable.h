@@ -11,12 +11,17 @@ namespace onmt
     class SplitTable: public Module<MatFwd>
     {
     public:
-      SplitTable();
+      SplitTable()
+        : Module<MatFwd>("nn.SplitTable")
+      {
+      }
 
-      virtual std::vector<MatFwd> forward_impl(std::vector<MatFwd>& input) const override;
+      void forward_impl(const std::vector<MatFwd>& inputs) override
+      {
+        // it is assumed that the previous reshape did the split
+        this->_outputs = inputs;
+      }
     };
 
   }
 }
-
-#include "onmt/nn/SplitTable.hxx"
