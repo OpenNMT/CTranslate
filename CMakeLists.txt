@@ -80,6 +80,7 @@ endif()
 
 if (CUDA_FOUND)
   add_definitions(-DWITH_CUDA)
+  cuda_include_directories(${INCLUDE_DIRECTORIES})
   cuda_add_library(${PROJECT_NAME}
     ${SOURCES}
     src/cuda/Utils.cc
