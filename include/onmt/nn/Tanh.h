@@ -18,7 +18,7 @@ namespace onmt
 
       void forward_impl(const MatFwd& input) override
       {
-        this->_output = input.array().tanh();
+        this->_output = input.array().tanh().matrix();
       }
     };
 
