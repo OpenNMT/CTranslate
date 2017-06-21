@@ -305,7 +305,7 @@ namespace onmt
 
     size_t num_layers = _model.template get_option_value<size_t>("layers");
     size_t rnn_size = _model.template get_option_value<size_t>("rnn_size");
-    bool brnn = _model.get_option_flag("brnn");
+    bool brnn = _model.get_option_string("encoder_type") == "brnn" || _model.get_option_flag("brnn");
     const std::string& brnn_merge = _model.get_option_string("brnn_merge");
 
     if (brnn && brnn_merge == "concat")
