@@ -82,15 +82,15 @@ For a more advanced usage, see:
 
 Also see the headers available in the [Tokenizer](https://github.com/OpenNMT/Tokenizer) that are accessible when linking against CTranslate.
 
-## Unsupported features
+## Supported features
 
-Some model configurations are currently unsupported:
+CTranslate focuses on supporting model configurations that are likely to be used in production settings. It covers models trained with the default options, plus some variants:
 
-* GRU
-* deep bidirectional encoder
-* pyramidal deep bidirectional encoder
-* *concat* variant of global attention
-* bridges other than *copy*
+* additional input or output word features
+* `brnn` encoder (with `sum` or `concat` merge policy)
+* `dot` attention
+* residual connections
+* no input feeding
 
 Additionally, CTranslate misses some advanced features of `translate.lua`:
 
