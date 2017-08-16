@@ -237,7 +237,13 @@ namespace onmt
     {
       batch_ids.push_back(words_to_ids(_src_dict, batch_tokens[b]));
 
-      if (_src_feat_dicts.size() > 0)
+      if (_src_feat_dicts.size() != batch_features[b].size())
+        throw std::runtime_error("expected "
+                                 + std::to_string(_src_feat_dicts.size())
+                                 + " word feature(s), got "
+                                 + std::to_string(batch_features[b].size())
+                                 + " instead");
+      else if (_src_feat_dicts.size() > 0)
       {
         batch_feat_ids.emplace_back();
         for (size_t j = 0; j < _src_feat_dicts.size(); ++j)
