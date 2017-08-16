@@ -18,7 +18,7 @@ namespace onmt
 
       void forward_impl(const std::vector<MatFwd>& inputs) override
       {
-        this->_outputs.resize(inputs.size());
+        this->_outputs.resize(this->_sequence.size());
 
         for (size_t i = 0; i < this->_sequence.size(); ++i)
         {
@@ -35,7 +35,7 @@ namespace onmt
 
               auto res = this->_sequence[i]->forward(in);
 
-              for (size_t j = i; j < res.size(); ++j)
+              for (size_t j = i; j - i < res.size(); ++j)
                 this->_outputs[j] = res[j - i];
             }
             else
