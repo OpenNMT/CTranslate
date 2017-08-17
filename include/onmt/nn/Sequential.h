@@ -19,7 +19,10 @@ namespace onmt
       void forward_impl(const std::vector<MatFwd>& inputs) override
       {
         if (this->_sequence.empty())
+        {
           this->_outputs = inputs;
+          return;
+        }
 
         auto it = this->_sequence.begin();
         this->_outputs = (*it)->forward(inputs);
