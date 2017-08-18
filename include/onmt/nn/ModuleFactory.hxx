@@ -50,18 +50,6 @@ namespace onmt
         throw std::runtime_error("CTranslate was not compiled with CUDA support");
 #endif
       }
-
-      // These modules are stateless so we can reuse the same instance for different
-      // nodes in the graph.
-      _stateless_storage["nn.CAddTable"] = new CAddTable<MatFwd>();
-      _stateless_storage["nn.CMulTable"] = new CMulTable<MatFwd>();
-      _stateless_storage["nn.Sigmoid"] = new Sigmoid<MatFwd>();
-      _stateless_storage["nn.Tanh"] = new Tanh<MatFwd>();
-      _stateless_storage["nn.SplitTable"] = new SplitTable<MatFwd>();
-      _stateless_storage["nn.JoinTable"] = new JoinTable<MatFwd>();
-      _stateless_storage["nn.SoftMax"] = new SoftMax<MatFwd>();
-      _stateless_storage["nn.LogSoftMax"] = new LogSoftMax<MatFwd>();
-      _stateless_storage["nn.Identity"] = new Identity<MatFwd>();
     }
 
     template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
@@ -71,9 +59,6 @@ namespace onmt
       if (_cuda)
         CUBLAS_CHECK(cublasDestroy(_handle));
 #endif
-
-      for (const auto& mod: _stateless_storage)
-        delete mod.second;
 
       for (const auto& mod: _storage)
         delete mod;
@@ -85,19 +70,6 @@ namespace onmt
     {
       std::string name = obj->get_classname();
       auto data = dynamic_cast<th::Table*>(obj->get_data());
-
-      auto custom_name = th::get_field<th::String*>(data, "name");
-
-      if (!custom_name)
-      {
-        auto it = _stateless_storage.find(name);
-
-        if (it != _stateless_storage.end())
-        {
-          it->second->set_profiler(_profiler);
-          return it->second;
-        }
-      }
 
       Module<MatFwd>* mod = nullptr;
 
@@ -161,6 +133,8 @@ namespace onmt
         else
           throw std::runtime_error(name + " is not supported yet");
       }
+
+      auto custom_name = th::get_field<th::String*>(data, "name");
 
       if (custom_name)
         mod->set_custom_name(custom_name->get_value());
