@@ -34,7 +34,7 @@ CTranslate also bundles OpenNMT's [Tokenizer](https://github.com/OpenNMT/Tokeniz
 
 ### Options
 
-* To give hints about Eigen location, use the `-DEIGEN_ROOT=<path to Eigen library>` option.
+* To give hints about Eigen location, use the `-DEIGEN3_ROOT=<path to Eigen library>` option.
 * To compile only the library, use the `-DLIB_ONLY=ON` flag.
 * To disable [OpenMP](http://www.openmp.org), use the `-DWITH_OPENMP=OFF` flag.
 

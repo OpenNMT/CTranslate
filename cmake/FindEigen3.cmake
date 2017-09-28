@@ -59,23 +59,11 @@ macro(_eigen3_check_version)
   endif(NOT EIGEN3_VERSION_OK)
 endmacro(_eigen3_check_version)
 
-if (EIGEN3_INCLUDE_DIR)
-
-  # in cache already
-  _eigen3_check_version()
-  set(EIGEN3_FOUND ${EIGEN3_VERSION_OK})
-
-else (EIGEN3_INCLUDE_DIR)
-  
-  # search first if an Eigen3Config.cmake is available in the system,
-  # if successful this would set EIGEN3_INCLUDE_DIR and the rest of
-  # the script will work as usual
-  find_package(Eigen3 ${Eigen3_FIND_VERSION} NO_MODULE QUIET)
-
+macro(_search_eigen3)
   if(NOT EIGEN3_INCLUDE_DIR)
     find_path(EIGEN3_INCLUDE_DIR NAMES signature_of_eigen3_matrix_library
         HINTS
-        ENV EIGEN3_ROOT 
+        ENV EIGEN3_ROOT
         ENV EIGEN3_ROOT_DIR
         PATHS
         ${CMAKE_INSTALL_PREFIX}/include
@@ -83,6 +71,25 @@ else (EIGEN3_INCLUDE_DIR)
         PATH_SUFFIXES eigen3 eigen
       )
   endif(NOT EIGEN3_INCLUDE_DIR)
+endmacro(_search_eigen3)
+
+if (EIGEN3_INCLUDE_DIR)
+
+  # in cache already
+  _eigen3_check_version()
+  set(EIGEN3_FOUND ${EIGEN3_VERSION_OK})
+
+else (EIGEN3_INCLUDE_DIR)
+
+  if(DEFINED ENV{EIGEN3_ROOT})
+    _search_eigen3()
+  else()
+    # search if an Eigen3Config.cmake is available in the system,
+    # if successful this would set EIGEN3_INCLUDE_DIR and the rest of
+    # the script will work as usual
+    find_package(Eigen3 ${Eigen3_FIND_VERSION} NO_MODULE QUIET)
+    _search_eigen3()
+  endif()
 
   if(EIGEN3_INCLUDE_DIR)
     _eigen3_check_version()
