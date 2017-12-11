@@ -2,6 +2,12 @@
 
 ### New features
 
+### Fixes and improvements
+
+## [v0.5.0](https://github.com/OpenNMT/CTranslate/releases/tag/v0.5.0) (2017-12-11)
+
+### New features
+
 * Add module profiling
 * Link against Intel® MKL if available
 * [*experimental*] Offload matrix multiplication to the GPU
