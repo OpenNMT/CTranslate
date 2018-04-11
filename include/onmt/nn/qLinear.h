@@ -26,7 +26,6 @@ namespace onmt
           throw std::runtime_error("Weight matrix weight should be multiple of 8 for qLinear");
         _quant_weight.resize(_wrows * _wcols / 8);
         Quantize(_weight.data(), _quant_weight, _quant_mult, _wrows, _wcols);
-        _quant_input = 0;
       }
 
       virtual ~qLinear()
