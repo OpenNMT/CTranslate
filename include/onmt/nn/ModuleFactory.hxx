@@ -40,9 +40,10 @@ namespace onmt
 
 
     template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-    ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>::ModuleFactory(Profiler& profiler, bool cuda)
+    ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>::ModuleFactory(Profiler& profiler, bool cuda, bool qlinear)
       : _profiler(profiler)
       , _cuda(cuda)
+      , _qlinear(qlinear)
     {
       if (_cuda)
       {
@@ -82,6 +83,9 @@ namespace onmt
           mod = new cuLinear<MatFwd, MatIn, ModelT>(data, _handle);
         else
 #endif
+        if (_qlinear)
+          mod = new qLinear<MatFwd, MatIn, ModelT>(data);
+        else
           mod = new Linear<MatFwd, MatIn, ModelT>(data);
       }
       else if (name == "nn.LookupTable")

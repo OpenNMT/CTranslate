@@ -16,6 +16,7 @@ namespace onmt
                                               size_t max_sent_length = 250,
                                               size_t beam_size = 5,
                                               bool cuda = false,
+                                              bool qlinear = false,
                                               bool profiling = false);
   };
 

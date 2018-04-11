@@ -9,11 +9,12 @@ namespace onmt
                                                         size_t max_sent_length,
                                                         size_t beam_size,
                                                         bool cuda,
+                                                        bool qlinear,
                                                         bool profiling)
   {
     ITranslator* t = nullptr;
 
-    t = new DefaultTranslator<float>(model, phrase_table, replace_unk, max_sent_length, beam_size, cuda, profiling);
+    t = new DefaultTranslator<float>(model, phrase_table, replace_unk, max_sent_length, beam_size, cuda, qlinear, profiling);
 
     return std::unique_ptr<ITranslator>(t);
   }

@@ -145,9 +145,10 @@ namespace onmt
                                                         size_t max_sent_length,
                                                         size_t beam_size,
                                                         bool cuda,
+                                                        bool qlinear,
                                                         bool profiling)
     : _profiler(profiling)
-    , _model(model, _profiler, cuda)
+    , _model(model, _profiler, cuda, qlinear)
     , _src_dict(_model.get_src_dict())
     , _tgt_dict(_model.get_tgt_dict())
     , _src_feat_dicts(_model.get_src_feat_dicts())

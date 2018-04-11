@@ -28,6 +28,7 @@ int main(int argc, char* argv[])
     ("profiler", po::bool_switch()->default_value(false), "output per module computation time")
     ("threads", po::value<size_t>()->default_value(0), "number of threads to use (set to 0 to use the number defined by OpenMP)")
     ("cuda", po::bool_switch()->default_value(false), "use cuda when available")
+    ("qlinear", po::bool_switch()->default_value(false), "use quantized linear for speed-up")
     ;
 
   po::variables_map vm;
@@ -55,6 +56,7 @@ int main(int argc, char* argv[])
                                                    vm["max_sent_length"].as<size_t>(),
                                                    vm["beam_size"].as<size_t>(),
                                                    vm["cuda"].as<bool>(),
+                                                   vm["qlinear"].as<bool>(),
                                                    vm["profiler"].as<bool>());
 
   std::unique_ptr<BatchReader> reader;
