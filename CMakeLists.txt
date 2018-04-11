@@ -76,6 +76,7 @@ set(SOURCES
   src/TranslatorFactory.cc
   src/TranslationResult.cc
   src/Threads.cc
+  src/SSE_Matrix_Mult.cc
   )
 set(LIBRARIES
   OpenNMTTokenizer
