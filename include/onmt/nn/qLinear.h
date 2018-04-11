@@ -23,7 +23,7 @@ namespace onmt
         _wrows = _weight.rows();
         _wcols = _weight.cols();
         if (_wcols % 8)
-          throw std::runtime_error("Weight matrix weight should be multiple of 8 for qLinear");
+          throw std::runtime_error("Weight matrix width should be multiple of 8 for qLinear");
         _quant_weight.resize(_wrows * _wcols / 8);
         Quantize(_weight.data(), _quant_weight.data(), _quant_mult, _wrows, _wcols);
       }
