@@ -31,6 +31,8 @@
 #  include "onmt/nn/cuLinear.h"
 #endif
 
+#  include "onmt/nn/qLinear.h"
+
 namespace onmt
 {
   namespace nn
