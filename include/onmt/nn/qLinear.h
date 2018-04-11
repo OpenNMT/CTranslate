@@ -19,9 +19,11 @@ namespace onmt
         , _bias(StorageLoader<MatIn, ModelT>::get_matrix(data, "bias"))
       {
         // Quantize the weight - ncols=width is suppose to be multiple of 8
-        MatIn _weight = StorageLoader<MatIn, ModelT>::get_matrix(data, "weight").transpose();
+        MatIn _weight = StorageLoader<MatIn, ModelT>::get_matrix(data, "weight");
         _wrows = _weight.rows();
         _wcols = _weight.cols();
+        if (_wcols % 8)
+          throw std::runtime_error("Weight matrix weight should be multiple of 8 for qLinear");
         _quant_weight.resize(_wrows * _wcols / 8);
         Quantize(_weight.data(), _quant_weight, _quant_mult, _wrows, _wcols);
         _quant_input = 0;
