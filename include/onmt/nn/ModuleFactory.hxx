@@ -31,7 +31,9 @@
 #  include "onmt/nn/cuLinear.h"
 #endif
 
+#ifdef WITH_QLINEAR
 #  include "onmt/nn/qLinear.h"
+#endif
 
 namespace onmt
 {
@@ -51,6 +53,12 @@ namespace onmt
         CUBLAS_CHECK(cublasCreate(&_handle));
 #else
         throw std::runtime_error("CTranslate was not compiled with CUDA support");
+#endif
+      }
+      if (_qlinear)
+      {
+#ifndef WITH_QLINEAR
+        throw std::runtime_error("CTranslate was not compiled with QLINEAR support");
 #endif
       }
     }
@@ -83,9 +91,11 @@ namespace onmt
           mod = new cuLinear<MatFwd, MatIn, ModelT>(data, _handle);
         else
 #endif
+#ifdef WITH_QLINEAR
         if (_qlinear)
           mod = new qLinear<MatFwd, MatIn, ModelT>(data);
         else
+#endif
           mod = new Linear<MatFwd, MatIn, ModelT>(data);
       }
       else if (name == "nn.LookupTable")

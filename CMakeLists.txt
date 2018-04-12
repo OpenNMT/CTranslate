@@ -5,6 +5,7 @@ option(LIB_ONLY "Do not compile clients" OFF)
 option(WITH_OPENMP "Use OpenMP if available" ON)
 option(WITH_CUDA "Use CUDA if available" ON)
 option(WITH_MKL "Use Intel® MKL if available" ON)
+option(WITH_QLINEAR "Add Quantized linear module - required SSE2" OFF)
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
 set(CMAKE_CXX_STANDARD 11)
@@ -76,11 +77,17 @@ set(SOURCES
   src/TranslatorFactory.cc
   src/TranslationResult.cc
   src/Threads.cc
-  src/SSE_Matrix_Mult.cc
   )
 set(LIBRARIES
   OpenNMTTokenizer
   TH)
+
+if (WITH_QLINEAR)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWITH_QLINEAR")
+  list(APPEND SOURCES
+    src/SSE_Matrix_Mult.cc
+  )
+endif()
 
 if (MKL_FOUND)
   add_definitions(-DEIGEN_USE_MKL_ALL)
