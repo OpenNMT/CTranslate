@@ -83,6 +83,19 @@ set(LIBRARIES
   TH)
 
 if (WITH_QLINEAR)
+  IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
+     EXEC_PROGRAM(cat ARGS "/proc/cpuinfo" OUTPUT_VARIABLE CPUINFO)
+     STRING(REGEX REPLACE "^.*(sse2).*$" "\\1" SSE_THERE ${CPUINFO})
+     STRING(COMPARE EQUAL "sse2" "${SSE_THERE}" SSE2_TRUE)
+  ELSEIF(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+     EXEC_PROGRAM("/usr/sbin/sysctl -n machdep.cpu.features" OUTPUT_VARIABLE
+        CPUINFO)
+     STRING(REGEX REPLACE "^.*[^S](SSE2).*$" "\\1" SSE_THERE ${CPUINFO})
+     STRING(COMPARE EQUAL "SSE2" "${SSE_THERE}" SSE2_TRUE)
+  ENDIF()
+  if(NOT SSE2_TRUE)
+        MESSAGE(FATAL_ERROR "Could not find support for SSE2 on this machine.")
+  endif(NOT SSE2_TRUE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWITH_QLINEAR")
   list(APPEND SOURCES
     src/SSE_Matrix_Mult.cc
