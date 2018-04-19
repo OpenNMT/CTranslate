@@ -14,7 +14,8 @@ namespace onmt
   {
     ITranslator* t = nullptr;
 
-    t = new DefaultTranslator<float>(model, phrase_table, replace_unk, max_sent_length, beam_size, cuda, qlinear, profiling);
+    t = new DefaultTranslator<float>(model, phrase_table, replace_unk, max_sent_length, beam_size, cuda, 
+                                     qlinear, profiling);
 
     return std::unique_ptr<ITranslator>(t);
   }

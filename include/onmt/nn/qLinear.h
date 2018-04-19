@@ -18,7 +18,7 @@ namespace onmt
         : Module<MatFwd>("nn.qLinear")
         , _bias(StorageLoader<MatIn, ModelT>::get_matrix(data, "bias"))
       {
-        // Quantize the weight - ncols=width is suppose to be multiple of 8
+        // Quantize the weight - ncols=width is supposed to be multiple of 8
         MatIn _weight = StorageLoader<MatIn, ModelT>::get_matrix(data, "weight");
         _wrows = _weight.rows();
         _wcols = _weight.cols();
