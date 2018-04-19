@@ -191,13 +191,8 @@ namespace onmt
     if (M->get_name() == "nn.Linear") {
       nn::Linear<MatFwd, MatIn, ModelT> *mL = (nn::Linear<MatFwd, MatIn, ModelT> *)M;
       tdict *data = (tdict *)t;
-      std::cerr<<"gwr="<<mL->getWeight().rows()<<std::endl;
       if (mL->getWeight().rows() == data->_ndict) {
-        std::cerr<<"browse-BF-----"<<mL->get_name()<<"--"<<
-                   mL->getRWeight().rows()<<"/"<<data->_ndict<<std::endl;
         mL->getRWeight() = SubDict::reduce_linearweight(mL->getWeight(), data->subvocab);
-        std::cerr<<"browse-AF-----"<<mL->get_name()<<"--"<<
-                   mL->getRWeight().rows()<<"/"<<data->_ndict<<std::endl;
       }
     }
     return 0;
@@ -239,7 +234,6 @@ namespace onmt
         _subdict.extract(it, e);
       }
       /* convert into vector */
-      std::cerr<<"subvocab="<<e.size()<<std::endl;
       for(auto idx: e)
         data.subvocab.push_back(idx);
       _generator->apply(reduce_vocabulary<MatFwd, MatIn, MatEmb, ModelT>, &data);
