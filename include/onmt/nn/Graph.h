@@ -39,6 +39,10 @@ namespace onmt
         return _root.find(custom_name);
       }
 
+      void *apply(void *(*func)(Module<MatFwd> *, void *), void *data) override {
+        return _root.apply(func, data);
+      }
+
       // Dump the graph in the DOT format.
       void to_dot(const std::string& file, const std::string& name)
       {

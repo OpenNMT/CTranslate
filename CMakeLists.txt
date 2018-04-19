@@ -70,7 +70,7 @@ set(SOURCES
   src/th/Obj.cc
   src/th/Utils.cc
   src/Dictionary.cc
-  src/VocabMapping.cc
+  src/SubDict.cc
   src/PhraseTable.cc
   src/Profiler.cc
   src/ITranslator.cc

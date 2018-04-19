@@ -3,6 +3,7 @@
 #include "onmt/nn/Module.h"
 #include "onmt/th/Obj.h"
 #include "onmt/StorageLoader.h"
+#include <vector>
 
 #ifdef ANDROID_GNUSTL_COMPAT
 #  include "onmt/android_gnustl_compat.h"
@@ -30,8 +31,13 @@ namespace onmt
 
       virtual void forward_impl(const MatFwd& input) override
       {
-        this->_output.resize(input.rows(), _weight.rows());
-        this->_output = input * _weight.transpose();
+        if (_rweight.rows()) {
+          this->_output.resize(input.rows(), _rweight.rows());
+          this->_output = input * _rweight.transpose();
+        } else {
+          this->_output.resize(input.rows(), _weight.rows());
+          this->_output = input * _weight.transpose();
+        }
 
         if (_bias.rows() > 0)
         {
@@ -48,9 +54,13 @@ namespace onmt
         return details;
       }
 
+      const MatIn &getWeight() { return _weight; }
+      MatFwd &getRWeight() { return _rweight; }
+
     protected:
       MatIn _weight;
       MatIn _bias;
+      MatFwd _rweight;
     };
 
   }

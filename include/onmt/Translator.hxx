@@ -141,6 +141,7 @@ namespace onmt
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
   Translator<MatFwd, MatIn, MatEmb, ModelT>::Translator(const std::string& model,
                                                         const std::string& phrase_table,
+                                                        const std::string& vocab_mapping,
                                                         bool replace_unk,
                                                         size_t max_sent_length,
                                                         size_t beam_size,
@@ -153,6 +154,7 @@ namespace onmt
     , _src_feat_dicts(_model.get_src_feat_dicts())
     , _tgt_feat_dicts(_model.get_tgt_feat_dicts())
     , _phrase_table(phrase_table)
+    , _subdict(vocab_mapping, _tgt_dict)
     , _replace_unk(replace_unk)
     , _max_sent_length(max_sent_length)
     , _beam_size(beam_size)
@@ -177,6 +179,30 @@ namespace onmt
     return tokenizer.detokenize(res.get_words(), res.get_features());
   }
 
+  class tdict {
+    public:
+      tdict(int n):_ndict(n) {}
+      int _ndict;
+      std::vector<size_t> subvocab;
+  };
+
+  template <typename MatFwd, typename MatIn, typename, typename ModelT>
+  void *reduce_vocabulary(nn::Module<MatFwd> *M, void *t) {
+    if (M->get_name() == "nn.Linear") {
+      nn::Linear<MatFwd, MatIn, ModelT> *mL = (nn::Linear<MatFwd, MatIn, ModelT> *)M;
+      tdict *data = (tdict *)t;
+      std::cerr<<"gwr="<<mL->getWeight().rows()<<std::endl;
+      if (mL->getWeight().rows() == data->_ndict) {
+        std::cerr<<"browse-BF-----"<<mL->get_name()<<"--"<<
+                   mL->getRWeight().rows()<<"/"<<data->_ndict<<std::endl;
+        mL->getRWeight() = SubDict::reduce_linearweight(mL->getWeight(), data->subvocab);
+        std::cerr<<"browse-AF-----"<<mL->get_name()<<"--"<<
+                   mL->getRWeight().rows()<<"/"<<data->_ndict<<std::endl;
+      }
+    }
+    return 0;
+  }
+
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
   TranslationResult
   Translator<MatFwd, MatIn, MatEmb, ModelT>::translate(const std::vector<std::string>& tokens,
@@ -193,6 +219,7 @@ namespace onmt
   Translator<MatFwd, MatIn, MatEmb, ModelT>::translate_batch(const std::vector<std::string>& texts,
                                                              ITokenizer& tokenizer)
   {
+
     std::vector<std::vector<std::string> > batch_tokens;
     std::vector<std::vector<std::vector<std::string> > > batch_features;
 
@@ -203,6 +230,19 @@ namespace onmt
       tokenizer.tokenize(text, tokens, features);
       batch_tokens.push_back(tokens);
       batch_features.push_back(features);
+    }
+
+    if (!_subdict.empty()) {
+      tdict data(_tgt_dict.get_size());
+      std::set<size_t> e;
+      for(const auto it: batch_tokens) {
+        _subdict.extract(it, e);
+      }
+      /* convert into vector */
+      std::cerr<<"subvocab="<<e.size()<<std::endl;
+      for(auto idx: e)
+        data.subvocab.push_back(idx);
+      _generator->apply(reduce_vocabulary<MatFwd, MatIn, MatEmb, ModelT>, &data);
     }
 
     TranslationResult res = translate_batch(batch_tokens, batch_features);
