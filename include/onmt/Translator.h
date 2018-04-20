@@ -71,7 +71,7 @@ namespace onmt
            size_t source_l,
            std::vector<MatFwd>& rnn_state_enc,
            MatFwd& context,
-           const std::vector<size_t> &subvocab);
+           const std::vector<size_t>& subvocab);
 
   private:
     nn::Module<MatFwd>* _encoder;

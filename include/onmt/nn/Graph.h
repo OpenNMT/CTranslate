@@ -39,7 +39,8 @@ namespace onmt
         return _root.find(custom_name);
       }
 
-      void *apply(void *(*func)(Module<MatFwd> *, void *), void *data) override {
+      void* apply(void* (*func)(Module<MatFwd>*, void*), void* data) override
+      {
         return _root.apply(func, data);
       }
 

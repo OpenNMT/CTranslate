@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 #include "onmt/nn/Module.h"
 #include "onmt/th/Obj.h"
 #include "onmt/StorageLoader.h"
