@@ -1,9 +1,9 @@
 ## [Unreleased]
 
+### New features
+
 * Introduce vocabulary mapping to speed-up decoding-up
 * Report profiles per modules block (encoder_fwd, encoder_bwd, decoder, generator)
-
-### New features
 
 ### Fixes and improvements
 
