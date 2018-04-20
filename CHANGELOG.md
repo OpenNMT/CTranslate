@@ -1,6 +1,7 @@
 ## [Unreleased]
 
 * introduce vocabulary mapping for decoding speed-up
+* report profiles per block (encoder_fwd, encoder_bwd, decoder, generator)
 
 ### New features
 
