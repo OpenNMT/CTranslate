@@ -73,6 +73,17 @@ namespace onmt
         return nullptr;
       }
 
+      void* apply(void* (*func)(Module<MatFwd>*, void*), void* data)
+      {
+        if (_module)
+          _module->apply(func, data);
+
+        for (auto child: _children)
+          child->apply(func, data);
+
+        return nullptr;
+      }
+
       void to_dot(std::ostream& os) const
       {
         if (_visited)

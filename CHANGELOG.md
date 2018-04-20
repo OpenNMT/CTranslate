@@ -2,6 +2,9 @@
 
 ### New features
 
+* Introduce vocabulary mapping to speed-up decoding-up
+* Report profiles per modules block (encoder_fwd, encoder_bwd, decoder, generator)
+
 ### Fixes and improvements
 
 ## [v0.5.4](https://github.com/OpenNMT/CTranslate/releases/tag/v0.5.4) (2018-04-10)

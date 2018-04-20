@@ -30,13 +30,25 @@ namespace onmt
 
       virtual void forward_impl(const MatFwd& input) override
       {
-        this->_output.resize(input.rows(), _weight.rows());
-        this->_output = input * _weight.transpose();
-
-        if (_bias.rows() > 0)
+        if (_rweight.rows())
         {
-          for (int i = 0; i < input.rows(); ++i)
-            this->_output.row(i).noalias() += _bias.transpose();
+          this->_output.resize(input.rows(), _rweight.rows());
+          this->_output = input * _rweight.transpose();
+          if (_bias.rows() > 0)
+          {
+            for (int i = 0; i < input.rows(); ++i)
+              this->_output.row(i).noalias() += _rbias.transpose();
+          }
+        }
+        else
+        {
+          this->_output.resize(input.rows(), _weight.rows());
+          this->_output = input * _weight.transpose();
+          if (_bias.rows() > 0)
+          {
+            for (int i = 0; i < input.rows(); ++i)
+              this->_output.row(i).noalias() += _bias.transpose();
+          }
         }
       }
 
@@ -48,9 +60,31 @@ namespace onmt
         return details;
       }
 
+      const MatIn& get_weight()
+      {
+        return _weight;
+      }
+
+      const MatIn& get_bias()
+      {
+        return _bias;
+      }
+
+      Eigen::RowMajorMat<ModelT>& get_rweight()
+      {
+        return _rweight;
+      }
+
+      Eigen::RowMajorMat<ModelT>& get_rbias()
+      {
+        return _rbias;
+      }
+
     protected:
       MatIn _weight;
       MatIn _bias;
+      Eigen::RowMajorMat<ModelT> _rweight;
+      Eigen::RowMajorMat<ModelT> _rbias;
     };
 
   }

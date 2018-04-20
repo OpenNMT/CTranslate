@@ -6,6 +6,7 @@
 #include "Dictionary.h"
 #include "PhraseTable.h"
 #include "ITranslator.h"
+#include "SubDict.h"
 
 namespace onmt
 {
@@ -33,6 +34,7 @@ namespace onmt
   protected:
     Translator(const std::string& model,
                const std::string& phrase_table,
+               const std::string& vocab_mapping,
                bool replace_unk,
                size_t max_sent_length,
                size_t beam_size,
@@ -46,6 +48,7 @@ namespace onmt
     const std::vector<Dictionary>& _src_feat_dicts;
     const std::vector<Dictionary>& _tgt_feat_dicts;
     PhraseTable _phrase_table;
+    SubDict _subdict;
     bool _replace_unk;
     size_t _max_sent_length;
     size_t _beam_size;
@@ -67,7 +70,8 @@ namespace onmt
     decode(const std::vector<std::vector<std::string> >& batch_tokens,
            size_t source_l,
            std::vector<MatFwd>& rnn_state_enc,
-           MatFwd& context);
+           MatFwd& context,
+           const std::vector<size_t>& subvocab);
 
   private:
     nn::Module<MatFwd>* _encoder;
