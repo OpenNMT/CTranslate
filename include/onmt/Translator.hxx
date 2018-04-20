@@ -179,21 +179,28 @@ namespace onmt
     return tokenizer.detokenize(res.get_words(), res.get_features());
   }
 
-  class tdict {
-    public:
-      tdict(int n):_ndict(n) {}
-      int _ndict;
-      std::vector<size_t> subvocab;
+  class tdict
+  {
+  public:
+    tdict(int n)
+      : _ndict(n)
+    {}
+    int _ndict;
+    std::vector<size_t> subvocab;
   };
 
   template <typename MatFwd, typename MatIn, typename, typename ModelT>
-  void *reduce_vocabulary(nn::Module<MatFwd> *M, void *t) {
-    if (M->get_name() == "nn.Linear") {
-      nn::Linear<MatFwd, MatIn, ModelT> *mL = (nn::Linear<MatFwd, MatIn, ModelT> *)M;
-      tdict *data = (tdict *)t;
-      if (mL->getWeight().rows() == data->_ndict) 
-        SubDict::reduce_linearweight(mL->getWeight(), mL->getBias(),
-                                     mL->getRWeight(), mL->getRBias(),
+  void* reduce_vocabulary(nn::Module<MatFwd>* M, void* t)
+  {
+    if (M->get_name() == "nn.Linear")
+    {
+      nn::Linear<MatFwd, MatIn, ModelT>* mL = (nn::Linear<MatFwd, MatIn, ModelT>*)M;
+      tdict* data = (tdict*)t;
+      if (mL->get_weight().rows() == data->_ndict)
+        SubDict::reduce_linearweight(mL->get_weight(),
+                                     mL->get_bias(),
+                                     mL->get_rweight(),
+                                     mL->get_rbias(),
                                      data->subvocab);
     }
     return 0;
@@ -215,7 +222,6 @@ namespace onmt
   Translator<MatFwd, MatIn, MatEmb, ModelT>::translate_batch(const std::vector<std::string>& texts,
                                                              ITokenizer& tokenizer)
   {
-
     std::vector<std::vector<std::string> > batch_tokens;
     std::vector<std::vector<std::vector<std::string> > > batch_features;
 
@@ -257,13 +263,13 @@ namespace onmt
     std::vector<std::vector<std::vector<size_t> > > batch_feat_ids;
 
     tdict data(_tgt_dict.get_size());
-    if (!_subdict.empty()) {
+    if (!_subdict.empty())
+    {
       std::set<size_t> e;
-      for(const auto it: batch_tokens) {
+      for (const auto& it: batch_tokens)
         _subdict.extract(it, e);
-      }
       /* convert into vector */
-      for(auto idx: e)
+      for (auto idx: e)
         data.subvocab.push_back(idx);
       /* modify generator weights and bias accordingly */
       _generator->apply(reduce_vocabulary<MatFwd, MatIn, MatEmb, ModelT>, &data);
@@ -446,7 +452,7 @@ namespace onmt
     size_t source_l,
     std::vector<MatFwd>& rnn_state_enc,
     MatFwd& context,
-    const std::vector<size_t> &subvocab)
+    const std::vector<size_t>& subvocab)
   {
     size_t batch_size = batch_tokens.size();
 

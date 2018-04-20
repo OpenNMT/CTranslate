@@ -76,7 +76,8 @@ namespace onmt
         return nullptr;
       }
 
-      virtual void *apply(void *(*func)(Module<MatFwd> *, void *), void *data) {
+      virtual void* apply(void* (*func)(Module<MatFwd>*, void*), void* data)
+      {
         return func(this, data);
       }
 
@@ -115,9 +116,9 @@ namespace onmt
         _profiler = &profiler;
       }
 
-      void set_block(const char *s)
+      void set_block(const char* s)
       {
-        _block = (std::string)s + ":";
+        _block = std::string(s) + ":";
       }
 
     protected:

@@ -93,8 +93,9 @@ namespace onmt
   }
 
   template <typename MF>
-  static void *mark_block(nn::Module<MF> *M, void *t) {
-    M->set_block((const char *)t);
+  static void* mark_block(nn::Module<MF>* M, void* t)
+  {
+    M->set_block((const char*)t);
     return 0;
   }
 

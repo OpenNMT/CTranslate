@@ -1,7 +1,7 @@
 ## [Unreleased]
 
-* introduce vocabulary mapping for decoding speed-up
-* report profiles per block (encoder_fwd, encoder_bwd, decoder, generator)
+* Introduce vocabulary mapping to speed-up decoding-up
+* Report profiles per modules block (encoder_fwd, encoder_bwd, decoder, generator)
 
 ### New features
 

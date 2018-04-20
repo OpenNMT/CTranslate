@@ -29,7 +29,8 @@ namespace onmt
       }
 
       /* apply recursively a generic function to each node of the graph */
-      void *apply(void *(*func)(Module<MatFwd> *, void *), void *data) {
+      void* apply(void* (*func)(Module<MatFwd>*, void*), void* data)
+      {
         for (auto child: _sequence)
           child->apply(func, data);
         return 0;
