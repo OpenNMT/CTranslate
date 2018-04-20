@@ -191,9 +191,10 @@ namespace onmt
     if (M->get_name() == "nn.Linear") {
       nn::Linear<MatFwd, MatIn, ModelT> *mL = (nn::Linear<MatFwd, MatIn, ModelT> *)M;
       tdict *data = (tdict *)t;
-      if (mL->getWeight().rows() == data->_ndict) {
-        mL->getRWeight() = SubDict::reduce_linearweight(mL->getWeight(), data->subvocab);
-      }
+      if (mL->getWeight().rows() == data->_ndict) 
+        SubDict::reduce_linearweight(mL->getWeight(), mL->getBias(),
+                                     mL->getRWeight(), mL->getRBias(),
+                                     data->subvocab);
     }
     return 0;
   }
@@ -227,18 +228,6 @@ namespace onmt
       batch_features.push_back(features);
     }
 
-    if (!_subdict.empty()) {
-      tdict data(_tgt_dict.get_size());
-      std::set<size_t> e;
-      for(const auto it: batch_tokens) {
-        _subdict.extract(it, e);
-      }
-      /* convert into vector */
-      for(auto idx: e)
-        data.subvocab.push_back(idx);
-      _generator->apply(reduce_vocabulary<MatFwd, MatIn, MatEmb, ModelT>, &data);
-    }
-
     TranslationResult res = translate_batch(batch_tokens, batch_features);
 
     std::vector<std::string> tgt_texts;
@@ -266,6 +255,19 @@ namespace onmt
     // Convert words to ids.
     std::vector<std::vector<size_t> > batch_ids;
     std::vector<std::vector<std::vector<size_t> > > batch_feat_ids;
+
+    tdict data(_tgt_dict.get_size());
+    if (!_subdict.empty()) {
+      std::set<size_t> e;
+      for(const auto it: batch_tokens) {
+        _subdict.extract(it, e);
+      }
+      /* convert into vector */
+      for(auto idx: e)
+        data.subvocab.push_back(idx);
+      /* modify generator weights and bias accordingly */
+      _generator->apply(reduce_vocabulary<MatFwd, MatIn, MatEmb, ModelT>, &data);
+    }
 
     for (size_t b = 0; b < batch_size; ++b)
     {
@@ -299,7 +301,7 @@ namespace onmt
     MatFwd context;
 
     encode(batch_tokens, batch_ids, batch_feat_ids, rnn_state_enc, context);
-    return decode(batch_tokens, source_l, rnn_state_enc, context);
+    return decode(batch_tokens, source_l, rnn_state_enc, context, data.subvocab);
   }
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
@@ -443,7 +445,8 @@ namespace onmt
     const std::vector<std::vector<std::string> >& batch_tokens,
     size_t source_l,
     std::vector<MatFwd>& rnn_state_enc,
-    MatFwd& context)
+    MatFwd& context,
+    const std::vector<size_t> &subvocab)
   {
     size_t batch_size = batch_tokens.size();
 
@@ -663,7 +666,12 @@ namespace onmt
           }
 
           prev_ks[b][i][k] = from_beam;
-          next_ys[b][i][k] = best_score_id;
+          if (subvocab.size())
+            /* restore the actual index */
+            next_ys[b][i][k] = subvocab[best_score_id];
+          else
+            next_ys[b][i][k] = best_score_id;
+
           scores[b][i][k] = best_score;
 
           size_t from_beam_offset = get_offset(idx, from_beam, remaining_sents);

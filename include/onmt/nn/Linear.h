@@ -34,16 +34,21 @@ namespace onmt
         if (_rweight.rows()) {
           this->_output.resize(input.rows(), _rweight.rows());
           this->_output = input * _rweight.transpose();
+          if (_bias.rows() > 0)
+          {
+            for (int i = 0; i < input.rows(); ++i)
+              this->_output.row(i).noalias() += _rbias.transpose();
+          }
         } else {
           this->_output.resize(input.rows(), _weight.rows());
           this->_output = input * _weight.transpose();
+          if (_bias.rows() > 0)
+          {
+            for (int i = 0; i < input.rows(); ++i)
+              this->_output.row(i).noalias() += _bias.transpose();
+          }
         }
 
-        if (_bias.rows() > 0)
-        {
-          for (int i = 0; i < input.rows(); ++i)
-            this->_output.row(i).noalias() += _bias.transpose();
-        }
       }
 
       std::string get_details() const override
@@ -55,12 +60,15 @@ namespace onmt
       }
 
       const MatIn &getWeight() { return _weight; }
-      MatFwd &getRWeight() { return _rweight; }
+      const MatIn &getBias() { return _bias; }
+      Eigen::RowMajorMat<ModelT> &getRWeight() { return _rweight; }
+      Eigen::RowMajorMat<ModelT> &getRBias() { return _rbias; }
 
     protected:
       MatIn _weight;
       MatIn _bias;
-      MatFwd _rweight;
+      Eigen::RowMajorMat<ModelT> _rweight;
+      Eigen::RowMajorMat<ModelT> _rbias;
     };
 
   }

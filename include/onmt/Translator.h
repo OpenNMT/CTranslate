@@ -70,7 +70,8 @@ namespace onmt
     decode(const std::vector<std::vector<std::string> >& batch_tokens,
            size_t source_l,
            std::vector<MatFwd>& rnn_state_enc,
-           MatFwd& context);
+           MatFwd& context,
+           const std::vector<size_t> &subvocab);
 
   private:
     nn::Module<MatFwd>* _encoder;

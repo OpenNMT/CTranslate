@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+* introduce vocabulary mapping for decoding speed-up
+
 ### New features
 
 ### Fixes and improvements
