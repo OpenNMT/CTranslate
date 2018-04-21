@@ -18,7 +18,7 @@ namespace onmt
         : Linear<MatFwd, MatIn, ModelT>(data)
       {
         // Quantize the weight - ncols=width is supposed to be multiple of SIMD_VSIZE
-        if (this->_wcols % SIMD_VIZE)
+        if (this->_wcols % SIMD_VSIZE)
           throw std::runtime_error("Weight matrix width should be multiple of 8/16 for qLinear");
         _quant_weight.resize(this->_wrows * this->_wcols / SIMD_VSIZE);
         Quantize(this->_weight.data(), _quant_weight.data(), this->_wrows, this->_wcols);
