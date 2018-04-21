@@ -19,13 +19,13 @@
 // SOFTWARE.
 
 #include <cassert>
-#include <math.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <vector>
-#include "onmt/SSE_Matrix_Mult.h"
+#include "onmt/simd/MatrixMult.h"
+
+// This implementation is based on the reference SSE2 implementation provided
+// as complementary material of paper "Sharp Models on Dull Hardware: Fast and Accurate
+// Neural Machine Translation Decoding on the CPU". The implementation has just been
+// extended to support to remove constraints on A numbers of row.
+
 
 // This is a reference implementation of 16-bit matrix multiplication described in "Sharp Models on Dull Hardware: Fast and Accurate Neural Machine Translation Decoding on the CPU".
 // This model is not as fast as the one in the paper, becuase it uses SSE2 instead of AVX2. AVX2 instructions are only available on more modern CPUs (Haswell or later).
@@ -55,19 +55,23 @@
 // This should always be possible because the value you're quantizing will either be NN weights or NN activations, both of
 // which can be clipped to a fixed range during training.
 
-void Quantize(const float * input, __m128i * output, float quant_mult, int num_rows, int width) {
+void Quantize(const float * input,
+              __m128i * output,
+              int num_rows,
+              int width)
+{
     assert(width % 8 == 0);
     
-    int num_input_chunks = width/8;
+    int num_input_chunks = width / 8;
     
     // Fill an SSE float with 4 copies of the quant mult
     __m128 sse_quant_mult = _mm_set_ps(quant_mult, quant_mult, quant_mult, quant_mult);
     
     for (int i = 0; i < num_rows; i++) {
-        const float * input_row = input + i*width;
-        __m128i * output_row = output + i*num_input_chunks;
+        const float * input_row = input + i * width;
+        __m128i * output_row = output + i * num_input_chunks;
         for (int j = 0; j < num_input_chunks; j++) {
-            const float * x = input_row + j*8;
+            const float * x = input_row + j * 8;
             // Process 8 floats at once, since each __m128i can contain 8 16-bit integers.
             
             // Load floats floats into SSE registers.
@@ -95,12 +99,16 @@ void Quantize(const float * input, __m128i * output, float quant_mult, int num_r
 // 
 // B is typically a weight matrix, so it can be pre-processed offline, and therefore this transpose does not cost anything.
 // A is typically an activation minibatch matrix.
-void SSE_MatrixMult(const __m128i * A, const __m128i * B, float * C, float unquant_mult, int num_A_rows, int num_B_rows, int width)
+void SSE_MatrixMult(const __m128i * A,
+                    const __m128i * B,
+                    float * C,
+                    int num_A_rows,
+                    int num_B_rows,
+                    int width)
 {
-    assert(num_A_rows % 4 == 0);
     assert(width % 8 == 0);
 
-    int sse_width = width/8;
+    int sse_width = width / 8;
 
     // We do loop unrolling over A. This is *significantly* faster
     // since B can live in the registers. We are assuming that
@@ -113,13 +121,16 @@ void SSE_MatrixMult(const __m128i * A, const __m128i * B, float * C, float unqua
     // The justification is that A is typically small enough that it can live in L1 cache.
     // B is usually a larger weight matrix, so it might not be able to. However, we are using
     // each element of B four times while it's still in a register, so caching is not as important.
-    for (int i = 0; i < num_A_rows; i += 4) {
+    int i;
+    for (i = 0; i < num_A_rows-3; i += 4)
+    {
         const __m128i * A1_row = A + (i+0)*sse_width;
         const __m128i * A2_row = A + (i+1)*sse_width;
         const __m128i * A3_row = A + (i+2)*sse_width;
         const __m128i * A4_row = A + (i+3)*sse_width;
 
-        for (int j = 0; j < num_B_rows; j++) {
+        for (int j = 0; j < num_B_rows; j++)
+        {
             const __m128i * B_row = B + j*sse_width;
 
             __m128i sum1 = _mm_setzero_si128();
@@ -128,7 +139,8 @@ void SSE_MatrixMult(const __m128i * A, const __m128i * B, float * C, float unqua
             __m128i sum4 = _mm_setzero_si128();
 
             // This is just a simple dot product, unrolled four ways.
-            for (int k = 0; k < sse_width; k++) {
+            for (int k = 0; k < sse_width; k++)
+            {
                 __m128i b = *(B_row + k);
                 
                 __m128i a1 = *(A1_row + k);
@@ -191,5 +203,99 @@ void SSE_MatrixMult(const __m128i * A, const __m128i * B, float * C, float unqua
             _mm_store_ss(C4, _mm_cvtepi32_ps(sum4));
             *(C4) *= unquant_mult;
         }
+    }
+    switch (num_A_rows - i) {
+        case 3:
+        {
+            const __m128i * A1_row = A + (i+0)*sse_width;
+            const __m128i * A2_row = A + (i+1)*sse_width;
+            const __m128i * A3_row = A + (i+2)*sse_width;
+            for (int j = 0; j < num_B_rows; j++)
+            {
+                const __m128i * B_row = B + j*sse_width;
+                __m128i sum1 = _mm_setzero_si128();
+                __m128i sum2 = _mm_setzero_si128();
+                __m128i sum3 = _mm_setzero_si128();
+                for (int k = 0; k < sse_width; k++)
+                {
+                    __m128i b = *(B_row + k);
+                    __m128i a1 = *(A1_row + k);
+                    __m128i a2 = *(A2_row + k);
+                    __m128i a3 = *(A3_row + k);
+                    sum1 = _mm_add_epi32(sum1, _mm_madd_epi16(b, a1));
+                    sum2 = _mm_add_epi32(sum2, _mm_madd_epi16(b, a2));
+                    sum3 = _mm_add_epi32(sum3, _mm_madd_epi16(b, a3));
+                }
+                sum1 = _mm_hadd_epi32(sum1, sum1);
+                sum1 = _mm_hadd_epi32(sum1, sum1);
+                sum2 = _mm_hadd_epi32(sum2, sum2);
+                sum2 = _mm_hadd_epi32(sum2, sum2);
+                sum3 = _mm_hadd_epi32(sum3, sum3);
+                sum3 = _mm_hadd_epi32(sum3, sum3);
+                float * C1 = C + (i+0)*num_B_rows + j;
+                float * C2 = C + (i+1)*num_B_rows + j;
+                float * C3 = C + (i+2)*num_B_rows + j;
+                _mm_store_ss(C1, _mm_cvtepi32_ps(sum1));
+                *(C1) *= unquant_mult;
+                _mm_store_ss(C2, _mm_cvtepi32_ps(sum2));
+                *(C2) *= unquant_mult;
+                _mm_store_ss(C3, _mm_cvtepi32_ps(sum3));
+                *(C3) *= unquant_mult;
+            }
+            break;
+        }
+        case 2:
+        {
+            const __m128i * A1_row = A + (i+0)*sse_width;
+            const __m128i * A2_row = A + (i+1)*sse_width;
+            for (int j = 0; j < num_B_rows; j++)
+            {
+                const __m128i * B_row = B + j*sse_width;
+                __m128i sum1 = _mm_setzero_si128();
+                __m128i sum2 = _mm_setzero_si128();
+                for (int k = 0; k < sse_width; k++)
+                {
+                    __m128i b = *(B_row + k);
+                    __m128i a1 = *(A1_row + k);
+                    __m128i a2 = *(A2_row + k);
+                    sum1 = _mm_add_epi32(sum1, _mm_madd_epi16(b, a1));
+                    sum2 = _mm_add_epi32(sum2, _mm_madd_epi16(b, a2));
+                }
+                sum1 = _mm_hadd_epi32(sum1, sum1);
+                sum1 = _mm_hadd_epi32(sum1, sum1);
+                sum2 = _mm_hadd_epi32(sum2, sum2);
+                sum2 = _mm_hadd_epi32(sum2, sum2);
+                float * C1 = C + (i+0)*num_B_rows + j;
+                float * C2 = C + (i+1)*num_B_rows + j;
+                _mm_store_ss(C1, _mm_cvtepi32_ps(sum1));
+                *(C1) *= unquant_mult;
+                _mm_store_ss(C2, _mm_cvtepi32_ps(sum2));
+                *(C2) *= unquant_mult;
+            }
+            break;
+        }
+        case 1:
+        {
+            const __m128i * A1_row = A + (i+0)*sse_width;
+            for (int j = 0; j < num_B_rows; j++)
+            {
+                const __m128i * B_row = B + j*sse_width;
+                __m128i sum1 = _mm_setzero_si128();
+                for (int k = 0; k < sse_width; k++)
+                {
+                    __m128i b = *(B_row + k);
+                    __m128i a1 = *(A1_row + k);
+                    sum1 = _mm_add_epi32(sum1, _mm_madd_epi16(b, a1));
+                }
+                sum1 = _mm_hadd_epi32(sum1, sum1);
+                sum1 = _mm_hadd_epi32(sum1, sum1);
+                float * C1 = C + (i+0)*num_B_rows + j;
+                _mm_store_ss(C1, _mm_cvtepi32_ps(sum1));
+                *(C1) *= unquant_mult;
+            }
+            break;
+        }
+        default:
+            break;
     }
 }

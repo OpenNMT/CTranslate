@@ -98,7 +98,7 @@ if (WITH_QLINEAR)
   endif(NOT SSE2_TRUE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWITH_QLINEAR")
   list(APPEND SOURCES
-    src/SSE_Matrix_Mult.cc
+    src/simd/SSE2_MatrixMult.cc
   )
 endif()
 
