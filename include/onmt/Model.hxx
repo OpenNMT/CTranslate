@@ -92,11 +92,23 @@ namespace onmt
     }
   }
 
+  template <typename MF>
+  static void* mark_block(nn::Module<MF>* M, void* t)
+  {
+    M->set_block((const char*)t);
+    return 0;
+  }
+
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
   void Model<MatFwd, MatIn, MatEmb, ModelT>::load_networks(th::Table* obj)
   {
     load_networks(th::get_field<th::Table*>(obj, "encoder"), _encoder_modules);
+    _encoder_modules[0]->apply(mark_block<MatFwd>, (void*)"encoder_fwd");
+    if (_encoder_modules[1])
+      _encoder_modules[1]->apply(mark_block<MatFwd>, (void*)"encoder_bwd");
     load_networks(th::get_field<th::Table*>(obj, "decoder"), _decoder_modules);
+    _decoder_modules[0]->apply(mark_block<MatFwd>, (void*)"decoder");
+    _decoder_modules[1]->apply(mark_block<MatFwd>, (void*)"generator");
   }
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>

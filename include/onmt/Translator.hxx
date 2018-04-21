@@ -141,6 +141,7 @@ namespace onmt
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
   Translator<MatFwd, MatIn, MatEmb, ModelT>::Translator(const std::string& model,
                                                         const std::string& phrase_table,
+                                                        const std::string& vocab_mapping,
                                                         bool replace_unk,
                                                         size_t max_sent_length,
                                                         size_t beam_size,
@@ -154,6 +155,7 @@ namespace onmt
     , _src_feat_dicts(_model.get_src_feat_dicts())
     , _tgt_feat_dicts(_model.get_tgt_feat_dicts())
     , _phrase_table(phrase_table)
+    , _subdict(vocab_mapping, _tgt_dict)
     , _replace_unk(replace_unk)
     , _max_sent_length(max_sent_length)
     , _beam_size(beam_size)
@@ -176,6 +178,33 @@ namespace onmt
     TranslationResult res = translate(src_tokens, src_features);
 
     return tokenizer.detokenize(res.get_words(), res.get_features());
+  }
+
+  class tdict
+  {
+  public:
+    tdict(int n)
+      : _ndict(n)
+    {}
+    int _ndict;
+    std::vector<size_t> subvocab;
+  };
+
+  template <typename MatFwd, typename MatIn, typename, typename ModelT>
+  void* reduce_vocabulary(nn::Module<MatFwd>* M, void* t)
+  {
+    if (M->get_name() == "nn.Linear")
+    {
+      nn::Linear<MatFwd, MatIn, ModelT>* mL = (nn::Linear<MatFwd, MatIn, ModelT>*)M;
+      tdict* data = (tdict*)t;
+      if (mL->get_weight().rows() == data->_ndict)
+        SubDict::reduce_linearweight(mL->get_weight(),
+                                     mL->get_bias(),
+                                     mL->get_rweight(),
+                                     mL->get_rbias(),
+                                     data->subvocab);
+    }
+    return 0;
   }
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
@@ -234,6 +263,19 @@ namespace onmt
     std::vector<std::vector<size_t> > batch_ids;
     std::vector<std::vector<std::vector<size_t> > > batch_feat_ids;
 
+    tdict data(_tgt_dict.get_size());
+    if (!_subdict.empty())
+    {
+      std::set<size_t> e;
+      for (const auto& it: batch_tokens)
+        _subdict.extract(it, e);
+      /* convert into vector */
+      for (auto idx: e)
+        data.subvocab.push_back(idx);
+      /* modify generator weights and bias accordingly */
+      _generator->apply(reduce_vocabulary<MatFwd, MatIn, MatEmb, ModelT>, &data);
+    }
+
     for (size_t b = 0; b < batch_size; ++b)
     {
       batch_ids.push_back(words_to_ids(_src_dict, batch_tokens[b]));
@@ -266,7 +308,7 @@ namespace onmt
     MatFwd context;
 
     encode(batch_tokens, batch_ids, batch_feat_ids, rnn_state_enc, context);
-    return decode(batch_tokens, source_l, rnn_state_enc, context);
+    return decode(batch_tokens, source_l, rnn_state_enc, context, data.subvocab);
   }
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
@@ -410,7 +452,8 @@ namespace onmt
     const std::vector<std::vector<std::string> >& batch_tokens,
     size_t source_l,
     std::vector<MatFwd>& rnn_state_enc,
-    MatFwd& context)
+    MatFwd& context,
+    const std::vector<size_t>& subvocab)
   {
     size_t batch_size = batch_tokens.size();
 
@@ -630,7 +673,12 @@ namespace onmt
           }
 
           prev_ks[b][i][k] = from_beam;
-          next_ys[b][i][k] = best_score_id;
+          if (subvocab.size())
+            /* restore the actual index */
+            next_ys[b][i][k] = subvocab[best_score_id];
+          else
+            next_ys[b][i][k] = best_score_id;
+
           scores[b][i][k] = best_score;
 
           size_t from_beam_offset = get_offset(idx, from_beam, remaining_sents);

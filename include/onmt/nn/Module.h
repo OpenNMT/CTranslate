@@ -45,7 +45,7 @@ namespace onmt
         forward_impl(inputs);
 
         if (_profile && _profiler)
-          _profiler->stop(!_custom_name.empty() ? _custom_name : _name);
+          _profiler->stop(_block + (!_custom_name.empty() ? _custom_name : _name));
 
         if (_post_process)
           _post_process(_outputs);
@@ -74,6 +74,11 @@ namespace onmt
           return this;
 
         return nullptr;
+      }
+
+      virtual void* apply(void* (*func)(Module<MatFwd>*, void*), void* data)
+      {
+        return func(this, data);
       }
 
       std::function<void(std::vector<MatFwd>&)>& post_process_fun()
@@ -111,10 +116,16 @@ namespace onmt
         _profiler = &profiler;
       }
 
+      void set_block(const char* s)
+      {
+        _block = std::string(s) + ":";
+      }
+
     protected:
       std::string _name;
       std::string _custom_name;
       bool _profile;
+      std::string _block;
       Profiler* _profiler;
 
       std::vector<MatFwd> _outputs;
