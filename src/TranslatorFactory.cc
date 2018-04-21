@@ -22,7 +22,7 @@ namespace onmt
                                      max_sent_length,
                                      beam_size,
                                      cuda,
-                                     qLinear,
+                                     qlinear,
                                      profiling);
 
     return std::unique_ptr<ITranslator>(t);
