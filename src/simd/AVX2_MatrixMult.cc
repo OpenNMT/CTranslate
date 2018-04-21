@@ -37,7 +37,9 @@ void Quantize(const float * input,
     __m256i const perm_mask = _mm256_set_epi32(7, 6, 3, 2, 5, 4, 1, 0);
 
     // Fill an AVX float with 8 copies of the quant mult
-    __m256 sse_quant_mult = _mm256_set_ps(quant_mult, quant_mult, quant_mult, quant_mult, quant_mult, quant_mult, quant_mult, quant_mult);
+    __m256 sse_quant_mult = _mm256_set_ps(quant_mult, quant_mult, quant_mult,
+                                          quant_mult, quant_mult, quant_mult,
+                                          quant_mult, quant_mult);
     
     for (int i = 0; i < num_rows; i++) {
         const float * input_row = input + i * width;

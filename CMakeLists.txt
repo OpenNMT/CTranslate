@@ -89,18 +89,39 @@ if (WITH_QLINEAR)
      STRING(REGEX REPLACE "^.*(sse2).*$" "\\1" SSE_THERE ${CPUINFO})
      STRING(COMPARE EQUAL "sse2" "${SSE_THERE}" SSE2_TRUE)
   ELSEIF(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-     EXEC_PROGRAM("/usr/sbin/sysctl -n machdep.cpu.features" OUTPUT_VARIABLE
+     EXEC_PROGRAM("/usr/sbin/sysctl -n machdep.cpu" OUTPUT_VARIABLE
         CPUINFO)
      STRING(REGEX REPLACE "^.*[^S](SSE2).*$" "\\1" SSE_THERE ${CPUINFO})
      STRING(COMPARE EQUAL "SSE2" "${SSE_THERE}" SSE2_TRUE)
   ENDIF()
-  if(NOT SSE2_TRUE)
-        MESSAGE(FATAL_ERROR "Could not find support for SSE2 on this machine.")
-  endif(NOT SSE2_TRUE)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWITH_QLINEAR -DSIMD_SSE2")
-  list(APPEND SOURCES
-    src/simd/SSE2_MatrixMult.cc
-  )
+  IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
+     EXEC_PROGRAM(cat ARGS "/proc/cpuinfo" OUTPUT_VARIABLE CPUINFO)
+     STRING(REGEX REPLACE "^.*(avx2).*$" "\\1" AVX_THERE ${CPUINFO})
+     STRING(COMPARE EQUAL "avx2" "${AVX_THERE}" AVX2_TRUE)
+  ELSEIF(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+     EXEC_PROGRAM("/usr/sbin/sysctl -n machdep.cpu" OUTPUT_VARIABLE
+        CPUINFO)
+     STRING(REGEX REPLACE "^.*(AVX2).*$" "\\1" AVX_THERE ${CPUINFO})
+     STRING(COMPARE EQUAL "AVX2" "${AVX_THERE}" AVX2_TRUE)
+  ENDIF()
+  IF(AVX2_TRUE)
+      SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWITH_QLINEAR -DSIMD_AVX2")
+      LIST(APPEND SOURCES
+        src/simd/AVX2_MatrixMult.cc
+      )
+      IF(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+      ENDIF()
+    MESSAGE(STATUS "Using AVX2 instruction sets")
+  ELSEIF(SSE2_TRUE)
+      SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWITH_QLINEAR -DSIMD_SSE2")
+      LIST(APPEND SOURCES
+        src/simd/SSE2_MatrixMult.cc
+      )
+    MESSAGE(STATUS "Using SSE2 instruction sets")
+  ELSE(SSE2_TRUE)
+      MESSAGE(FATAL_ERROR "Could not find support for SSE2 on this machine.")
+  ENDIF(AVX2_TRUE)
 endif()
 
 if (MKL_FOUND)
