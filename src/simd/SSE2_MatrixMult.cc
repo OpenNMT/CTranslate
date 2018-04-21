@@ -99,12 +99,13 @@ void Quantize(const float * input,
 // 
 // B is typically a weight matrix, so it can be pre-processed offline, and therefore this transpose does not cost anything.
 // A is typically an activation minibatch matrix.
-void SSE_MatrixMult(const __m128i * A,
-                    const __m128i * B,
-                    float * C,
-                    int num_A_rows,
-                    int num_B_rows,
-                    int width)
+void SIMD_MatrixMult(const __m128i * A,
+                     const __m128i * B,
+                     float * C,
+                     int num_A_rows,
+                     int num_B_rows,
+                     int width,
+                     const std::vector<size_t> &subdict)
 {
     assert(width % 8 == 0);
 
@@ -131,7 +132,8 @@ void SSE_MatrixMult(const __m128i * A,
 
         for (int j = 0; j < num_B_rows; j++)
         {
-            const __m128i * B_row = B + j*sse_width;
+            int B_row_idx = subdict.size() ? subdict[j] : j;
+            const __m128i * B_row = B + B_row_idx * sse_width;
 
             __m128i sum1 = _mm_setzero_si128();
             __m128i sum2 = _mm_setzero_si128();
@@ -212,7 +214,8 @@ void SSE_MatrixMult(const __m128i * A,
             const __m128i * A3_row = A + (i+2)*sse_width;
             for (int j = 0; j < num_B_rows; j++)
             {
-                const __m128i * B_row = B + j*sse_width;
+                int B_row_idx = subdict.size() ? subdict[j] : j;
+                const __m128i * B_row = B + B_row_idx * sse_width;
                 __m128i sum1 = _mm_setzero_si128();
                 __m128i sum2 = _mm_setzero_si128();
                 __m128i sum3 = _mm_setzero_si128();
@@ -250,7 +253,8 @@ void SSE_MatrixMult(const __m128i * A,
             const __m128i * A2_row = A + (i+1)*sse_width;
             for (int j = 0; j < num_B_rows; j++)
             {
-                const __m128i * B_row = B + j*sse_width;
+                int B_row_idx = subdict.size() ? subdict[j] : j;
+                const __m128i * B_row = B + B_row_idx * sse_width;
                 __m128i sum1 = _mm_setzero_si128();
                 __m128i sum2 = _mm_setzero_si128();
                 for (int k = 0; k < sse_width; k++)
@@ -279,7 +283,8 @@ void SSE_MatrixMult(const __m128i * A,
             const __m128i * A1_row = A + (i+0)*sse_width;
             for (int j = 0; j < num_B_rows; j++)
             {
-                const __m128i * B_row = B + j*sse_width;
+                int B_row_idx = subdict.size() ? subdict[j] : j;
+                const __m128i * B_row = B + B_row_idx * sse_width;
                 __m128i sum1 = _mm_setzero_si128();
                 for (int k = 0; k < sse_width; k++)
                 {

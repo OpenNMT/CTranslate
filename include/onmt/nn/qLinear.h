@@ -30,25 +30,39 @@ namespace onmt
 
       virtual void forward_impl(const MatFwd& input) override
       {
-        this->_output.resize(input.rows(), this->_wrows);
+        if (this->_rwrows)
+          this->_output.resize(input.rows(), this->_rwrows);
+        else
+          this->_output.resize(input.rows(), this->_wrows);
 
+        /* quantize the input */
         _quant_input.resize(input.rows() * input.cols() / SIMD_VSIZE);
-
         Quantize(input.data(), _quant_input.data(), input.rows(), input.cols());
 
-        SSE_MatrixMult(_quant_input.data(), _quant_weight.data(), this->_output.data(),
-                       input.rows(), this->_wrows, this->_wcols);
+        SIMD_MatrixMult(_quant_input.data(), _quant_weight.data(), this->_output.data(),
+                       input.rows(), this->_rwrows || this->_wrows, this->_wcols,
+                       _subdict);
 
-        if (this->_bias.rows() > 0)
-        {
-          for (int i = 0; i < input.rows(); ++i)
-            this->_output.row(i).noalias() += this->_bias.transpose();
+        /* add bias */
+        if (this->_rbias.rows() > 0) {
+          if (this->_rwrows)
+            for (int i = 0; i < input.rows(); ++i)
+              this->_output.row(i).noalias() += this->_rbias.transpose();
+          else
+            for (int i = 0; i < input.rows(); ++i)
+              this->_output.row(i).noalias() += this->_bias.transpose();
         }
       }
 
       /* reduce a linear weigth matrix to a given vocabulary */
       virtual void apply_subdictionary(const std::vector<size_t>& v) override {
+        this->_rwrows = v.size();
         _subdict = v;
+        this->_rbias.resize(v.size(), 1);
+        /* adjust bias */
+        for (size_t i = 0; i < v.size(); i++) {
+          this->_rbias.row(i) = this->_bias.row(v[i]);
+        }        
       }
 
     protected:

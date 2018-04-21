@@ -79,12 +79,13 @@ static inline __m128i _mm256i_sum8 (__m256i a)
     return _mm_add_epi32(_mm256_castsi256_si128(a), _mm256_extracti128_si256(a, 1));
 }
 
-void SSE_MatrixMult(const __m256i * A,
-                    const __m256i * B,
-                    float * C,
-                    int num_A_rows,
-                    int num_B_rows,
-                    int width)
+void SIMD_MatrixMult(const __m256i * A,
+                     const __m256i * B,
+                     float * C,
+                     int num_A_rows,
+                     int num_B_rows,
+                     int width,
+                     const std::vector<size_t> &subdict)
 {
     assert(width % 16 == 0);
 
@@ -101,7 +102,8 @@ void SSE_MatrixMult(const __m256i * A,
 
         for (int j = 0; j < num_B_rows; j++)
         {
-            const __m256i * B_row = B + j * avx_width;
+            int B_row_idx = subdict.size() ? subdict[j] : j;
+            const __m256i * B_row = B + B_row_idx * avx_width;
 
             __m256i sum1 = _mm256_setzero_si256();
             __m256i sum2 = _mm256_setzero_si256();
@@ -156,7 +158,8 @@ void SSE_MatrixMult(const __m256i * A,
                 const __m256i * A3_row = A + (i+2) * avx_width;
                 for (int j = 0; j < num_B_rows; j++)
                 {
-                    const __m256i * B_row = B + j * avx_width;
+                    int B_row_idx = subdict.size() ? subdict[j] : j;
+                    const __m256i * B_row = B + B_row_idx * avx_width;
                     __m256i sum1 = _mm256_setzero_si256();
                     __m256i sum2 = _mm256_setzero_si256();
                     __m256i sum3 = _mm256_setzero_si256();
@@ -191,7 +194,8 @@ void SSE_MatrixMult(const __m256i * A,
                 const __m256i * A2_row = A + (i+1) * avx_width;
                 for (int j = 0; j < num_B_rows; j++)
                 {
-                    const __m256i * B_row = B + j * avx_width;
+                    int B_row_idx = subdict.size() ? subdict[j] : j;
+                    const __m256i * B_row = B + B_row_idx * avx_width;
                     __m256i sum1 = _mm256_setzero_si256();
                     __m256i sum2 = _mm256_setzero_si256();
                     for (int k = 0; k < avx_width; k++)
@@ -218,7 +222,8 @@ void SSE_MatrixMult(const __m256i * A,
                 const __m256i * A1_row = A + (i+0) * avx_width;
                 for (int j = 0; j < num_B_rows; j++)
                 {
-                    const __m256i * B_row = B + j * avx_width;
+                    int B_row_idx = subdict.size() ? subdict[j] : j;
+                    const __m256i * B_row = B + B_row_idx * avx_width;
                     __m256i sum1 = _mm256_setzero_si256();
                     for (int k = 0; k < avx_width; k++)
                     {

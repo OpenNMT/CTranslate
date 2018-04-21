@@ -4,6 +4,7 @@
 #include <immintrin.h>
 #include <tmmintrin.h>
 #include <xmmintrin.h>
+#include <vector>
 
 // We quantize with 10 bits of precision. This works well "universally".
 // See the top of SSE2_MatricMult.cc for more info on why.
@@ -28,9 +29,10 @@ void Quantize(const float * input,
               int num_rows,
               int width);
 
-void SSE_MatrixMult(const SIMD_TYPE * A,
-                    const SIMD_TYPE * B,
-                    float * C,
-                    int num_A_rows,
-                    int num_B_rows,
-                    int width);
+void SIMD_MatrixMult(const SIMD_TYPE * A,
+                     const SIMD_TYPE * B,
+                     float * C,
+                     int num_A_rows,
+                     int num_B_rows,
+                     int width,
+                     const std::vector<size_t> &subdict);
