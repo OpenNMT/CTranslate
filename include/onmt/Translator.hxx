@@ -186,7 +186,7 @@ namespace onmt
     tdict(int n)
       : _ndict(n)
     {}
-    int _ndict;
+    size_t _ndict;
     std::vector<size_t> subvocab;
   };
 
@@ -197,7 +197,7 @@ namespace onmt
     {
       nn::Linear<MatFwd, MatIn, ModelT>* mL = (nn::Linear<MatFwd, MatIn, ModelT>*)M;
       tdict* data = (tdict*)t;
-      if (mL->get_weight().rows() == data->_ndict)
+      if (mL->get_weightrows() == data->_ndict)
         mL->apply_subdictionary(data->subvocab);
     }
     return 0;

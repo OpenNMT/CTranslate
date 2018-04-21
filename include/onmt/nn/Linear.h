@@ -22,6 +22,9 @@ namespace onmt
         , _weight(StorageLoader<MatIn, ModelT>::get_matrix(data, "weight"))
         , _bias(StorageLoader<MatIn, ModelT>::get_matrix(data, "bias"))
       {
+        _wrows = _weight.rows();
+        _wcols = _weight.cols();
+        _rwrows = 0;
       }
 
       virtual ~Linear()
@@ -30,11 +33,11 @@ namespace onmt
 
       virtual void forward_impl(const MatFwd& input) override
       {
-        if (_rweight.rows())
+        if (_rwrows)
         {
-          this->_output.resize(input.rows(), _rweight.rows());
+          this->_output.resize(input.rows(), _rwrows);
           this->_output = input * _rweight.transpose();
-          if (_bias.rows() > 0)
+          if (_rbias.rows() > 0)
           {
             for (int i = 0; i < input.rows(); ++i)
               this->_output.row(i).noalias() += _rbias.transpose();
@@ -42,7 +45,7 @@ namespace onmt
         }
         else
         {
-          this->_output.resize(input.rows(), _weight.rows());
+          this->_output.resize(input.rows(), _wrows);
           this->_output = input * _weight.transpose();
           if (_bias.rows() > 0)
           {
@@ -54,22 +57,23 @@ namespace onmt
 
       std::string get_details() const override
       {
-        std::string details = std::to_string(_weight.cols()) + "->" + std::to_string(_weight.rows());
+        std::string details = std::to_string(_wcols) + "->" + std::to_string(_wrows);
         if (_bias.rows() == 0)
           details += " without bias";
         return details;
       }
 
-      const MatIn& get_weight()
+      size_t get_weightrows() const
       {
-        return _weight;
+        return _wrows;
       }
 
-      /* reduce a linear weigth matrix to a given vocabulary */
-      void apply_subdictionary(const std::vector<size_t>& v) {
-        _rweight.resize(v.size(), _weight.cols());
+      /* reduce the weight matrix to a given vocabulary, v is the list of index to keep */
+      virtual void apply_subdictionary(const std::vector<size_t>& v) {
+        _rwrows = v.size();
+        _rweight.resize(v.size(), _wcols);
         _rbias.resize(v.size(), 1);
-        /* build sub-matrix where the number of rows is restricted to rows in row_subset */
+        /* build sub-matrix */
         for (size_t i = 0; i < v.size(); i++) {
           _rweight.row(i) = _weight.row(v[i]);
           _rbias.row(i) = _bias.row(v[i]);
@@ -81,6 +85,8 @@ namespace onmt
       MatIn _bias;
       Eigen::RowMajorMat<ModelT> _rweight;
       Eigen::RowMajorMat<ModelT> _rbias;
+      size_t _wrows, _wcols;
+      size_t _rwrows;
     };
 
   }
