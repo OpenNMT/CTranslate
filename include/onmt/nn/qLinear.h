@@ -17,10 +17,10 @@ namespace onmt
       qLinear(th::Table* data)
         : Linear<MatFwd, MatIn, ModelT>(data)
       {
-        // Quantize the weight - ncols=width is supposed to be multiple of 8
-        if (this->_wcols % 16)
-          throw std::runtime_error("Weight matrix width should be multiple of 8 for qLinear");
-        _quant_weight.resize(this->_wrows * this->_wcols / 8);
+        // Quantize the weight - ncols=width is supposed to be multiple of SIMD_VSIZE
+        if (this->_wcols % SIMD_VIZE)
+          throw std::runtime_error("Weight matrix width should be multiple of 8/16 for qLinear");
+        _quant_weight.resize(this->_wrows * this->_wcols / SIMD_VSIZE);
         Quantize(this->_weight.data(), _quant_weight.data(), this->_wrows, this->_wcols);
       }
 
@@ -32,7 +32,7 @@ namespace onmt
       {
         this->_output.resize(input.rows(), this->_wrows);
 
-        _quant_input.resize(input.rows() * input.cols() / 8);
+        _quant_input.resize(input.rows() * input.cols() / SIMD_VSIZE);
 
         Quantize(input.data(), _quant_input.data(), input.rows(), input.cols());
 
