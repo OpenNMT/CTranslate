@@ -5,7 +5,7 @@ option(LIB_ONLY "Do not compile clients" OFF)
 option(WITH_OPENMP "Use OpenMP if available" ON)
 option(WITH_CUDA "Use CUDA if available" ON)
 option(WITH_MKL "Use Intel® MKL if available" ON)
-option(WITH_QLINEAR "Add Quantized linear module - required SSE2" OFF)
+option(WITH_QLINEAR "Add Quantized linear module - required SSE2 or AVX2 support" OFF)
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
 set(CMAKE_CXX_STANDARD 11)
