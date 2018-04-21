@@ -198,11 +198,7 @@ namespace onmt
       nn::Linear<MatFwd, MatIn, ModelT>* mL = (nn::Linear<MatFwd, MatIn, ModelT>*)M;
       tdict* data = (tdict*)t;
       if (mL->get_weight().rows() == data->_ndict)
-        SubDict::reduce_linearweight(mL->get_weight(),
-                                     mL->get_bias(),
-                                     mL->get_rweight(),
-                                     mL->get_rbias(),
-                                     data->subvocab);
+        mL->apply_subdictionary(data->subvocab);
     }
     return 0;
   }

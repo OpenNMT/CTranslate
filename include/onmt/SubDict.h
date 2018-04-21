@@ -24,14 +24,6 @@ namespace onmt
       return _map_rules.size() == 0;
     }
 
-    /* reduce a linear weigth matrix to a given extract */
-    static void reduce_linearweight(
-      const Eigen::Map<const Eigen::RowMajorMat<float> >& w,
-      const Eigen::Map<const Eigen::RowMajorMat<float> >& b,
-      Eigen::RowMajorMat<float>& rw,
-      Eigen::RowMajorMat<float>& rb,
-      const std::vector<size_t>& v);
-
   private:
     std::vector<std::multimap<std::string, size_t> > _map_rules;
   };

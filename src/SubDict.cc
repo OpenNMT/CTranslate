@@ -90,20 +90,4 @@ namespace onmt
     }
   }
 
-  void SubDict::reduce_linearweight(
-      const Eigen::Map<const Eigen::RowMajorMat<float> >& w,
-      const Eigen::Map<const Eigen::RowMajorMat<float> >& b,
-      Eigen::RowMajorMat<float>& rw,
-      Eigen::RowMajorMat<float>& rb,
-      const std::vector<size_t>& v)
-  {
-    rw.resize(v.size(), w.cols());
-    rb.resize(v.size(), 1);
-    /* build sub-matrix where the number of rows is restricted to rows in row_subset */
-    for (size_t i = 0; i < v.size(); i++) {
-      rw.row(i) = w.row(v[i]);
-      rb.row(i) = b.row(v[i]);
-    }
-  }
-
 }

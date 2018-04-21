@@ -65,19 +65,15 @@ namespace onmt
         return _weight;
       }
 
-      const MatIn& get_bias()
-      {
-        return _bias;
-      }
-
-      Eigen::RowMajorMat<ModelT>& get_rweight()
-      {
-        return _rweight;
-      }
-
-      Eigen::RowMajorMat<ModelT>& get_rbias()
-      {
-        return _rbias;
+      /* reduce a linear weigth matrix to a given vocabulary */
+      void apply_subdictionary(const std::vector<size_t>& v) {
+        _rweight.resize(v.size(), _weight.cols());
+        _rbias.resize(v.size(), 1);
+        /* build sub-matrix where the number of rows is restricted to rows in row_subset */
+        for (size_t i = 0; i < v.size(); i++) {
+          _rweight.row(i) = _weight.row(v[i]);
+          _rbias.row(i) = _bias.row(v[i]);
+        }        
       }
 
     protected:
