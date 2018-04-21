@@ -97,7 +97,7 @@ if (WITH_QLINEAR)
   if(NOT SSE2_TRUE)
         MESSAGE(FATAL_ERROR "Could not find support for SSE2 on this machine.")
   endif(NOT SSE2_TRUE)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWITH_QLINEAR")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWITH_QLINEAR -DSIMD_SSE2")
   list(APPEND SOURCES
     src/simd/SSE2_MatrixMult.cc
   )

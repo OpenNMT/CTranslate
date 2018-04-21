@@ -14,14 +14,19 @@ const float quant_mult = 1000.0;
 // So we must divide by 1.0/(n^2) to get back the original value.
 const float unquant_mult = 1.0 / (quant_mult * quant_mult);
 
+#ifdef SIMD_SSE2
+  #define SIMD_TYPE __m128i
+#else
+  #error "no simd type defined"
+#endif
 
 void Quantize(const float * input,
-              __m128i * output,
+              SIMD_TYPE * output,
               int num_rows,
               int width);
 
-void SSE_MatrixMult(const __m128i * A,
-                    const __m128i * B,
+void SSE_MatrixMult(const SIMD_TYPE * A,
+                    const SIMD_TYPE * B,
                     float * C,
                     int num_A_rows,
                     int num_B_rows,

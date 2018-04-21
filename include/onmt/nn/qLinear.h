@@ -59,8 +59,8 @@ namespace onmt
       }
 
     protected:
-      std::vector<__m128i> _quant_weight;
-      std::vector<__m128i> _quant_input;
+      std::vector<SIMD_TYPE> _quant_weight;
+      std::vector<SIMD_TYPE> _quant_input;
       size_t _wrows, _wcols;
       MatIn _bias;
     };
