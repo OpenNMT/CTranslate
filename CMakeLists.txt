@@ -109,9 +109,6 @@ if (WITH_QLINEAR)
       LIST(APPEND SOURCES
         src/simd/AVX2_MatrixMult.cc
       )
-      IF(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
-      ENDIF()
     MESSAGE(STATUS "Using AVX2 instruction sets")
   ELSEIF(SSE2_TRUE)
       SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWITH_QLINEAR -DSIMD_SSE2")
@@ -122,6 +119,7 @@ if (WITH_QLINEAR)
   ELSE(SSE2_TRUE)
       MESSAGE(FATAL_ERROR "Could not find support for SSE2 on this machine.")
   ENDIF(AVX2_TRUE)
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 endif()
 
 if (MKL_FOUND)
