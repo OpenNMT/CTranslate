@@ -40,11 +40,11 @@ namespace onmt
         Quantize(input.data(), _quant_input.data(), input.rows(), input.cols());
 
         SIMD_MatrixMult(_quant_input.data(), _quant_weight.data(), this->_output.data(),
-                       input.rows(), this->_rwrows || this->_wrows, this->_wcols,
-                       _subdict);
+                        input.rows(), (this->_rwrows?this->_rwrows:this->_wrows), this->_wcols,
+                        _subdict);
 
         /* add bias */
-        if (this->_rbias.rows() > 0) {
+        if (this->_bias.rows() > 0) {
           if (this->_rwrows)
             for (int i = 0; i < input.rows(); ++i)
               this->_output.row(i).noalias() += this->_rbias.transpose();

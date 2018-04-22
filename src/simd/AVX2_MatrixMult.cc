@@ -138,7 +138,7 @@ void SIMD_MatrixMult(const __m256i * A,
             float * C3 = C + (i+2)*num_B_rows + j;
             float * C4 = C + (i+3)*num_B_rows + j;
 
-             _mm_store_ss(C1, _mm_cvtepi32_ps(sum1_128));
+            _mm_store_ss(C1, _mm_cvtepi32_ps(sum1_128));
             *(C1) *= unquant_mult;            
             _mm_store_ss(C2, _mm_cvtepi32_ps(sum2_128));
             *(C2) *= unquant_mult;
