@@ -5,7 +5,7 @@ option(LIB_ONLY "Do not compile clients" OFF)
 option(WITH_OPENMP "Use OpenMP if available" ON)
 option(WITH_CUDA "Use CUDA if available" ON)
 option(WITH_MKL "Use Intel® MKL if available" ON)
-option(WITH_QLINEAR "Add Quantized linear module - required SSE2 or AVX2 support" OFF)
+option(WITH_QLINEAR "Add Quantized linear module, value can be OFF, SSE2 or AVX2" OFF)
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
 set(CMAKE_CXX_STANDARD 11)
@@ -84,42 +84,21 @@ set(LIBRARIES
   TH)
 
 if (WITH_QLINEAR)
-  IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
-     EXEC_PROGRAM(cat ARGS "/proc/cpuinfo" OUTPUT_VARIABLE CPUINFO)
-     STRING(REGEX REPLACE "^.*(sse2).*$" "\\1" SSE_THERE ${CPUINFO})
-     STRING(COMPARE EQUAL "sse2" "${SSE_THERE}" SSE2_TRUE)
-  ELSEIF(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-     EXEC_PROGRAM("/usr/sbin/sysctl -n machdep.cpu" OUTPUT_VARIABLE
-        CPUINFO)
-     STRING(REGEX REPLACE "^.*[^S](SSE2).*$" "\\1" SSE_THERE ${CPUINFO})
-     STRING(COMPARE EQUAL "SSE2" "${SSE_THERE}" SSE2_TRUE)
-  ENDIF()
-  IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
-     EXEC_PROGRAM(cat ARGS "/proc/cpuinfo" OUTPUT_VARIABLE CPUINFO)
-     STRING(REGEX REPLACE "^.*(avx2).*$" "\\1" AVX_THERE ${CPUINFO})
-     STRING(COMPARE EQUAL "avx2" "${AVX_THERE}" AVX2_TRUE)
-  ELSEIF(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-     EXEC_PROGRAM("/usr/sbin/sysctl -n machdep.cpu" OUTPUT_VARIABLE
-        CPUINFO)
-     STRING(REGEX REPLACE "^.*(AVX2).*$" "\\1" AVX_THERE ${CPUINFO})
-     STRING(COMPARE EQUAL "AVX2" "${AVX_THERE}" AVX2_TRUE)
-  ENDIF()
-  IF(AVX2_TRUE)
+  IF(WITH_QLINEAR STREQUAL "AVX2")
       SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWITH_QLINEAR -DSIMD_AVX2")
       LIST(APPEND SOURCES
-        src/simd/AVX2_MatrixMult.cc
+        src/simd/SSE2_MatrixMult.cc
       )
     MESSAGE(STATUS "Using AVX2 instruction sets")
-  ELSEIF(SSE2_TRUE)
+  ELSEIF(WITH_QLINEAR STREQUAL "SSE2")
       SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWITH_QLINEAR -DSIMD_SSE2")
       LIST(APPEND SOURCES
         src/simd/SSE2_MatrixMult.cc
       )
     MESSAGE(STATUS "Using SSE2 instruction sets")
-  ELSE(SSE2_TRUE)
-      MESSAGE(FATAL_ERROR "Could not find support for SSE2 on this machine.")
-  ENDIF(AVX2_TRUE)
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+  ELSE(WITH_QLINEAR STREQUAL "AVX2")
+      MESSAGE(FATAL_ERROR "Incorrect value of WITH_QLINEAR option")
+  ENDIF(WITH_QLINEAR STREQUAL "AVX2")
 endif()
 
 if (MKL_FOUND)

@@ -39,13 +39,13 @@ CTranslate also bundles OpenNMT's [Tokenizer](https://github.com/OpenNMT/Tokeniz
 * To give hints about Eigen location, use the `-DEIGEN3_ROOT=<path to Eigen library>` option.
 * To compile only the library, use the `-DLIB_ONLY=ON` flag.
 * To disable [OpenMP](http://www.openmp.org), use the `-DWITH_OPENMP=OFF` flag.
-* To enable optimization through quantization in matrix multiplications, use the `-DWITH_QLINEAR=ON` flag. Note that this will detect your server SIMD ability (SSE2+, AVX2+, or AVX512) and will activate the corresponding optimizations. You *cannot cross-compile* for a different server with different SIMD instruction sets. Corresponding runtime optimization is done with `--qlinear` option.
+* To enable optimization through quantization in matrix multiplications, use the `-DWITH_QLINEAR=AX2|SSE2` flag (`OFF` by default). Note that this requires hardware supporting these instructions sets. Depending on your compiler you might need to add `-DCMAKE_CXX_FLAGS="-march=native"` to the cmake command (which makes cross-compiling non operational).
 
 ### Performance tips
 
 * Unless you are cross-compiling for a different architecture, add `-DCMAKE_CXX_FLAGS="-march=native"` to the `cmake` command above to optimize for speed.
 * Consider installing [Intel® MKL](https://software.intel.com/en-us/intel-mkl) when you are targetting Intel®-powered platforms. If found, the project will automatically link against it.
-* Consider using quantization option (see above) if your hardware is compatible.
+* Consider using quantization options (see above) if your hardware is compatible.
 
 ## Using
 
