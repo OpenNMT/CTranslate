@@ -43,7 +43,7 @@ namespace onmt
       {
         // See http://docs.nvidia.com/cuda/cublas/#cublas-lt-t-gt-gemm
 
-        const int batch_size = input.rows();
+        const size_t batch_size = input.rows();
         const int input_size = input.cols();
         const int output_size = this->_weight.rows();
 
