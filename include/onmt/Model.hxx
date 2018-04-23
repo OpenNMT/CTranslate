@@ -104,7 +104,7 @@ namespace onmt
   {
     load_networks(th::get_field<th::Table*>(obj, "encoder"), _encoder_modules);
     _encoder_modules[0]->apply(mark_block<MatFwd>, (void*)"encoder_fwd");
-    if (_encoder_modules[1])
+    if (_encoder_modules.size() > 1)
       _encoder_modules[1]->apply(mark_block<MatFwd>, (void*)"encoder_bwd");
     load_networks(th::get_field<th::Table*>(obj, "decoder"), _decoder_modules);
     _decoder_modules[0]->apply(mark_block<MatFwd>, (void*)"decoder");
