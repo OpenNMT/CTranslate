@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include "onmt/nn/Linear.h"
 #include "onmt/th/Obj.h"
 #include "onmt/StorageLoader.h"
@@ -15,17 +16,35 @@ namespace onmt
     {
     public:
       qLinear(th::Table* data)
-        : Linear<MatFwd, MatIn, ModelT>(data)
+        : Linear<MatFwd, MatIn, ModelT>(data), _quant_input_buffer(nullptr)
       {
         // Quantize the weight - ncols=width is supposed to be multiple of SIMD_VSIZE
         if (this->_wcols % SIMD_VSIZE)
           throw std::runtime_error("Weight matrix width should be multiple of 8/16 for qLinear");
-        _quant_weight.resize(this->_wrows * this->_wcols / SIMD_VSIZE);
-        Quantize(this->_weight.data(), _quant_weight.data(), this->_wrows, this->_wcols);
+        _malloc_align(_quant_weight_buffer, _quant_weight, this->_wrows * this->_wcols / SIMD_VSIZE);
+          
+        Quantize(this->_weight.data(), _quant_weight, this->_wrows, this->_wcols);
       }
 
       virtual ~qLinear()
       {
+        free(_quant_weight_buffer);
+        free(_quant_input_buffer);
+      }
+
+      /* aligned allocation method - in c++17 we have aligned_alloc that we can use */
+      void _malloc_align(void *&buffer, SIMD_TYPE *&data, size_t size) {
+        buffer = nullptr;
+        _realloc_align(buffer, data, size);
+      }
+      void _realloc_align(void *&buffer, SIMD_TYPE *&data, size_t size) {
+        size_t buf_size = (size+1) * sizeof(SIMD_TYPE);
+        buffer = realloc(buffer, buf_size);
+        if (!buffer)
+          throw std::runtime_error("Cannot allocate memory");
+        void *ptr = (void*)buffer;
+        std::align(sizeof(SIMD_TYPE), size * sizeof(SIMD_TYPE), ptr, buf_size);
+        data = reinterpret_cast<SIMD_TYPE*>(ptr);
       }
 
       virtual void forward_impl(const MatFwd& input) override
@@ -36,10 +55,10 @@ namespace onmt
           this->_output.resize(input.rows(), this->_wrows);
 
         /* quantize the input */
-        _quant_input.resize(input.rows() * input.cols() / SIMD_VSIZE);
-        Quantize(input.data(), _quant_input.data(), input.rows(), input.cols());
+        _realloc_align(_quant_input_buffer, _quant_input, input.rows() * input.cols() / SIMD_VSIZE);
+        Quantize(input.data(), _quant_input, input.rows(), input.cols());
 
-        SIMD_MatrixMult(_quant_input.data(), _quant_weight.data(), this->_output.data(),
+        SIMD_MatrixMult(_quant_input, _quant_weight, this->_output.data(),
                         input.rows(), (this->_rwrows?this->_rwrows:this->_wrows), this->_wcols,
                         _subdict);
 
@@ -66,8 +85,10 @@ namespace onmt
       }
 
     protected:
-      std::vector<SIMD_TYPE> _quant_weight;
-      std::vector<SIMD_TYPE> _quant_input;
+      void *_quant_weight_buffer;
+      void *_quant_input_buffer;
+      SIMD_TYPE *_quant_weight;
+      SIMD_TYPE *_quant_input;
       std::vector<size_t> _subdict;
     };
 
