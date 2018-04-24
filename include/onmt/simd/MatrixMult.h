@@ -7,14 +7,14 @@
 #include <vector>
 
 // We quantize with 10 bits of precision. This works well "universally".
-// See the top of SSE2_MatricMult.cc for more info on why.
+// See the top of SSE_MatricMult.cc for more info on why.
 const float quant_mult = 1000.0;
 
 // If we quantize to n bits and then multiple the values together, the result will be quantized to n^2 bits.
 // So we must divide by 1.0/(n^2) to get back the original value.
 const float unquant_mult = 1.0 / (quant_mult * quant_mult);
 
-#ifdef SIMD_SSE2
+#ifdef SIMD_SSE
   #define SIMD_TYPE __m128i
   #define SIMD_VSIZE 8
 #elif SIMD_AVX2

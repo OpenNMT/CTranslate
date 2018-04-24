@@ -2,7 +2,7 @@
 
 ### New features
 
-* Add FP16 quantization with SSE2 and AVX2 optimizations
+* Add 16 bits quantization with SSE and AVX2 optimizations
 * Introduce vocabulary mapping to speed-up decoding-up
 * Report profiles per modules block (encoder_fwd, encoder_bwd, decoder, generator)
 
