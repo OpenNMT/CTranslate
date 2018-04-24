@@ -31,6 +31,10 @@
 #  include "onmt/nn/cuLinear.h"
 #endif
 
+#ifdef WITH_QLINEAR
+#  include "onmt/nn/qLinear.h"
+#endif
+
 namespace onmt
 {
   namespace nn
@@ -38,9 +42,10 @@ namespace onmt
 
 
     template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-    ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>::ModuleFactory(Profiler& profiler, bool cuda)
+    ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>::ModuleFactory(Profiler& profiler, bool cuda, bool qlinear)
       : _profiler(profiler)
       , _cuda(cuda)
+      , _qlinear(qlinear)
     {
       if (_cuda)
       {
@@ -48,6 +53,12 @@ namespace onmt
         CUBLAS_CHECK(cublasCreate(&_handle));
 #else
         throw std::runtime_error("CTranslate was not compiled with CUDA support");
+#endif
+      }
+      if (_qlinear)
+      {
+#ifndef WITH_QLINEAR
+        throw std::runtime_error("CTranslate was not compiled with QLINEAR support");
 #endif
       }
     }
@@ -78,6 +89,11 @@ namespace onmt
 #ifdef WITH_CUDA
         if (_cuda)
           mod = new cuLinear<MatFwd, MatIn, ModelT>(data, _handle);
+        else
+#endif
+#ifdef WITH_QLINEAR
+        if (_qlinear)
+          mod = new qLinear<MatFwd, MatIn, ModelT>(data);
         else
 #endif
           mod = new Linear<MatFwd, MatIn, ModelT>(data);

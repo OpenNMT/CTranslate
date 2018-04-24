@@ -16,7 +16,7 @@ namespace onmt
     class ModuleFactory
     {
     public:
-      ModuleFactory(Profiler& profiler, bool cuda);
+      ModuleFactory(Profiler& profiler, bool cuda, bool qlinear);
       ~ModuleFactory();
 
       Module<MatFwd>* build(th::Class* obj);
@@ -25,6 +25,7 @@ namespace onmt
       std::vector<Module<MatFwd>*> _storage;
       Profiler& _profiler;
       bool _cuda;
+      bool _qlinear;
 #ifdef WITH_CUDA
       cublasHandle_t _handle;
 #endif

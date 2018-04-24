@@ -6,8 +6,8 @@ namespace onmt
 {
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-  Model<MatFwd, MatIn, MatEmb, ModelT>::Model(const std::string& filename, Profiler& profiler, bool cuda)
-    : _module_factory(profiler, cuda)
+  Model<MatFwd, MatIn, MatEmb, ModelT>::Model(const std::string& filename, Profiler& profiler, bool cuda, bool qlinear)
+    : _module_factory(profiler, cuda, qlinear)
   {
     THFile* tf = THDiskFile_new(filename.c_str(), "r", 0);
     THFile_binary(tf);

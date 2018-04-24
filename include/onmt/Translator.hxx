@@ -146,9 +146,10 @@ namespace onmt
                                                         size_t max_sent_length,
                                                         size_t beam_size,
                                                         bool cuda,
+                                                        bool qlinear,
                                                         bool profiling)
     : _profiler(profiling)
-    , _model(model, _profiler, cuda)
+    , _model(model, _profiler, cuda, qlinear)
     , _src_dict(_model.get_src_dict())
     , _tgt_dict(_model.get_tgt_dict())
     , _src_feat_dicts(_model.get_src_feat_dicts())
@@ -185,7 +186,7 @@ namespace onmt
     tdict(int n)
       : _ndict(n)
     {}
-    int _ndict;
+    size_t _ndict;
     std::vector<size_t> subvocab;
   };
 
@@ -196,12 +197,8 @@ namespace onmt
     {
       nn::Linear<MatFwd, MatIn, ModelT>* mL = (nn::Linear<MatFwd, MatIn, ModelT>*)M;
       tdict* data = (tdict*)t;
-      if (mL->get_weight().rows() == data->_ndict)
-        SubDict::reduce_linearweight(mL->get_weight(),
-                                     mL->get_bias(),
-                                     mL->get_rweight(),
-                                     mL->get_rbias(),
-                                     data->subvocab);
+      if (mL->get_weight_rows() == data->_ndict)
+        mL->apply_subdictionary(data->subvocab);
     }
     return 0;
   }

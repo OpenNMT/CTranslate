@@ -10,6 +10,7 @@ namespace onmt
                                                         size_t max_sent_length,
                                                         size_t beam_size,
                                                         bool cuda,
+                                                        bool qlinear,
                                                         bool profiling)
   {
     ITranslator* t = nullptr;
@@ -21,6 +22,7 @@ namespace onmt
                                      max_sent_length,
                                      beam_size,
                                      cuda,
+                                     qlinear,
                                      profiling);
 
     return std::unique_ptr<ITranslator>(t);
