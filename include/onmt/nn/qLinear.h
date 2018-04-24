@@ -23,7 +23,7 @@ namespace onmt
         if (this->_wcols % SIMD_VSIZE)
           throw std::runtime_error("Weight matrix width should be multiple of 8/16 for qLinear");
         _malloc_align(_quant_weight_buffer, _quant_weight, this->_wrows * this->_wcols / SIMD_VSIZE);
-        Quantize(this->_weight.data(), _quant_weight, this->_wrows, this->_wcols);
+        simd::Quantize(this->_weight.data(), _quant_weight, this->_wrows, this->_wcols);
       }
 
       virtual ~qLinear()
@@ -59,11 +59,11 @@ namespace onmt
 
         /* quantize the input */
         _realloc_align(_quant_input_buffer, _quant_input, input.rows() * input.cols() / SIMD_VSIZE);
-        Quantize(input.data(), _quant_input, input.rows(), input.cols());
+        simd::Quantize(input.data(), _quant_input, input.rows(), input.cols());
 
-        SIMD_MatrixMult(_quant_input, _quant_weight, this->_output.data(),
-                        input.rows(), (this->_rwrows?this->_rwrows:this->_wrows), this->_wcols,
-                        _subdict);
+        simd::MatrixMult(_quant_input, _quant_weight, this->_output.data(),
+                         input.rows(), (this->_rwrows?this->_rwrows:this->_wrows), this->_wcols,
+                         _subdict);
 
         /* add bias */
         if (this->_bias.rows() > 0)
