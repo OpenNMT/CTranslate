@@ -23,7 +23,6 @@ namespace onmt
         if (this->_wcols % SIMD_VSIZE)
           throw std::runtime_error("Weight matrix width should be multiple of 8/16 for qLinear");
         _malloc_align(_quant_weight_buffer, _quant_weight, this->_wrows * this->_wcols / SIMD_VSIZE);
-          
         Quantize(this->_weight.data(), _quant_weight, this->_wrows, this->_wcols);
       }
 
@@ -34,16 +33,19 @@ namespace onmt
       }
 
       /* aligned allocation method - in c++17 we have aligned_alloc that we can use */
-      void _malloc_align(void *&buffer, SIMD_TYPE *&data, size_t size) {
+      void _malloc_align(void *&buffer, SIMD_TYPE *&data, size_t size)
+      {
         buffer = nullptr;
         _realloc_align(buffer, data, size);
       }
-      void _realloc_align(void *&buffer, SIMD_TYPE *&data, size_t size) {
-        size_t buf_size = (size+1) * sizeof(SIMD_TYPE);
+
+      void _realloc_align(void *&buffer, SIMD_TYPE *&data, size_t size)
+      {
+        size_t buf_size = (size + 1) * sizeof(SIMD_TYPE);
         buffer = realloc(buffer, buf_size);
         if (!buffer)
           throw std::runtime_error("Cannot allocate memory");
-        void *ptr = (void*)buffer;
+        void* ptr = (void*)buffer;
         align(sizeof(SIMD_TYPE), size * sizeof(SIMD_TYPE), ptr, buf_size);
         data = reinterpret_cast<SIMD_TYPE*>(ptr);
       }
@@ -64,7 +66,8 @@ namespace onmt
                         _subdict);
 
         /* add bias */
-        if (this->_bias.rows() > 0) {
+        if (this->_bias.rows() > 0)
+        {
           if (this->_rwrows)
             for (int i = 0; i < input.rows(); ++i)
               this->_output.row(i).noalias() += this->_rbias.transpose();
@@ -75,21 +78,22 @@ namespace onmt
       }
 
       /* reduce a linear weigth matrix to a given vocabulary */
-      virtual void apply_subdictionary(const std::vector<size_t>& v) override {
+      virtual void apply_subdictionary(const std::vector<size_t>& v) override
+      {
         this->_rwrows = v.size();
         _subdict = v;
         this->_rbias.resize(v.size(), 1);
         /* adjust bias */
         for (size_t i = 0; i < v.size(); i++) {
           this->_rbias.row(i) = this->_bias.row(v[i]);
-        }        
+        }
       }
 
     protected:
-      void *_quant_weight_buffer;
-      void *_quant_input_buffer;
-      SIMD_TYPE *_quant_weight;
-      SIMD_TYPE *_quant_input;
+      void* _quant_weight_buffer;
+      void* _quant_input_buffer;
+      SIMD_TYPE* _quant_weight;
+      SIMD_TYPE* _quant_input;
       std::vector<size_t> _subdict;
     };
 

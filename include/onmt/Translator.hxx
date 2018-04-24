@@ -197,7 +197,7 @@ namespace onmt
     {
       nn::Linear<MatFwd, MatIn, ModelT>* mL = (nn::Linear<MatFwd, MatIn, ModelT>*)M;
       tdict* data = (tdict*)t;
-      if (mL->get_weightrows() == data->_ndict)
+      if (mL->get_weight_rows() == data->_ndict)
         mL->apply_subdictionary(data->subvocab);
     }
     return 0;

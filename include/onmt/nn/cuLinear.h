@@ -71,7 +71,8 @@ namespace onmt
         cuda::to_host<float>(_output_device, this->_output.data(), output_size, batch_size);
       }
 
-      virtual void apply_subdictionary(const std::vector<size_t>&) {
+      virtual void apply_subdictionary(const std::vector<size_t>&)
+      {
         throw std::runtime_error("subdictionary not implemented for cuLinear");
       }
 

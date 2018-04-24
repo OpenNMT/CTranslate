@@ -63,21 +63,23 @@ namespace onmt
         return details;
       }
 
-      size_t get_weightrows() const
+      size_t get_weight_rows() const
       {
         return _wrows;
       }
 
       /* reduce the weight matrix to a given vocabulary, v is the list of index to keep */
-      virtual void apply_subdictionary(const std::vector<size_t>& v) {
+      virtual void apply_subdictionary(const std::vector<size_t>& v)
+      {
         _rwrows = v.size();
         _rweight.resize(v.size(), _wcols);
         _rbias.resize(v.size(), 1);
         /* build sub-matrix */
-        for (size_t i = 0; i < v.size(); i++) {
+        for (size_t i = 0; i < v.size(); i++)
+        {
           _rweight.row(i) = _weight.row(v[i]);
           _rbias.row(i) = _bias.row(v[i]);
-        }        
+        }
       }
 
     protected:
