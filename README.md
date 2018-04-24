@@ -18,9 +18,7 @@ CTranslate provides optimized CPU translation and optionally offloads matrix mul
 
 ## Compiling
 
-*CMake and a compiler that supports the C++11 standard are required to compile the project.* 
-
-If you are using GCC - version 5.2+ is also required. 
+*CMake and a compiler that supports the C++11 standard are required to compile the project.*
 
 ```
 git submodule update --init

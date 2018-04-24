@@ -4,6 +4,7 @@
 #include "onmt/nn/Linear.h"
 #include "onmt/th/Obj.h"
 #include "onmt/StorageLoader.h"
+#include "onmt/Utils.h"
 #include "onmt/simd/MatrixMult.h"
 
 namespace onmt
@@ -43,7 +44,7 @@ namespace onmt
         if (!buffer)
           throw std::runtime_error("Cannot allocate memory");
         void *ptr = (void*)buffer;
-        std::align(sizeof(SIMD_TYPE), size * sizeof(SIMD_TYPE), ptr, buf_size);
+        align(sizeof(SIMD_TYPE), size * sizeof(SIMD_TYPE), ptr, buf_size);
         data = reinterpret_cast<SIMD_TYPE*>(ptr);
       }
 
