@@ -87,7 +87,7 @@ if (WITH_QLINEAR)
   IF(WITH_QLINEAR STREQUAL "AVX2")
       SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWITH_QLINEAR -DSIMD_AVX2")
       LIST(APPEND SOURCES
-        src/simd/SSE2_MatrixMult.cc
+        src/simd/AVX2_MatrixMult.cc
       )
     MESSAGE(STATUS "Using AVX2 instruction sets")
   ELSEIF(WITH_QLINEAR STREQUAL "SSE2")
