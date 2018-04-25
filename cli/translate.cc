@@ -3,6 +3,8 @@
 #include <boost/program_options.hpp>
 #include <chrono>
 #include <algorithm>
+#include <thread>
+#include <future>
 
 #include <onmt/onmt.h>
 
@@ -27,6 +29,7 @@ int main(int argc, char* argv[])
     ("max_sent_length", po::value<size_t>()->default_value(250), "maximum sentence length to produce")
     ("time", po::bool_switch()->default_value(false), "output average translation time")
     ("profiler", po::bool_switch()->default_value(false), "output per module computation time")
+    ("parallel", po::value<size_t>()->default_value(1), "number of parallel translator")
     ("threads", po::value<size_t>()->default_value(0), "number of threads to use (set to 0 to use the number defined by OpenMP)")
     ("cuda", po::bool_switch()->default_value(false), "use cuda when available")
     ("qlinear", po::bool_switch()->default_value(false), "use quantized linear for speed-up")
@@ -51,15 +54,19 @@ int main(int argc, char* argv[])
   if (vm["threads"].as<size_t>() > 0)
     onmt::Threads::set(vm["threads"].as<size_t>());
 
-  auto translator = onmt::TranslatorFactory::build(vm["model"].as<std::string>(),
-                                                   vm["phrase_table"].as<std::string>(),
-                                                   vm["vocab_mapping"].as<std::string>(),
-                                                   vm["replace_unk"].as<bool>(),
-                                                   vm["max_sent_length"].as<size_t>(),
-                                                   vm["beam_size"].as<size_t>(),
-                                                   vm["cuda"].as<bool>(),
-                                                   vm["qlinear"].as<bool>(),
-                                                   vm["profiler"].as<bool>());
+  std::vector<std::unique_ptr<onmt::ITranslator>> translator_pool;
+  translator_pool.emplace_back(onmt::TranslatorFactory::build(vm["model"].as<std::string>(),
+                                                              vm["phrase_table"].as<std::string>(),
+                                                              vm["vocab_mapping"].as<std::string>(),
+                                                              vm["replace_unk"].as<bool>(),
+                                                              vm["max_sent_length"].as<size_t>(),
+                                                              vm["beam_size"].as<size_t>(),
+                                                              vm["cuda"].as<bool>(),
+                                                              vm["qlinear"].as<bool>(),
+                                                              vm["profiler"].as<bool>()));
+  for (size_t i = 0; i < vm["parallel"].as<size_t>() - 1; ++i) {
+    translator_pool.emplace_back(onmt::TranslatorFactory::clone(translator_pool.front()));
+  }
 
   std::unique_ptr<BatchReader> reader;
   if (vm.count("src"))
@@ -76,28 +83,35 @@ int main(int argc, char* argv[])
   std::chrono::high_resolution_clock::time_point t1, t2;
 
   double total_time_s = 0;
-  size_t num_sents = 0;
 
-  for (auto batch = reader->read_next(); !batch.empty(); batch = reader->read_next())
+  t1 = std::chrono::high_resolution_clock::now();
+
+  std::vector<std::future<bool>> futures;
+
+  for (auto& trans: translator_pool)
   {
-    if (vm["time"].as<bool>())
-      t1 = std::chrono::high_resolution_clock::now();
-
-    auto trans = translator->translate_batch(batch);
-
-    if (vm["time"].as<bool>())
+    futures.emplace_back(std::async(std::launch::async,
+       [](BatchReader* pReader, BatchWriter* pWriter, onmt::ITranslator *ITrans)
     {
+      while (true) {
+        auto batch = pReader->read_next();
+        if (batch.empty()) return true;
+        auto res = ITrans->translate_batch(batch.get_data());
+        pWriter->write(Batch(res, batch.get_id()));
+      }
+    }, reader.get(), writer.get(), trans.get()));
+  }
+
+  /* wait for all the threads to be complete */
+  for(auto &f: futures)
+    f.wait();
+
+  if (vm["time"].as<bool>())
       t2 = std::chrono::high_resolution_clock::now();
       std::chrono::duration<float> sec = t2 - t1;
       total_time_s += sec.count();
-      num_sents += batch.size();
-    }
-
-    writer->write(trans);
-  }
-
-  if (vm["time"].as<bool>())
-    std::cerr << "avg real\t" << total_time_s / num_sents << std::endl;
+      size_t num_sents = reader->size();
+      std::cerr << "avg real (sentence/s)\t" << total_time_s / num_sents << std::endl;
 
   return 0;
 }

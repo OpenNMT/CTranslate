@@ -48,6 +48,7 @@ CTranslate also bundles OpenNMT's [Tokenizer](https://github.com/OpenNMT/Tokeniz
   * otherwise, select a recent [SIMD extensions](https://gcc.gnu.org/onlinedocs/gcc-5.5.0/gcc/x86-Options.html#x86-Options) to improve performance while meeting portability requirements.
 * Consider installing [Intel® MKL](https://software.intel.com/en-us/intel-mkl) when you are targetting Intel®-powered platforms. If found, the project will automatically link against it.
 * Consider using quantization options as described above.
+* Parallel translation launch parallel translation process, each translation handling `batch` sentences in parallel - while when using `threads` you enable each translator to use multiple threads. If you want to have optimal global throughput for a collection of sentence, favor `parallel` with `thread` to 1. If you want to have optimal response time for a single batch, set `parallel` to 1, and increase `thread`.
 
 ## Using
 
