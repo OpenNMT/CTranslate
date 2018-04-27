@@ -28,4 +28,12 @@ namespace onmt
     return std::unique_ptr<ITranslator>(t);
   }
 
+  std::unique_ptr<ITranslator>
+  TranslatorFactory::clone(const std::unique_ptr<ITranslator>& translator)
+  {
+    ITranslator* t = new DefaultTranslator<float>(
+      dynamic_cast<const DefaultTranslator<float>&>(*translator));
+    return std::unique_ptr<ITranslator>(t);
+  }
+
 }

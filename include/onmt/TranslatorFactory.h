@@ -19,6 +19,8 @@ namespace onmt
                                               bool cuda = false,
                                               bool qlinear = false,
                                               bool profiling = false);
+
+    static std::unique_ptr<ITranslator> clone(const std::unique_ptr<ITranslator>& translator);
   };
 
 }

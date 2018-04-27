@@ -148,22 +148,49 @@ namespace onmt
                                                         bool cuda,
                                                         bool qlinear,
                                                         bool profiling)
-    : _profiler(profiling)
-    , _model(model, _profiler, cuda, qlinear)
-    , _src_dict(_model.get_src_dict())
-    , _tgt_dict(_model.get_tgt_dict())
-    , _src_feat_dicts(_model.get_src_feat_dicts())
-    , _tgt_feat_dicts(_model.get_tgt_feat_dicts())
-    , _phrase_table(phrase_table)
-    , _subdict(vocab_mapping, _tgt_dict)
+    : _model(new Model<MatFwd, MatIn, MatEmb, ModelT>(model))
+    , _phrase_table(new PhraseTable(phrase_table))
+    , _subdict(new SubDict(vocab_mapping, _model->get_tgt_dict()))
+    , _cuda(cuda)
+    , _profiling(profiling)
+    , _qlinear(qlinear)
+    , _profiler(profiling)
     , _replace_unk(replace_unk)
     , _max_sent_length(max_sent_length)
     , _beam_size(beam_size)
-    , _encoder(_model.get_encoder_module(0))
-    , _encoder_bwd(_model.get_encoder_module(1))
-    , _decoder(_model.get_decoder_module(0))
-    , _generator(_model.get_decoder_module(1))
+    , _factory(_profiler, cuda, qlinear)
   {
+    init_graph();
+  }
+
+  template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
+  Translator<MatFwd, MatIn, MatEmb, ModelT>::Translator(
+    const Translator<MatFwd, MatIn, MatEmb, ModelT>& other)
+    : _model(other._model)
+    , _phrase_table(other._phrase_table)
+    , _subdict(other._subdict)
+    , _cuda(other._cuda)
+    , _profiling(other._profiling)
+    , _qlinear(other._qlinear)
+    , _profiler(_profiling)
+    , _replace_unk(other._replace_unk)
+    , _max_sent_length(other._max_sent_length)
+    , _beam_size(other._beam_size)
+    , _factory(_profiler, _cuda, _qlinear)
+  {
+    init_graph();
+  }
+
+  template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
+  void Translator<MatFwd, MatIn, MatEmb, ModelT>::init_graph()
+  {
+    std::vector<nn::Module<MatFwd>*> encoder;
+    std::vector<nn::Module<MatFwd>*> decoder;
+    _model->create_graph(_factory, encoder, decoder);
+    _encoder = encoder[0];
+    _encoder_bwd = encoder.size() > 1 ? encoder[1] : nullptr;
+    _decoder = decoder[0];
+    _generator = decoder[1];
   }
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
@@ -259,12 +286,12 @@ namespace onmt
     std::vector<std::vector<size_t> > batch_ids;
     std::vector<std::vector<std::vector<size_t> > > batch_feat_ids;
 
-    tdict data(_tgt_dict.get_size());
-    if (!_subdict.empty())
+    tdict data(_model->get_tgt_dict().get_size());
+    if (!_subdict->empty())
     {
       std::set<size_t> e;
       for (const auto& it: batch_tokens)
-        _subdict.extract(it, e);
+        _subdict->extract(it, e);
       /* convert into vector */
       for (auto idx: e)
         data.subvocab.push_back(idx);
@@ -274,26 +301,26 @@ namespace onmt
 
     for (size_t b = 0; b < batch_size; ++b)
     {
-      batch_ids.push_back(words_to_ids(_src_dict, batch_tokens[b]));
+      batch_ids.push_back(words_to_ids(_model->get_src_dict(), batch_tokens[b]));
 
-      if (_src_feat_dicts.size() != batch_features[b].size())
+      if (_model->get_src_feat_dicts().size() != batch_features[b].size())
         throw std::runtime_error("expected "
-                                 + std::to_string(_src_feat_dicts.size())
+                                 + std::to_string(_model->get_src_feat_dicts().size())
                                  + " word feature(s), got "
                                  + std::to_string(batch_features[b].size())
                                  + " instead");
-      else if (_src_feat_dicts.size() > 0)
+      else if (_model->get_src_feat_dicts().size() > 0)
       {
         batch_feat_ids.emplace_back();
-        for (size_t j = 0; j < _src_feat_dicts.size(); ++j)
-          batch_feat_ids[b].push_back(words_to_ids(_src_feat_dicts[j], batch_features[b][j]));
+        for (size_t j = 0; j < _model->get_src_feat_dicts().size(); ++j)
+          batch_feat_ids[b].push_back(words_to_ids(_model->get_src_feat_dicts()[j], batch_features[b][j]));
       }
     }
 
     // Pad inputs to the left.
     size_t source_l = pad_inputs(batch_ids, Dictionary::pad_id, _max_sent_length);
 
-    for (size_t j = 0; j < _src_feat_dicts.size(); ++j)
+    for (size_t j = 0; j < _model->get_src_feat_dicts().size(); ++j)
     {
       for (size_t b = 0; b < batch_size; ++b)
         pad_input(batch_feat_ids[b][j], Dictionary::pad_id, source_l);
@@ -324,12 +351,12 @@ namespace onmt
       input.push_back(rnn_state_enc[l]);
 
     // Words and features
-    input.emplace_back(batch_size, 1 + _src_feat_dicts.size());
+    input.emplace_back(batch_size, 1 + _model->get_src_feat_dicts().size());
     for (size_t b = 0; b < batch_size; ++b)
     {
       input.back()(b, 0) = batch_ids[b][t];
 
-      for (size_t j = 0; j < _src_feat_dicts.size(); ++j)
+      for (size_t j = 0; j < _model->get_src_feat_dicts().size(); ++j)
         input.back()(b, j + 1) = batch_feat_ids[b][j][t];
     }
 
@@ -348,10 +375,10 @@ namespace onmt
     size_t batch_size = batch_ids.size();
     size_t source_l = batch_ids[0].size();
 
-    size_t num_layers = _model.template get_option_value<size_t>("layers");
-    size_t rnn_size = _model.template get_option_value<size_t>("rnn_size");
-    bool brnn = _model.get_option_string("encoder_type") == "brnn" || _model.get_option_flag("brnn");
-    const std::string& brnn_merge = _model.get_option_string("brnn_merge");
+    size_t num_layers = _model->template get_option_value<size_t>("layers");
+    size_t rnn_size = _model->template get_option_value<size_t>("rnn_size");
+    bool brnn = _model->get_option_string("encoder_type") == "brnn" || _model->get_option_flag("brnn");
+    const std::string& brnn_merge = _model->get_option_string("brnn_merge");
 
     if (brnn && brnn_merge == "concat")
       rnn_size /= 2;
@@ -453,8 +480,8 @@ namespace onmt
   {
     size_t batch_size = batch_tokens.size();
 
-    size_t rnn_size = _model.template get_option_value<size_t>("rnn_size");
-    bool with_input_feeding = _model.get_option_flag("input_feed", true);
+    size_t rnn_size = _model->template get_option_value<size_t>("rnn_size");
+    bool with_input_feeding = _model->get_option_flag("input_feed", true);
 
     MatFwd context_dec = context.replicate(_beam_size, 1);
     context_dec.setHiddenDim(source_l);
@@ -494,11 +521,11 @@ namespace onmt
       std::vector<float> scores1(_beam_size, 0.0);
       scores.emplace_back(1, scores1);
 
-      if (_tgt_feat_dicts.size() > 0)
+      if (_model->get_tgt_feat_dicts().size() > 0)
       {
         next_features.emplace_back();
         next_features.back().emplace_back();
-        for (size_t j = 0; j < _tgt_feat_dicts.size(); ++j)
+        for (size_t j = 0; j < _model->get_tgt_feat_dicts().size(); ++j)
         {
           std::vector<size_t> in_feat1(_beam_size, Dictionary::pad_id);
           in_feat1[0] = Dictionary::eos_id;
@@ -537,7 +564,7 @@ namespace onmt
         input.push_back(rnn_state_dec[l]);
 
       // Words and features.
-      input.emplace_back(_beam_size * remaining_sents, 1 + _tgt_feat_dicts.size());
+      input.emplace_back(_beam_size * remaining_sents, 1 + _model->get_tgt_feat_dicts().size());
       for (size_t b = 0; b < batch_size; ++b)
       {
         if (done[b])
@@ -549,7 +576,7 @@ namespace onmt
         {
           input.back()(get_offset(idx, k, remaining_sents), 0) = next_ys[b][i-1][k];
 
-          for (size_t j = 0; j < _tgt_feat_dicts.size(); ++j)
+          for (size_t j = 0; j < _model->get_tgt_feat_dicts().size(); ++j)
             input.back()(get_offset(idx, k, remaining_sents), j + 1) = next_features[b][i-1][j][k];
         }
 
@@ -686,10 +713,10 @@ namespace onmt
           out.row(from_beam_offset)(best_score_id) = -std::numeric_limits<float>::max();
         }
 
-        if (_tgt_feat_dicts.size() > 0)
+        if (_model->get_tgt_feat_dicts().size() > 0)
         {
           next_features[b].emplace_back();
-          for (size_t j = 0; j < _tgt_feat_dicts.size(); ++j)
+          for (size_t j = 0; j < _model->get_tgt_feat_dicts().size(); ++j)
           {
             next_features[b][i].emplace_back();
             for (size_t k = 0; k < _beam_size; ++k)
@@ -811,7 +838,7 @@ namespace onmt
 
       tgt_ids.resize(len - 2); // Ignore <s> and </s>.
 
-      for (size_t f = 0; f < _tgt_feat_dicts.size(); ++f)
+      for (size_t f = 0; f < _model->get_tgt_feat_dicts().size(); ++f)
         tgt_feat_ids.emplace_back(len - 2, 0);
       for (size_t l = 0; l < len - 2; ++l)
         attention.emplace_back(batch_tokens[b].size(), 0);
@@ -826,24 +853,24 @@ namespace onmt
           size_t pad_length = source_l - batch_tokens[b].size();
           attention[j - 2][l] = all_attention[b][j - 1](k, l + pad_length);
         }
-        for (size_t f = 0; f < _tgt_feat_dicts.size(); ++f)
+        for (size_t f = 0; f < _model->get_tgt_feat_dicts().size(); ++f)
           tgt_feat_ids[f][j - 2] = next_features[b][j][f][k];
       }
 
       batch_attention.push_back(attention);
 
       if (_replace_unk)
-        batch_tgt_tokens.push_back(ids_to_words_replace(_tgt_dict,
-                                                         _phrase_table,
-                                                         tgt_ids,
-                                                         batch_tokens[b],
-                                                         attention));
+        batch_tgt_tokens.push_back(ids_to_words_replace(_model->get_tgt_dict(),
+                                                        *_phrase_table,
+                                                        tgt_ids,
+                                                        batch_tokens[b],
+                                                        attention));
       else
-        batch_tgt_tokens.push_back(ids_to_words(_tgt_dict, tgt_ids));
+        batch_tgt_tokens.push_back(ids_to_words(_model->get_tgt_dict(), tgt_ids));
 
       batch_tgt_features.emplace_back();
-      for (size_t f = 0; f < _tgt_feat_dicts.size(); ++f)
-        batch_tgt_features[b].push_back(ids_to_words(_tgt_feat_dicts[f], tgt_feat_ids[f]));
+      for (size_t f = 0; f < _model->get_tgt_feat_dicts().size(); ++f)
+        batch_tgt_features[b].push_back(ids_to_words(_model->get_tgt_feat_dicts()[f], tgt_feat_ids[f]));
     }
 
     return TranslationResult(batch_tgt_tokens, batch_tgt_features, batch_attention);

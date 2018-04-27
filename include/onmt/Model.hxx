@@ -6,8 +6,7 @@ namespace onmt
 {
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-  Model<MatFwd, MatIn, MatEmb, ModelT>::Model(const std::string& filename, Profiler& profiler, bool cuda, bool qlinear)
-    : _module_factory(profiler, cuda, qlinear)
+  Model<MatFwd, MatIn, MatEmb, ModelT>::Model(const std::string& filename)
   {
     THFile* tf = THDiskFile_new(filename.c_str(), "r", 0);
     THFile_binary(tf);
@@ -17,11 +16,10 @@ namespace onmt
 
     THFile_free(tf);
 
-    th::Table* main = dynamic_cast<th::Table*>(obj);
+    _root = dynamic_cast<th::Table*>(obj);
 
-    load_options(th::get_field<th::Table*>(main, "options"));
-    load_dictionaries(th::get_field<th::Table*>(main, "dicts"));
-    load_networks(th::get_field<th::Table*>(main, "models"));
+    load_options(th::get_field<th::Table*>(_root, "options"));
+    load_dictionaries(th::get_field<th::Table*>(_root, "dicts"));
   }
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
@@ -75,8 +73,10 @@ namespace onmt
   }
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-  void Model<MatFwd, MatIn, MatEmb, ModelT>::load_networks(th::Table* obj,
-                                                           std::vector<nn::Module<MatFwd>*>& modules)
+  void Model<MatFwd, MatIn, MatEmb, ModelT>::load_modules(
+    th::Table* obj,
+    std::vector<nn::Module<MatFwd>*>& modules,
+    nn::ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& module_factory) const
   {
     auto modules_set = th::get_field<th::Table*>(obj, "modules");
     auto modules_data = modules_set->get_array();
@@ -86,9 +86,9 @@ namespace onmt
       th::Class* mod = dynamic_cast<th::Class*>(module);
 
       if (mod)
-        modules.push_back(_module_factory.build(mod));
+        modules.push_back(module_factory.build(mod));
       else if (dynamic_cast<th::Table*>(module))
-        load_networks(dynamic_cast<th::Table*>(module), modules);
+        load_modules(dynamic_cast<th::Table*>(module), modules, module_factory);
     }
   }
 
@@ -100,36 +100,20 @@ namespace onmt
   }
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-  void Model<MatFwd, MatIn, MatEmb, ModelT>::load_networks(th::Table* obj)
+  void Model<MatFwd, MatIn, MatEmb, ModelT>::create_graph(
+    nn::ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory,
+    std::vector<nn::Module<MatFwd>*>& encoder,
+    std::vector<nn::Module<MatFwd>*>& decoder)
   {
-    load_networks(th::get_field<th::Table*>(obj, "encoder"), _encoder_modules);
-    _encoder_modules[0]->apply(mark_block<MatFwd>, (void*)"encoder_fwd");
-    if (_encoder_modules.size() > 1)
-      _encoder_modules[1]->apply(mark_block<MatFwd>, (void*)"encoder_bwd");
-    load_networks(th::get_field<th::Table*>(obj, "decoder"), _decoder_modules);
-    _decoder_modules[0]->apply(mark_block<MatFwd>, (void*)"decoder");
-    _decoder_modules[1]->apply(mark_block<MatFwd>, (void*)"generator");
-  }
+    auto models = th::get_field<th::Table*>(_root, "models");
+    load_modules(th::get_field<th::Table*>(models, "encoder"), encoder, factory);
+    load_modules(th::get_field<th::Table*>(models, "decoder"), decoder, factory);
 
-  template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-  nn::Module<MatFwd>* Model<MatFwd, MatIn, MatEmb, ModelT>::get_module(size_t index,
-                                                                       std::vector<nn::Module<MatFwd>*>& modules)
-  {
-    if (index < modules.size())
-      return modules[index];
-    return nullptr;
-  }
-
-  template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-  nn::Module<MatFwd>* Model<MatFwd, MatIn, MatEmb, ModelT>::get_encoder_module(size_t index)
-  {
-    return get_module(index, _encoder_modules);
-  }
-
-  template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-  nn::Module<MatFwd>* Model<MatFwd, MatIn, MatEmb, ModelT>::get_decoder_module(size_t index)
-  {
-    return get_module(index, _decoder_modules);
+    encoder[0]->apply(mark_block<MatFwd>, (void*)"encoder_fwd");
+    if (encoder.size() > 1)
+      encoder[1]->apply(mark_block<MatFwd>, (void*)"encoder_bwd");
+    decoder[0]->apply(mark_block<MatFwd>, (void*)"decoder");
+    decoder[1]->apply(mark_block<MatFwd>, (void*)"generator");
   }
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
