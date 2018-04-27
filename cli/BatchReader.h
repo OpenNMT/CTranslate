@@ -18,7 +18,7 @@ private:
   std::ifstream _file;
   std::istream& _in;
   size_t _batch_size;
-  int _batch_id;
+  size_t _batch_id;
   size_t _read_size;
   std::mutex _reader_mutex;
 };
