@@ -13,10 +13,11 @@ namespace onmt
   class Model
   {
   public:
-    Model(const std::string& filename, Profiler& profiler, bool cuda, bool qlinear);
+    Model(const std::string& filename);
 
-    nn::Module<MatFwd>* get_encoder_module(size_t index);
-    nn::Module<MatFwd>* get_decoder_module(size_t index);
+    void create_graph(nn::ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory,
+                      std::vector<nn::Module<MatFwd>*>& encoder,
+                      std::vector<nn::Module<MatFwd>*>& decoder);
 
     const Dictionary& get_src_dict() const;
     const Dictionary& get_tgt_dict() const;
@@ -29,22 +30,17 @@ namespace onmt
     template <typename T = double>
     T get_option_value(const std::string& key, T default_value = 0) const;
 
-    void enable_profiling();
-
   private:
-    nn::Module<MatFwd>* get_module(size_t index, std::vector<nn::Module<MatFwd>*>& modules);
-
     void load_options(th::Table* obj);
     void load_dictionaries(th::Table* obj, Dictionary& words, std::vector<Dictionary>& features);
     void load_dictionaries(th::Table* obj);
-    void load_networks(th::Table* obj, std::vector<nn::Module<MatFwd>*>& modules);
-    void load_networks(th::Table* obj);
+
+    void load_modules(th::Table* obj,
+                      std::vector<nn::Module<MatFwd>*>& modules,
+                      nn::ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& module_factory) const;
 
     th::Env _env;
-    nn::ModuleFactory<MatFwd, MatIn, MatEmb, ModelT> _module_factory;
-
-    std::vector<nn::Module<MatFwd>*> _encoder_modules;
-    std::vector<nn::Module<MatFwd>*> _decoder_modules;
+    th::Table* _root;
 
     Dictionary _src_dict;
     Dictionary _tgt_dict;

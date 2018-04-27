@@ -17,7 +17,7 @@ namespace onmt
     SubDict(const std::string& map_file, const Dictionary& dict);
 
     /* given a sequence of words, extract sub-dictionary */
-    void extract(const std::vector<std::string>& words, std::set<size_t>& r);
+    void extract(const std::vector<std::string>& words, std::set<size_t>& r) const;
 
     bool empty() const
     {

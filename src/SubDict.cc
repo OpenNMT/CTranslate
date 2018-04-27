@@ -56,7 +56,7 @@ namespace onmt
     }
   }
 
-  void SubDict::extract(const std::vector<std::string>& words, std::set<size_t>& r)
+  void SubDict::extract(const std::vector<std::string>& words, std::set<size_t>& r) const
   {
     std::multimap<std::string, size_t>::const_iterator it;
 

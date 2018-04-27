@@ -41,15 +41,18 @@ namespace onmt
                bool cuda,
                bool qlinear,
                bool profiling);
+    Translator(const Translator& other);
+
+    // Members shared accross translator instances.
+    std::shared_ptr<Model<MatFwd, MatIn, MatEmb, ModelT>> _model;
+    std::shared_ptr<const PhraseTable> _phrase_table;
+    std::shared_ptr<const SubDict> _subdict;
+
+    bool _cuda;
+    bool _profiling;
+    bool _qlinear;
 
     Profiler _profiler;
-    Model<MatFwd, MatIn, MatEmb, ModelT> _model;
-    const Dictionary& _src_dict;
-    const Dictionary& _tgt_dict;
-    const std::vector<Dictionary>& _src_feat_dicts;
-    const std::vector<Dictionary>& _tgt_feat_dicts;
-    PhraseTable _phrase_table;
-    SubDict _subdict;
     bool _replace_unk;
     size_t _max_sent_length;
     size_t _beam_size;
@@ -75,6 +78,9 @@ namespace onmt
            const std::vector<size_t>& subvocab);
 
   private:
+    void init_graph();
+
+    nn::ModuleFactory<MatFwd, MatIn, MatEmb, ModelT> _factory;
     nn::Module<MatFwd>* _encoder;
     nn::Module<MatFwd>* _encoder_bwd;
     nn::Module<MatFwd>* _decoder;
