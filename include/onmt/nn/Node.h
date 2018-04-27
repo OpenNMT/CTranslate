@@ -75,6 +75,11 @@ namespace onmt
 
       void* apply(void* (*func)(Module<MatFwd>*, void*), void* data)
       {
+        if (_visited)
+          return nullptr;
+
+        _visited = true;
+
         if (_module)
           _module->apply(func, data);
 
@@ -158,6 +163,11 @@ namespace onmt
               child->forward(_output, final_output, this);
           }
         }
+      }
+
+      void set_unvisited()
+      {
+        _visited = false;
       }
 
     private:

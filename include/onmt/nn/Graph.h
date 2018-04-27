@@ -41,12 +41,21 @@ namespace onmt
 
       void* apply(void* (*func)(Module<MatFwd>*, void*), void* data) override
       {
-        return _root.apply(func, data);
+        for(auto &it: _node_map)
+          it.second.set_unvisited();
+
+        func(this, data);
+
+        _root.apply(func, data);
+        return nullptr;
       }
 
       // Dump the graph in the DOT format.
       void to_dot(const std::string& file, const std::string& name)
       {
+        for(auto &it: _node_map)
+          it.second.set_unvisited();
+
         std::ofstream out(file.c_str());
         out << "digraph " << name << " {" << std::endl;
         _root.to_dot(out);

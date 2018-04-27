@@ -148,37 +148,39 @@ namespace onmt
                                                         bool cuda,
                                                         bool qlinear,
                                                         bool profiling)
-    : _model(new Model<MatFwd, MatIn, MatEmb, ModelT>(model))
+    : _profiling(profiling)
+    , _profiler(profiling, true)
+    , _model(new Model<MatFwd, MatIn, MatEmb, ModelT>(model))
     , _phrase_table(new PhraseTable(phrase_table))
     , _subdict(new SubDict(vocab_mapping, _model->get_tgt_dict()))
     , _cuda(cuda)
-    , _profiling(profiling)
     , _qlinear(qlinear)
-    , _profiler(profiling)
     , _replace_unk(replace_unk)
     , _max_sent_length(max_sent_length)
     , _beam_size(beam_size)
     , _factory(_profiler, cuda, qlinear)
   {
     init_graph();
+    _profiler.stop("Initialization");
   }
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
   Translator<MatFwd, MatIn, MatEmb, ModelT>::Translator(
     const Translator<MatFwd, MatIn, MatEmb, ModelT>& other)
-    : _model(other._model)
+    : _profiling(other._profiling)
+    , _profiler(_profiling, true)
+    , _model(other._model)
     , _phrase_table(other._phrase_table)
     , _subdict(other._subdict)
     , _cuda(other._cuda)
-    , _profiling(other._profiling)
     , _qlinear(other._qlinear)
-    , _profiler(_profiling)
     , _replace_unk(other._replace_unk)
     , _max_sent_length(other._max_sent_length)
     , _beam_size(other._beam_size)
     , _factory(_profiler, _cuda, _qlinear)
   {
     init_graph();
+    _profiler.stop("Initialization");
   }
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>

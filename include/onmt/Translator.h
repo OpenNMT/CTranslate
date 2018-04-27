@@ -43,16 +43,18 @@ namespace onmt
                bool profiling);
     Translator(const Translator& other);
 
+    /* profiling - starting first to profile load time */
+    bool _profiling;
+    Profiler _profiler;
+
     // Members shared accross translator instances.
     std::shared_ptr<Model<MatFwd, MatIn, MatEmb, ModelT>> _model;
     std::shared_ptr<const PhraseTable> _phrase_table;
     std::shared_ptr<const SubDict> _subdict;
 
     bool _cuda;
-    bool _profiling;
     bool _qlinear;
 
-    Profiler _profiler;
     bool _replace_unk;
     size_t _max_sent_length;
     size_t _beam_size;

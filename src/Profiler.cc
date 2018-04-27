@@ -5,10 +5,19 @@
 
 namespace onmt
 {
+  int Profiler::_counter = 0;
+  std::mutex Profiler::_profiler_mutex;
 
-  Profiler::Profiler(bool enabled)
+  Profiler::Profiler(bool enabled, bool start_chrono)
     : _enabled(enabled)
+    , _total_time(std::chrono::microseconds::zero())
   {
+    if (start_chrono)
+      start();
+    reset();
+    /* assign unique id */
+    std::lock_guard<std::mutex> lock(_profiler_mutex);
+    _id = ++_counter;
   }
 
   Profiler::~Profiler()
@@ -31,8 +40,12 @@ namespace onmt
 
   void Profiler::reset()
   {
-    _total_time = std::chrono::microseconds::zero();
     _cumulated.clear();
+  }
+
+  int Profiler::get_id() const
+  {
+    return _id;
   }
 
   void Profiler::start()
@@ -57,6 +70,7 @@ namespace onmt
 
   std::ostream& operator<<(std::ostream& os, const Profiler& profiler)
   {
+      std::lock_guard<std::mutex> lock(Profiler::_profiler_mutex);
     // Sort accumulated time.
     std::vector<std::pair<std::string, std::chrono::microseconds> > samples;
     for (const auto& sample: profiler._cumulated)
@@ -71,7 +85,9 @@ namespace onmt
 
     for (auto it: samples)
     {
-      os << it.first
+      os << "[" << profiler.get_id() << "]" 
+         << '\t'
+         << it.first
          << '\t'
          << static_cast<double>(it.second.count()) / 1000 << "ms"
          << '\t'
