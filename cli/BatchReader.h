@@ -12,13 +12,17 @@ public:
   BatchReader(std::istream& in, size_t batch_size);
 
   Batch read_next();
-  size_t size() const { return _read_size; }
+
+  size_t read_lines() const
+  {
+    return _read_lines;
+  }
 
 private:
   std::ifstream _file;
   std::istream& _in;
   size_t _batch_size;
   size_t _batch_id;
-  size_t _read_size;
+  size_t _read_lines;
   std::mutex _reader_mutex;
 };

@@ -115,7 +115,7 @@ int main(int argc, char* argv[])
   {
     t2 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<float> sec = t2 - t1;
-    size_t num_sents = reader->size();
+    size_t num_sents = reader->read_lines();
     std::cerr << "avg real (sentence/s)\t" << sec.count() / num_sents << std::endl;
   }
 
