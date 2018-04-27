@@ -6,6 +6,7 @@
 * Introduce vocabulary mapping to speed-up decoding-up
 * Report profiles per modules block (encoder_fwd, encoder_bwd, decoder, generator)
 * Support cloning a `Translator` while sharing the model data
+* Translate batches in parallel via `cli/translate`
 
 ### Fixes and improvements
 
