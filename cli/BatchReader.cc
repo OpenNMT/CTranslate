@@ -12,16 +12,18 @@ BatchReader::BatchReader(const std::string& file, size_t batch_size)
 BatchReader::BatchReader(std::istream& in, size_t batch_size)
   : _in(in)
   , _batch_size(batch_size)
+  , _batch_id(0)
+  , _read_size(0)
 {
 }
 
 Batch BatchReader::read_next()
 {
-  std::lock_guard<std::mutex> lock(_readerMutex);
+  std::lock_guard<std::mutex> lock(_reader_mutex);
   std::vector<std::string> batch;
 
   if (_in.eof())
-    return Batch();
+    return Batch(batch, ++_batch_id);
 
   batch.reserve(_batch_size);
 

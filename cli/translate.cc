@@ -82,36 +82,42 @@ int main(int argc, char* argv[])
 
   std::chrono::high_resolution_clock::time_point t1, t2;
 
-  double total_time_s = 0;
-
-  t1 = std::chrono::high_resolution_clock::now();
+  if (vm["time"].as<bool>())
+    t1 = std::chrono::high_resolution_clock::now();
 
   std::vector<std::future<bool>> futures;
 
-  for (auto& trans: translator_pool)
+  for (auto& translator: translator_pool)
   {
-    futures.emplace_back(std::async(std::launch::async,
-       [](BatchReader* pReader, BatchWriter* pWriter, onmt::ITranslator *ITrans)
-    {
-      while (true) {
-        auto batch = pReader->read_next();
-        if (batch.empty()) return true;
-        auto res = ITrans->translate_batch(batch.get_data());
-        pWriter->write(Batch(res, batch.get_id()));
-      }
-    }, reader.get(), writer.get(), trans.get()));
+    futures.emplace_back(
+      std::async(std::launch::async,
+                 [](BatchReader* p_reader, BatchWriter* p_writer, onmt::ITranslator* p_trans)
+                 {
+                   while (true)
+                   {
+                     auto batch = p_reader->read_next();
+                     if (batch.empty())
+                       break;
+                     auto res = p_trans->translate_batch(batch.get_data());
+                     p_writer->write(Batch(res, batch.get_id()));
+                   }
+                   return true;
+                 },
+                 reader.get(),
+                 writer.get(),
+                 translator.get()));
   }
 
-  /* wait for all the threads to be complete */
-  for(auto &f: futures)
+  for (auto& f: futures)
     f.wait();
 
   if (vm["time"].as<bool>())
-      t2 = std::chrono::high_resolution_clock::now();
-      std::chrono::duration<float> sec = t2 - t1;
-      total_time_s += sec.count();
-      size_t num_sents = reader->size();
-      std::cerr << "avg real (sentence/s)\t" << total_time_s / num_sents << std::endl;
+  {
+    t2 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<float> sec = t2 - t1;
+    size_t num_sents = reader->size();
+    std::cerr << "avg real (sentence/s)\t" << sec.count() / num_sents << std::endl;
+  }
 
   return 0;
 }

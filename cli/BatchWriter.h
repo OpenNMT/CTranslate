@@ -19,6 +19,5 @@ private:
   std::ostream& _out;
   std::map<size_t, std::vector<std::string>> _pending_batches;
   size_t _last_batch_id;
-  std::mutex _writerMutex;
-
+  std::mutex _writer_mutex;
 };
