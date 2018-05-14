@@ -85,7 +85,13 @@ namespace onmt
       }
     }
 
-    void MatrixMult(const __m512i * A, const __m512i * B, float * C, int num_A_rows, int num_B_rows, int width)
+    void MatrixMult(const __m512i * A,
+                    const __m512i * B,
+                    float * C,
+                    int num_A_rows,
+                    int num_B_rows,
+                    int width,
+                    const std::vector<size_t> &subdict)
     {
         assert(width % 32 == 0);
 
