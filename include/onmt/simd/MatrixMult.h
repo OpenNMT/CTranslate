@@ -12,6 +12,9 @@
 #elif SIMD_AVX2
 # define SIMD_TYPE __m256i
 # define SIMD_VSIZE 16
+#elif SIMD_AVX512
+# define SIMD_TYPE __m512i
+# define SIMD_VSIZE 32
 #else
 # error "no simd type defined"
 #endif
