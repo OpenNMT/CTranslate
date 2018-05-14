@@ -37,8 +37,8 @@ CTranslate also bundles OpenNMT's [Tokenizer](https://github.com/OpenNMT/Tokeniz
 * To give hints about Eigen location, use the `-DEIGEN3_ROOT=<path to Eigen library>` option.
 * To compile only the library, use the `-DLIB_ONLY=ON` flag.
 * To disable [OpenMP](http://www.openmp.org), use the `-DWITH_OPENMP=OFF` flag.
-* To enable optimization through quantization in matrix multiplications, use the `-DWITH_QLINEAR=AX2|SSE` flag (`OFF` by default) and set the appropriate extended instructions set via `-DCMAKE_CXX_FLAGS`:
-  * `-DWITH_QLINEAR=AX2` requires at least `-mavx2`
+* To enable optimization through quantization in matrix multiplications, use the `-DWITH_QLINEAR=AVX2|SSE` flag (`OFF` by default) and set the appropriate extended instructions set via `-DCMAKE_CXX_FLAGS`:
+  * `-DWITH_QLINEAR=AVX2` requires at least `-mavx2`
   * `-DWITH_QLINEAR=SSE` requires at least `-mssse3`
 
 ### Performance tips
