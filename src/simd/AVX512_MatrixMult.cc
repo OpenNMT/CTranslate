@@ -100,7 +100,8 @@ namespace onmt
             const __m512i * A4_row = A + (i+3) * avx_width;
 
             for (int j = 0; j < num_B_rows; j++) {
-                const __m512i * B_row = B + j * avx_width;
+                int B_row_idx = subdict.size() ? subdict[j] : j;
+                const __m512i * B_row = B + B_row_idx * avx_width;
 
                 __m512i sum1 = _mm512_setzero_si512();
                 __m512i sum2 = _mm512_setzero_si512();
@@ -147,7 +148,8 @@ namespace onmt
           const __m512i * A3_row = A + (i+2) * avx_width;
 
           for (int j = 0; j < num_B_rows; j++) {
-            const __m512i * B_row = B + j * avx_width;
+            int B_row_idx = subdict.size() ? subdict[j] : j;
+            const __m512i * B_row = B + B_row_idx * avx_width;
 
             __m512i sum1 = _mm512_setzero_si512();
             __m512i sum2 = _mm512_setzero_si512();
@@ -184,7 +186,8 @@ namespace onmt
           const __m512i * A2_row = A + (i+1) * avx_width;
 
           for (int j = 0; j < num_B_rows; j++) {
-            const __m512i * B_row = B + j * avx_width;
+            int B_row_idx = subdict.size() ? subdict[j] : j;
+            const __m512i * B_row = B + B_row_idx * avx_width;
 
             __m512i sum1 = _mm512_setzero_si512();
             __m512i sum2 = _mm512_setzero_si512();
@@ -214,7 +217,8 @@ namespace onmt
           const __m512i * A1_row = A + (i+0) * avx_width;
 
           for (int j = 0; j < num_B_rows; j++) {
-            const __m512i * B_row = B + j * avx_width;
+            int B_row_idx = subdict.size() ? subdict[j] : j;
+            const __m512i * B_row = B + B_row_idx * avx_width;
 
             __m512i sum1 = _mm512_setzero_si512();
 
