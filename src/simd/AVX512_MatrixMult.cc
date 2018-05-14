@@ -40,6 +40,7 @@ namespace onmt
       assert(width % 32 == 0);
 
       int num_input_chunks = width / 32;
+      __m256i const perm_mask = _mm256_set_epi32(7, 6, 3, 2, 5, 4, 1, 0);
 
       // Fill an AVX float with 8 copies of the quant mult
       __m512 sse_quant_mult = _mm512_set_ps(quant_mult, quant_mult, quant_mult,
@@ -70,8 +71,16 @@ namespace onmt
           __m512i i_0 = _mm512_cvtps_epi32(m_0);
           __m512i i_1 = _mm512_cvtps_epi32(m_1);
 
-          // Cast 32-bit int to 16-bit int
-          *(output_row + j) = _mm512_packs_epi32(i_0, i_1);
+          __m256i low0  = _mm512_castsi512_si256(i_0);
+          __m256i high0 = _mm512_extracti64x4_epi64(i_0,1);
+          __m256i pack0 = _mm256_packs_epi32(low0, high0);
+          *((__m256i*)(output_row + j)) = _mm256_permutevar8x32_epi32(pack0, perm_mask);
+
+          __m256i low1  = _mm512_castsi512_si256(i_1);
+          __m256i high1 = _mm512_extracti64x4_epi64(i_1,1);
+          __m256i pack1 = _mm256_packs_epi32(low1, high1);
+          *((__m256i*)(output_row + j)+1) = _mm256_permutevar8x32_epi32(pack1, perm_mask);
+
         }
       }
     }
