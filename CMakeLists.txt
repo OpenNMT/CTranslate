@@ -5,7 +5,7 @@ option(LIB_ONLY "Do not compile clients" OFF)
 option(WITH_OPENMP "Use OpenMP if available" ON)
 option(WITH_CUDA "Use CUDA if available" ON)
 option(WITH_MKL "Use Intel® MKL if available" ON)
-option(WITH_QLINEAR "Add Quantized linear module, value can be OFF, SSE or AVX2" OFF)
+option(WITH_QLINEAR "Add Quantized linear module, value can be OFF, SSE, AVX2 or AVX512" OFF)
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
 set(CMAKE_CXX_STANDARD 11)
@@ -96,6 +96,12 @@ if (WITH_QLINEAR)
         src/simd/SSE_MatrixMult.cc
       )
     MESSAGE(STATUS "Using SSE instruction sets")
+  ELSEIF(WITH_QLINEAR STREQUAL "AVX512")
+      SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWITH_QLINEAR -DSIMD_SSE")
+      LIST(APPEND SOURCES
+        src/simd/AVX512_MatrixMult.cc
+      )
+    MESSAGE(STATUS "Using AVX512 instruction sets")
   ELSE(WITH_QLINEAR STREQUAL "AVX2")
       MESSAGE(FATAL_ERROR "Incorrect value of WITH_QLINEAR option")
   ENDIF(WITH_QLINEAR STREQUAL "AVX2")

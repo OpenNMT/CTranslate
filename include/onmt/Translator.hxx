@@ -492,9 +492,16 @@ namespace onmt
     input_feed.setZero();
 
     // Copy encoder states to decoder states.
+    size_t copy_offset = 0;
+    if (_model->get_option_string("bridge") == "last")
+    {
+      size_t enc_layers = _model->template get_option_value<size_t>("enc_layers");
+      size_t dec_layers = _model->template get_option_value<size_t>("dec_layers");
+      copy_offset = enc_layers - dec_layers;
+    }
     std::vector<MatFwd> rnn_state_dec;
-    rnn_state_dec.reserve(rnn_state_enc.size());
-    for (size_t l = 0; l < rnn_state_enc.size(); ++l)
+    rnn_state_dec.reserve(rnn_state_enc.size() - copy_offset);
+    for (size_t l = copy_offset; l < rnn_state_enc.size(); ++l)
     {
       rnn_state_dec.emplace_back(_beam_size * batch_size, rnn_size);
       rnn_state_dec.back() = rnn_state_enc[l].replicate(_beam_size, 1);

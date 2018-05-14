@@ -1,7 +1,7 @@
 #pragma once
 
 #include <set>
-#include <map>
+#include <unordered_map>
 #include <string>
 #include <vector>
 
@@ -25,7 +25,7 @@ namespace onmt
     }
 
   private:
-    std::vector<std::multimap<std::string, size_t> > _map_rules;
+    std::vector<std::unordered_map<std::string, std::vector<size_t> > > _map_rules;
   };
 
 }
