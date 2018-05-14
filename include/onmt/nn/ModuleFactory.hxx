@@ -33,6 +33,7 @@
 
 #ifdef WITH_QLINEAR
 #  include "onmt/nn/qLinear.h"
+#  include "onmt/nn/qLookupTable.h"
 #endif
 
 namespace onmt
@@ -99,6 +100,11 @@ namespace onmt
           mod = new Linear<MatFwd, MatIn, ModelT>(data);
       }
       else if (name == "nn.LookupTable")
+#ifdef WITH_QLINEAR
+        if (_qlinear)
+          mod = new qLookupTable<MatFwd, MatIn, ModelT>(data);
+        else
+#endif
         mod =  new LookupTable<MatFwd, MatEmb, ModelT>(data);
       else if (name == "nn.CAddTable")
         mod = new CAddTable<MatFwd>();
