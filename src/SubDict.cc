@@ -63,6 +63,13 @@ namespace onmt
     r.insert(Dictionary::eos_id);
     r.insert(Dictionary::pad_id);
 
+    auto it = _map_rules[0].find("");
+    if (it != _map_rules[0].end())
+    {
+      for (const auto& v: it->second)
+        r.insert(v);
+    }
+
     for (size_t i = 0; i < words.size(); i++)
     {
       std::string tok = words[i];
