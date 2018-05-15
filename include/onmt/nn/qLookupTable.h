@@ -27,7 +27,7 @@ namespace onmt
         this->_output.resize(input.rows(), _weight.cols());
 
         for (size_t i = 0; i < input.batches(); ++i) {
-          if (_weight(input(i,0),0) == 0) {
+          if (_weight(input(i,0),0) == 0 && _weight(input(i,0),1) == 0 && _weight(input(i,0),2) == 0) {
             _weight.row(input(i,0)) = _weightq.row(input(i,0)).template cast<ModelT>() / simd::quant_mult;
           }
           this->_output.row(i).noalias() = _weight.row(input(i, 0));
