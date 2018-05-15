@@ -97,13 +97,15 @@ namespace onmt
 
         int avx_width = width / 32;
 
-        // loop over A rows - 4 at a time
+        // loop over A rows - 6 at a time
         int i;
-        for (i = 0; i < num_A_rows - 3; i += 4) {
+        for (i = 0; i < num_A_rows - 5; i += 6) {
             const __m512i * A1_row = A + (i+0) * avx_width;
             const __m512i * A2_row = A + (i+1) * avx_width;
             const __m512i * A3_row = A + (i+2) * avx_width;
             const __m512i * A4_row = A + (i+3) * avx_width;
+            const __m512i * A5_row = A + (i+4) * avx_width;
+            const __m512i * A6_row = A + (i+5) * avx_width;
 
             for (int j = 0; j < num_B_rows; j++) {
                 int B_row_idx = subdict.size() ? subdict[j] : j;
@@ -113,6 +115,8 @@ namespace onmt
                 __m512i sum2 = _mm512_setzero_si512();
                 __m512i sum3 = _mm512_setzero_si512();
                 __m512i sum4 = _mm512_setzero_si512();
+                __m512i sum5 = _mm512_setzero_si512();
+                __m512i sum6 = _mm512_setzero_si512();
 
                 // This is just a simple dot product, unrolled four ways.
                 for (int k = 0; k < avx_width; k++) {
@@ -122,12 +126,16 @@ namespace onmt
                     __m512i a2 = *(A2_row + k);
                     __m512i a3 = *(A3_row + k);
                     __m512i a4 = *(A4_row + k);
+                    __m512i a5 = *(A5_row + k);
+                    __m512i a6 = *(A6_row + k);
 
                     // multiply and add
                     sum1 = _mm512_add_epi32(sum1, _mm512_madd_epi16(b, a1));
                     sum2 = _mm512_add_epi32(sum2, _mm512_madd_epi16(b, a2));
                     sum3 = _mm512_add_epi32(sum3, _mm512_madd_epi16(b, a3));
                     sum4 = _mm512_add_epi32(sum4, _mm512_madd_epi16(b, a4));
+                    sum5 = _mm512_add_epi32(sum5, _mm512_madd_epi16(b, a5));
+                    sum6 = _mm512_add_epi32(sum6, _mm512_madd_epi16(b, a6));
                 }
 
                 float * C1 = C + (i+0)*num_B_rows + j;
@@ -142,11 +150,116 @@ namespace onmt
                 float * C4 = C + (i+3)*num_B_rows + j;
                 (*C4) = _mm512_reduce_add_epi32(sum4)*unquant_mult;
 
+                float * C5 = C + (i+4)*num_B_rows + j;
+                (*C5) = _mm512_reduce_add_epi32(sum5)*unquant_mult;
+
+                float * C6 = C + (i+5)*num_B_rows + j;
+                (*C6) = _mm512_reduce_add_epi32(sum6)*unquant_mult;
+
             }
         }
       // finalize the last rows
       switch (num_A_rows - i)
       {
+        case 5:
+        {
+          const __m512i * A1_row = A + (i+0) * avx_width;
+          const __m512i * A2_row = A + (i+1) * avx_width;
+          const __m512i * A3_row = A + (i+2) * avx_width;
+          const __m512i * A4_row = A + (i+3) * avx_width;
+          const __m512i * A5_row = A + (i+4) * avx_width;
+
+          for (int j = 0; j < num_B_rows; j++) {
+            int B_row_idx = subdict.size() ? subdict[j] : j;
+            const __m512i * B_row = B + B_row_idx * avx_width;
+
+            __m512i sum1 = _mm512_setzero_si512();
+            __m512i sum2 = _mm512_setzero_si512();
+            __m512i sum3 = _mm512_setzero_si512();
+            __m512i sum4 = _mm512_setzero_si512();
+            __m512i sum5 = _mm512_setzero_si512();
+
+            // This is just a simple dot product, unrolled four ways.
+            for (int k = 0; k < avx_width; k++) {
+                __m512i b = *(B_row + k);
+                
+                __m512i a1 = *(A1_row + k);
+                __m512i a2 = *(A2_row + k);
+                __m512i a3 = *(A3_row + k);
+                __m512i a4 = *(A4_row + k);
+                __m512i a5 = *(A5_row + k);
+
+                // multiply and add
+                sum1 = _mm512_add_epi32(sum1, _mm512_madd_epi16(b, a1));
+                sum2 = _mm512_add_epi32(sum2, _mm512_madd_epi16(b, a2));
+                sum3 = _mm512_add_epi32(sum3, _mm512_madd_epi16(b, a3));
+                sum4 = _mm512_add_epi32(sum4, _mm512_madd_epi16(b, a4));
+                sum5 = _mm512_add_epi32(sum5, _mm512_madd_epi16(b, a5));
+            }
+
+            float * C1 = C + (i+0)*num_B_rows + j;
+            (*C1) = _mm512_reduce_add_epi32(sum1)*unquant_mult;
+
+            float * C2 = C + (i+1)*num_B_rows + j;
+            (*C2) = _mm512_reduce_add_epi32(sum2)*unquant_mult;
+
+            float * C3 = C + (i+2)*num_B_rows + j;
+            (*C3) = _mm512_reduce_add_epi32(sum3)*unquant_mult;
+
+            float * C4 = C + (i+3)*num_B_rows + j;
+            (*C4) = _mm512_reduce_add_epi32(sum4)*unquant_mult;
+
+            float * C5 = C + (i+4)*num_B_rows + j;
+            (*C5) = _mm512_reduce_add_epi32(sum5)*unquant_mult;
+          }
+        }
+        break;
+        case 4:
+        {
+          const __m512i * A1_row = A + (i+0) * avx_width;
+          const __m512i * A2_row = A + (i+1) * avx_width;
+          const __m512i * A3_row = A + (i+2) * avx_width;
+          const __m512i * A4_row = A + (i+3) * avx_width;
+
+          for (int j = 0; j < num_B_rows; j++) {
+            int B_row_idx = subdict.size() ? subdict[j] : j;
+            const __m512i * B_row = B + B_row_idx * avx_width;
+
+            __m512i sum1 = _mm512_setzero_si512();
+            __m512i sum2 = _mm512_setzero_si512();
+            __m512i sum3 = _mm512_setzero_si512();
+            __m512i sum4 = _mm512_setzero_si512();
+
+            // This is just a simple dot product, unrolled four ways.
+            for (int k = 0; k < avx_width; k++) {
+                __m512i b = *(B_row + k);
+                
+                __m512i a1 = *(A1_row + k);
+                __m512i a2 = *(A2_row + k);
+                __m512i a3 = *(A3_row + k);
+                __m512i a4 = *(A4_row + k);
+
+                // multiply and add
+                sum1 = _mm512_add_epi32(sum1, _mm512_madd_epi16(b, a1));
+                sum2 = _mm512_add_epi32(sum2, _mm512_madd_epi16(b, a2));
+                sum3 = _mm512_add_epi32(sum3, _mm512_madd_epi16(b, a3));
+                sum4 = _mm512_add_epi32(sum4, _mm512_madd_epi16(b, a4));
+            }
+
+            float * C1 = C + (i+0)*num_B_rows + j;
+            (*C1) = _mm512_reduce_add_epi32(sum1)*unquant_mult;
+
+            float * C2 = C + (i+1)*num_B_rows + j;
+            (*C2) = _mm512_reduce_add_epi32(sum2)*unquant_mult;
+
+            float * C3 = C + (i+2)*num_B_rows + j;
+            (*C3) = _mm512_reduce_add_epi32(sum3)*unquant_mult;
+
+            float * C4 = C + (i+3)*num_B_rows + j;
+            (*C4) = _mm512_reduce_add_epi32(sum4)*unquant_mult;
+          }
+        }
+        break;
         case 3:
         {
           const __m512i * A1_row = A + (i+0) * avx_width;
