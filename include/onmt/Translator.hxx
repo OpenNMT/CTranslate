@@ -381,11 +381,13 @@ namespace onmt
     size_t rnn_size = _model->template get_option_value<size_t>("rnn_size");
     bool brnn = _model->get_option_string("encoder_type") == "brnn" || _model->get_option_flag("brnn");
     const std::string& brnn_merge = _model->get_option_string("brnn_merge");
+    const std::string& rnn_type = _model->get_option_string("rnn_type");
+    size_t num_states = num_layers * ((rnn_type.empty() || rnn_type == "LSTM") ? 2 : 1);
 
     if (brnn && brnn_merge == "concat")
       rnn_size /= 2;
 
-    rnn_state_enc = init_rnn_states<MatFwd>(num_layers * 2, batch_size, rnn_size);
+    rnn_state_enc = init_rnn_states<MatFwd>(num_states, batch_size, rnn_size);
     context.resize(batch_size, source_l * rnn_size);
 
     for (size_t i = 0; i < source_l; ++i)
