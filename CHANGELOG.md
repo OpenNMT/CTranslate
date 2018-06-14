@@ -2,6 +2,12 @@
 
 ### New features
 
+### Fixes and improvements
+
+## [v0.6.0](https://github.com/OpenNMT/CTranslate/releases/tag/v0.6.0) (2018-06-14)
+
+### New features
+
 * Add 16 bits quantization with SSE and AVX2 optimizations
 * Introduce vocabulary mapping to speed-up decoding-up
 * Report profiles per modules block (encoder_fwd, encoder_bwd, decoder, generator)
