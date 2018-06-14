@@ -11,6 +11,7 @@
 ### Fixes and improvements
 
 * Fix GRU support
+* Update Tokenizer to v1.4.0
 
 ## [v0.5.4](https://github.com/OpenNMT/CTranslate/releases/tag/v0.5.4) (2018-04-10)
 
