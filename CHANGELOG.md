@@ -4,7 +4,7 @@
 
 ### Fixes and improvements
 
-## [v0.6.1](https://github.com/OpenNMT/CTranslate/releases/tag/v0.6.0) (2018-07-05)
+## [v0.6.1](https://github.com/OpenNMT/CTranslate/releases/tag/v0.6.1) (2018-07-05)
 
 ### Fixes and improvements
 
