@@ -4,6 +4,12 @@
 
 ### Fixes and improvements
 
+## [v0.6.4](https://github.com/OpenNMT/CTranslate/releases/tag/v0.6.4) (2018-07-13)
+
+### Fixes and improvements
+
+* Update Tokenizer to v1.5.3
+
 ## [v0.6.3](https://github.com/OpenNMT/CTranslate/releases/tag/v0.6.3) (2018-07-12)
 
 ### Fixes and improvements
