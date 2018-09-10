@@ -41,7 +41,6 @@ else()
 endif()
 
 add_subdirectory(lib/TH)
-add_subdirectory(lib/tokenizer)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
@@ -62,7 +61,6 @@ endif()
 
 set(INCLUDE_DIRECTORIES
   ${CMAKE_CURRENT_SOURCE_DIR}/lib
-  ${CMAKE_CURRENT_SOURCE_DIR}/lib/tokenizer/include
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${EIGEN3_INCLUDE_DIR}
   )
@@ -82,6 +80,20 @@ set(SOURCES
 set(LIBRARIES
   OpenNMTTokenizer
   TH)
+
+find_library(ONMT_TOKENIZER_LIBRARY NAMES OpenNMTTokenizer)
+find_path(ONMT_TOKENIZER_INCLUDE_DIR NAMES onmt/Tokenizer.h)
+
+if(NOT ONMT_TOKENIZER_LIBRARY OR NOT ONMT_TOKENIZER_INCLUDE_DIR)
+  message(STATUS "Using OpenNMT tokenizer submodule")
+  add_subdirectory(lib/tokenizer)
+  list(APPEND INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/lib/tokenizer/include)
+else()
+  message(STATUS "Found OpenNMT tokenizer: ${ONMT_TOKENIZER_LIBRARY}")
+  list(APPEND INCLUDE_DIRECTORIES ${ONMT_TOKENIZER_INCLUDE_DIR})
+  get_filename_component(ONMT_TOKENIZER_LIBRARY_DIR ${ONMT_TOKENIZER_LIBRARY} DIRECTORY)
+  link_directories(${ONMT_TOKENIZER_LIBRARY_DIR})
+endif()
 
 if (WITH_QLINEAR)
   IF(WITH_QLINEAR STREQUAL "AVX2")

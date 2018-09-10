@@ -4,6 +4,8 @@
 
 ### Fixes and improvements
 
+* Allow linking to external OpenNMT/Tokenizer
+
 ## [v0.6.9](https://github.com/OpenNMT/CTranslate/releases/tag/v0.6.9) (2018-09-07)
 
 ### Fixes and improvements
