@@ -19,9 +19,9 @@
 
 #ifdef _WIN32
 # ifdef TH_EXPORTS
-#  define TH_API TH_EXTERNC __declspec(dllexport)
+#  define TH_API TH_EXTERNC
 # else
-#  define TH_API TH_EXTERNC __declspec(dllimport)
+#  define TH_API TH_EXTERNC
 # endif
 #else
 # define TH_API TH_EXTERNC
