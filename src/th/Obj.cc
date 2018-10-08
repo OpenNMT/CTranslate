@@ -299,8 +299,9 @@ namespace onmt
           return obj;
 
         int size = THFile_readIntScalar(tf);
-        unsigned char buffer[size];
+        unsigned char* buffer = reinterpret_cast<unsigned char*>(THAlloc(size));
         THFile_readByteRaw(tf, buffer, size);
+        THFree(buffer);
         read_obj(tf, env);
 
         Nil* nil = new Nil();
