@@ -9,6 +9,7 @@ namespace onmt
                                                         bool replace_unk,
                                                         size_t max_sent_length,
                                                         size_t beam_size,
+                                                        size_t n_best,
                                                         bool cuda,
                                                         bool qlinear,
                                                         bool profiling)
@@ -21,6 +22,7 @@ namespace onmt
                                      replace_unk,
                                      max_sent_length,
                                      beam_size,
+                                     n_best,
                                      cuda,
                                      qlinear,
                                      profiling);

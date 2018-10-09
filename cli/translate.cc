@@ -26,6 +26,7 @@ int main(int argc, char* argv[])
     ("replace_unk", po::bool_switch()->default_value(false), "replace unknown tokens by source tokens with the highest attention")
     ("batch_size", po::value<size_t>()->default_value(30), "batch size")
     ("beam_size", po::value<size_t>()->default_value(5), "beam size")
+    ("n_best", po::value<size_t>()->default_value(1), "n best")
     ("max_sent_length", po::value<size_t>()->default_value(250), "maximum sentence length to produce")
     ("time", po::bool_switch()->default_value(false), "output average translation time")
     ("profiler", po::bool_switch()->default_value(false), "output per module computation time")
@@ -61,6 +62,7 @@ int main(int argc, char* argv[])
                                                               vm["replace_unk"].as<bool>(),
                                                               vm["max_sent_length"].as<size_t>(),
                                                               vm["beam_size"].as<size_t>(),
+                                                              vm["n_best"].as<size_t>(),
                                                               vm["cuda"].as<bool>(),
                                                               vm["qlinear"].as<bool>(),
                                                               vm["profiler"].as<bool>()));
@@ -99,7 +101,7 @@ int main(int argc, char* argv[])
                      if (batch.empty())
                        break;
                      auto res = p_trans->translate_batch(batch.get_data());
-                     p_writer->write(Batch(res, batch.get_id()));
+                     p_writer->write(BatchOutput(res, batch.get_id()));
                    }
                    return true;
                  },
