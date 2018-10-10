@@ -17,13 +17,13 @@ BatchReader::BatchReader(std::istream& in, size_t batch_size)
 {
 }
 
-Batch BatchReader::read_next()
+BatchInput BatchReader::read_next()
 {
   std::lock_guard<std::mutex> lock(_reader_mutex);
   std::vector<std::string> batch;
 
   if (_in.eof())
-    return Batch(batch, ++_batch_id);
+    return BatchInput(batch, ++_batch_id);
 
   batch.reserve(_batch_size);
 
@@ -33,5 +33,5 @@ Batch BatchReader::read_next()
 
   _read_lines += batch.size();
 
-  return Batch(batch, ++_batch_id);
+  return BatchInput(batch, ++_batch_id);
 }

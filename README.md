@@ -105,6 +105,5 @@ CTranslate focuses on supporting model configurations that are likely to be used
 Additionally, CTranslate misses some advanced features of `translate.lua`:
 
 * gold data score
-* best N hypotheses
 * hypotheses filtering
 * beam search normalization

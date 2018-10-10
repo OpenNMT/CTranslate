@@ -17,6 +17,7 @@ namespace onmt
                                               bool replace_unk = true,
                                               size_t max_sent_length = 250,
                                               size_t beam_size = 5,
+                                              size_t n_best = 1,
                                               bool cuda = false,
                                               bool qlinear = false,
                                               bool profiling = false);

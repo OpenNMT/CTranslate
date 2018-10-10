@@ -13,18 +13,22 @@ BatchWriter::BatchWriter(std::ostream& out)
 {
 }
 
-void BatchWriter::write(const Batch& batch)
+void BatchWriter::write(const BatchOutput& batch)
 {
   std::lock_guard<std::mutex> lock(_writer_mutex);
   size_t batch_id = batch.get_id();
   if (batch_id == _last_batch_id + 1)
   {
-    std::vector<std::string> v = batch.get_data();
+    std::vector<std::vector<std::string>> v = batch.get_data();
 
     while (batch_id == _last_batch_id + 1)
     {
-      for (const auto& sent: v)
-        _out << sent << std::endl;
+      for (const auto& result: v)
+      {
+        for (const auto& sent: result)
+          _out << sent << std::endl;
+      }
+
       _last_batch_id = batch_id;
       auto it = _pending_batches.find(_last_batch_id + 1);
       if (it != _pending_batches.end())
