@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <iostream>
 #include <limits>
-#include <cassert>
+#include <stdexcept>
 
 namespace onmt
 {
@@ -496,7 +496,11 @@ namespace onmt
     MatFwd& context,
     const std::vector<size_t>& subvocab)
   {
-    assert(_n_best <= _beam_size && _n_best > 0); // beam size must be greater or equal to the n-best list size
+    if (_beam_size < _n_best)
+      throw std::runtime_error("Beam size must be greater than or equal to the n-best list size");
+    else if (_n_best == 0)
+      throw std::runtime_error("N-best list size must not be zero");
+
     size_t batch_size = batch_tokens.size();
 
     size_t rnn_size = _model->template get_option_value<size_t>("rnn_size");
