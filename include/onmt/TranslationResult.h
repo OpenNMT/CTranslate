@@ -3,10 +3,12 @@
 #include <string>
 #include <vector>
 
+#include "onmt_export.h"
+
 namespace onmt
 {
 
-  class TranslationResult
+  class ONMT_EXPORT TranslationResult
   {
   public:
     TranslationResult(const std::vector<std::vector<std::string> >& words,

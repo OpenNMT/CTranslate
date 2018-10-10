@@ -4,12 +4,13 @@
 #include <vector>
 #include <unordered_map>
 
+#include "onmt_export.h"
 #include "onmt/th/Obj.h"
 
 namespace onmt
 {
 
-  class Dictionary
+  class ONMT_EXPORT Dictionary
   {
   public:
     static const size_t pad_id;

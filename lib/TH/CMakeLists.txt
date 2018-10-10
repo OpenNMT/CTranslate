@@ -1,6 +1,4 @@
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  )
+project(TH)
 
 set(PUBLIC_HEADERS
   THGeneral.h
@@ -8,18 +6,28 @@ set(PUBLIC_HEADERS
   THDiskFile.h
   )
 
-add_library(TH
+add_library(${PROJECT_NAME}
   THGeneral.c
   THFile.c
   THDiskFile.c
   )
 
+target_include_directories(${PROJECT_NAME} PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${PROJECT_BINARY_DIR}
+  )
+
+include(GNUInstallDirs)
+include(GenerateExportHeader)
+string(TOLOWER ${PROJECT_NAME} PROJECT_NAME_LOWER)
+generate_export_header(${PROJECT_NAME} BASE_NAME ${PROJECT_NAME_LOWER})
+
 install(
-  TARGETS TH
-  ARCHIVE DESTINATION lib/
-  LIBRARY DESTINATION lib/
+  TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   )
 install(
-  FILES ${PUBLIC_HEADERS}
-  DESTINATION include/TH
+  FILES ${PUBLIC_HEADERS} "${PROJECT_BINARY_DIR}/${PROJECT_NAME_LOWER}_export.h"
+  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/TH"
   )
