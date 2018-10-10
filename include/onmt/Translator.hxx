@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iostream>
 #include <limits>
+#include <stdexcept>
 
 namespace onmt
 {
@@ -145,6 +146,7 @@ namespace onmt
                                                         bool replace_unk,
                                                         size_t max_sent_length,
                                                         size_t beam_size,
+                                                        size_t n_best,
                                                         bool cuda,
                                                         bool qlinear,
                                                         bool profiling)
@@ -158,6 +160,7 @@ namespace onmt
     , _replace_unk(replace_unk)
     , _max_sent_length(max_sent_length)
     , _beam_size(beam_size)
+    , _n_best(n_best)
     , _factory(_profiler, cuda, qlinear)
   {
     init_graph();
@@ -177,6 +180,7 @@ namespace onmt
     , _replace_unk(other._replace_unk)
     , _max_sent_length(other._max_sent_length)
     , _beam_size(other._beam_size)
+    , _n_best(other._n_best)
     , _factory(_profiler, _cuda, _qlinear)
   {
     init_graph();
@@ -196,7 +200,7 @@ namespace onmt
   }
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-  std::string Translator<MatFwd, MatIn, MatEmb, ModelT>::translate(const std::string& text,
+  std::vector<std::string> Translator<MatFwd, MatIn, MatEmb, ModelT>::translate(const std::string& text,
                                                                    ITokenizer& tokenizer)
   {
     std::vector<std::string> src_tokens;
@@ -205,8 +209,13 @@ namespace onmt
     tokenizer.tokenize(text, src_tokens, src_features);
 
     TranslationResult res = translate(src_tokens, src_features);
+    std::vector<std::string> tgt_texts;
+    tgt_texts.reserve(res.count(0));
 
-    return tokenizer.detokenize(res.get_words(), res.get_features());
+    for (size_t i = 0; i < res.count(0); ++i)
+      tgt_texts.push_back(tokenizer.detokenize(res.get_words(0, i), res.get_features(0, i)));
+
+    return tgt_texts;
   }
 
   class tdict
@@ -244,7 +253,7 @@ namespace onmt
   }
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-  std::vector<std::string>
+  std::vector<std::vector<std::string> >
   Translator<MatFwd, MatIn, MatEmb, ModelT>::translate_batch(const std::vector<std::string>& texts,
                                                              ITokenizer& tokenizer)
   {
@@ -262,15 +271,20 @@ namespace onmt
 
     TranslationResult res = translate_batch(batch_tokens, batch_features);
 
-    std::vector<std::string> tgt_texts;
+    std::vector<std::vector<std::string> > tgt_texts;
     tgt_texts.reserve(texts.size());
 
-    for (size_t i = 0; i < res.count(); ++i)
+    for (size_t i = 0; i < res.count_batch(); ++i)
     {
-      if (res.has_features())
-        tgt_texts.push_back(tokenizer.detokenize(res.get_words(i), res.get_features(i)));
-      else
-        tgt_texts.push_back(tokenizer.detokenize(res.get_words(i), {}));
+      tgt_texts.emplace_back();
+      tgt_texts[i].reserve(res.count(i));
+      for (size_t j = 0; j < res.count(i); ++j)
+      {
+        if (res.has_features())
+          tgt_texts[i].push_back(tokenizer.detokenize(res.get_words(i, j), res.get_features(i, j)));
+        else
+          tgt_texts[i].push_back(tokenizer.detokenize(res.get_words(i, j), {}));
+      }
     }
 
     return tgt_texts;
@@ -482,6 +496,11 @@ namespace onmt
     MatFwd& context,
     const std::vector<size_t>& subvocab)
   {
+    if (_beam_size < _n_best)
+      throw std::runtime_error("Beam size must be greater than or equal to the n-best list size");
+    else if (_n_best == 0)
+      throw std::runtime_error("N-best list size must not be zero");
+
     size_t batch_size = batch_tokens.size();
 
     size_t rnn_size = _model->template get_option_value<size_t>("rnn_size");
@@ -554,14 +573,11 @@ namespace onmt
 
     size_t remaining_sents = batch_size;
     std::vector<bool> done(batch_size, false);
-    std::vector<bool> found_eos(batch_size, false);
+    std::vector<std::vector<bool> > found_eos(batch_size, std::vector<bool>(_beam_size, false));
 
-    std::vector<float> end_score(batch_size, -std::numeric_limits<float>::max());
-    std::vector<size_t> end_finished_at(batch_size, 0);
-
-    std::vector<float> max_score(batch_size, -std::numeric_limits<float>::max());
-    std::vector<size_t> best_k(batch_size, 0);
-    std::vector<size_t> best_finished_at(batch_size, 0);
+    std::vector<std::vector<float> > max_score(batch_size, std::vector<float>(_n_best, -std::numeric_limits<float>::max()));
+    std::vector<std::vector<size_t> > best_k(batch_size, std::vector<size_t>(_n_best, 0));
+    std::vector<std::vector<size_t> > best_finished_at(batch_size, std::vector<size_t>(_n_best, 0));
 
     size_t i;
 
@@ -678,29 +694,23 @@ namespace onmt
             best_score_id = 0;
             best_score = out.row(idx).maxCoeff(&best_score_id);
           }
-          else
+          else if (!found_eos[b][k])
           {
-            std::vector<float> best_score_per_beam_size;
-            std::vector<size_t> best_score_id_per_beam_size;
-
-            // Find the best score across all beams.
+            // Pick the best score across all beams.
             for (size_t k = 0; k < _beam_size; ++k)
             {
+              if (found_eos[b][k])
+                continue;
+
               size_t best_score_id_k = 0;
               float best_score_k = out
                 .row(get_offset(idx, k, remaining_sents))
                 .maxCoeff(&best_score_id_k);
-              best_score_per_beam_size.push_back(best_score_k);
-              best_score_id_per_beam_size.push_back(best_score_id_k);
-            }
 
-            // Pick the best.
-            for (size_t k = 0; k < _beam_size; ++k)
-            {
-              if (best_score_per_beam_size[k] > best_score)
+              if (best_score_k > best_score)
               {
-                best_score = best_score_per_beam_size[k];
-                best_score_id = best_score_id_per_beam_size[k];
+                best_score = best_score_k;
+                best_score_id = best_score_id_k;
                 from_beam = k;
               }
             }
@@ -721,7 +731,8 @@ namespace onmt
           all_attention[b][i].row(k) = attn_softmax_out.row(from_beam_offset);
 
           // Override the best to ignore it for the next beam.
-          out.row(from_beam_offset)(best_score_id) = -std::numeric_limits<float>::max();
+          if (!found_eos[b][k])
+            out.row(from_beam_offset)(best_score_id) = -std::numeric_limits<float>::max();
         }
 
         if (_model->get_tgt_feat_dicts().size() > 0)
@@ -739,31 +750,64 @@ namespace onmt
           }
         }
 
-        end_score[b] = scores[b][i][0];
+        // Update the current best beam.
+        for (size_t k = 0; k < _beam_size; ++k)
+        {
+          if (found_eos[b][k])
+            continue;
 
-        if (next_ys[b][i][0] == Dictionary::eos_id) // End of translation.
-        {
-          done[b] = true;
-          found_eos[b] = true;
-          end_finished_at[b] = i;
-          new_remaining_sents--;
-        }
-        else // Otherwise, update the current best beam.
-        {
-          for (size_t k = 0; k < _beam_size; ++k)
+          if (next_ys[b][i][k] == Dictionary::eos_id)
           {
-            if (next_ys[b][i][k] == Dictionary::eos_id)
+            found_eos[b][k] = true;
+            // Add to the n-best list if applicable, and keep the list sorted.
+            for (size_t n = 0; n < _n_best; ++n)
             {
-              found_eos[b] = true;
-              if (scores[b][i][k] > max_score[b])
+              if (scores[b][i][k] > max_score[b][n])
               {
-                max_score[b] = scores[b][i][k];
-                best_k[b] = k;
-                best_finished_at[b] = i;
+                for (size_t m = _n_best - 1; m > n; --m)
+                {
+                  max_score[b][m] = max_score[b][m - 1];
+                  best_k[b][m] = best_k[b][m - 1];
+                  best_finished_at[b][m] = best_finished_at[b][m - 1];
+                }
+
+                max_score[b][n] = scores[b][i][k];
+                best_k[b][n] = k;
+                best_finished_at[b][n] = i;
+                break;
               }
             }
           }
         }
+
+        // Done when top-of-beam is EOS, n-best finished, and no scores higher than the n-best.
+        done[b] = found_eos[b][0];
+        if (done[b])
+        {
+          for (size_t n = 0; n < _n_best; ++n)
+          {
+            if (max_score[b][n] == -std::numeric_limits<float>::max())
+            {
+              done[b] = false;
+              break;
+            }
+          }
+
+          if (done[b])
+          {
+            for (size_t k = 0; k < _beam_size; ++k)
+            {
+              if (!found_eos[b][k] && scores[b][i][k] > max_score[b][_n_best - 1])
+              {
+                done[b] = false;
+                break;
+              }
+            }
+          }
+        }
+
+        if (done[b])
+          new_remaining_sents--;
       }
 
       _profiler.stop("Beam search");
@@ -826,62 +870,62 @@ namespace onmt
     }
 
     // Build final translation by following the beam path for each batch.
-    std::vector<std::vector<std::string> > batch_tgt_tokens;
-    std::vector<std::vector<std::vector<std::string> > > batch_tgt_features;
-    std::vector<std::vector<std::vector<float> > > batch_attention;
+    std::vector<std::vector<std::vector<std::string> > > batch_tgt_tokens;
+    std::vector<std::vector<std::vector<std::vector<std::string> > > > batch_tgt_features;
+    std::vector<std::vector<std::vector<std::vector<float> > > > batch_attention;
 
     for (size_t b = 0; b < batch_size; ++b)
     {
-      size_t start_k = best_k[b];
-      size_t len = best_finished_at[b] + 1;
-      if (end_score[b] > max_score[b]) // End score is the score of the top beam.
-      {
-        start_k = 0;
-        len = end_finished_at[b] + 1;
-      }
-
-      if (len == 1)
-        len = i;
-
-      std::vector<size_t> tgt_ids;
-      std::vector<std::vector<size_t> > tgt_feat_ids;
-      std::vector<std::vector<float> > attention;
-
-      tgt_ids.resize(len - 2); // Ignore <s> and </s>.
-
-      for (size_t f = 0; f < _model->get_tgt_feat_dicts().size(); ++f)
-        tgt_feat_ids.emplace_back(len - 2, 0);
-      for (size_t l = 0; l < len - 2; ++l)
-        attention.emplace_back(batch_tokens[b].size(), 0);
-
-      for (size_t k = start_k, j = len - 1; j > 1; --j)
-      {
-        k = prev_ks[b][j][k];
-
-        tgt_ids[j - 2] = next_ys[b][j - 1][k];
-        for (size_t l = 0; l < batch_tokens[b].size(); ++l)
-        {
-          size_t pad_length = source_l - batch_tokens[b].size();
-          attention[j - 2][l] = all_attention[b][j - 1](k, l + pad_length);
-        }
-        for (size_t f = 0; f < _model->get_tgt_feat_dicts().size(); ++f)
-          tgt_feat_ids[f][j - 2] = next_features[b][j][f][k];
-      }
-
-      batch_attention.push_back(attention);
-
-      if (_replace_unk)
-        batch_tgt_tokens.push_back(ids_to_words_replace(_model->get_tgt_dict(),
-                                                        *_phrase_table,
-                                                        tgt_ids,
-                                                        batch_tokens[b],
-                                                        attention));
-      else
-        batch_tgt_tokens.push_back(ids_to_words(_model->get_tgt_dict(), tgt_ids));
-
+      batch_tgt_tokens.emplace_back();
       batch_tgt_features.emplace_back();
-      for (size_t f = 0; f < _model->get_tgt_feat_dicts().size(); ++f)
-        batch_tgt_features[b].push_back(ids_to_words(_model->get_tgt_feat_dicts()[f], tgt_feat_ids[f]));
+      batch_attention.emplace_back();
+      for (size_t n = 0; n < _n_best; ++n)
+      {
+        size_t start_k = best_k[b][n];
+        size_t len = best_finished_at[b][n] + 1;
+        if (len == 1)
+          len = i;
+
+        std::vector<size_t> tgt_ids;
+        std::vector<std::vector<size_t> > tgt_feat_ids;
+        std::vector<std::vector<float> > attention;
+
+        tgt_ids.resize(len - 2); // Ignore <s> and </s>.
+
+        for (size_t f = 0; f < _model->get_tgt_feat_dicts().size(); ++f)
+          tgt_feat_ids.emplace_back(len - 2, 0);
+        for (size_t l = 0; l < len - 2; ++l)
+          attention.emplace_back(batch_tokens[b].size(), 0);
+
+        for (size_t k = start_k, j = len - 1; j > 1; --j)
+        {
+          k = prev_ks[b][j][k];
+
+          tgt_ids[j - 2] = next_ys[b][j - 1][k];
+          for (size_t l = 0; l < batch_tokens[b].size(); ++l)
+          {
+            size_t pad_length = source_l - batch_tokens[b].size();
+            attention[j - 2][l] = all_attention[b][j - 1](k, l + pad_length);
+          }
+          for (size_t f = 0; f < _model->get_tgt_feat_dicts().size(); ++f)
+            tgt_feat_ids[f][j - 2] = next_features[b][j][f][k];
+        }
+
+        batch_attention[b].push_back(attention);
+
+        if (_replace_unk)
+          batch_tgt_tokens[b].push_back(ids_to_words_replace(_model->get_tgt_dict(),
+                                                             *_phrase_table,
+                                                             tgt_ids,
+                                                             batch_tokens[b],
+                                                             attention));
+        else
+          batch_tgt_tokens[b].push_back(ids_to_words(_model->get_tgt_dict(), tgt_ids));
+
+        batch_tgt_features[b].emplace_back();
+        for (size_t f = 0; f < _model->get_tgt_feat_dicts().size(); ++f)
+          batch_tgt_features[b][n].push_back(ids_to_words(_model->get_tgt_feat_dicts()[f], tgt_feat_ids[f]));
+      }
     }
 
     return TranslationResult(batch_tgt_tokens, batch_tgt_features, batch_attention);

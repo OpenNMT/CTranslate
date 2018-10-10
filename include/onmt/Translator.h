@@ -20,8 +20,8 @@ namespace onmt
   public:
     friend class TranslatorFactory;
 
-    std::string translate(const std::string& text, ITokenizer& tokenizer) override;
-    std::vector<std::string> translate_batch(const std::vector<std::string>& texts, ITokenizer& tokenizer) override;
+    std::vector<std::string> translate(const std::string& text, ITokenizer& tokenizer) override;
+    std::vector<std::vector<std::string> > translate_batch(const std::vector<std::string>& texts, ITokenizer& tokenizer) override;
 
     TranslationResult
     translate(const std::vector<std::string>& tokens,
@@ -38,6 +38,7 @@ namespace onmt
                bool replace_unk,
                size_t max_sent_length,
                size_t beam_size,
+               size_t n_best,
                bool cuda,
                bool qlinear,
                bool profiling);
@@ -58,6 +59,7 @@ namespace onmt
     bool _replace_unk;
     size_t _max_sent_length;
     size_t _beam_size;
+    size_t _n_best;
 
     std::vector<MatFwd>
     get_encoder_input(size_t t,
