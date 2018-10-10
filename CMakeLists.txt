@@ -142,7 +142,7 @@ endif()
 include(GNUInstallDirs)
 include(GenerateExportHeader)
 string(TOLOWER ${PROJECT_NAME} PROJECT_NAME_LOWER)
-generate_export_header(${PROJECT_NAME} BASE_NAME ${PROJECT_NAME_LOWER})
+generate_export_header(${PROJECT_NAME} EXPORT_FILE_NAME ${PROJECT_BINARY_DIR}/onmt/${PROJECT_NAME_LOWER}_export.h)
 target_link_libraries(${PROJECT_NAME} ${LIBRARIES})
 target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIRECTORIES})
 
@@ -163,6 +163,6 @@ install(
   FILES_MATCHING PATTERN "*.h*"
   )
 install(
-  FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME_LOWER}_export.h"
+  FILES "${PROJECT_BINARY_DIR}/onmt/${PROJECT_NAME_LOWER}_export.h"
   DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/onmt"
   )

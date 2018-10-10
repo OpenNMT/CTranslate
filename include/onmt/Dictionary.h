@@ -4,7 +4,7 @@
 #include <vector>
 #include <unordered_map>
 
-#include "onmt_export.h"
+#include "onmt/onmt_export.h"
 #include "onmt/th/Obj.h"
 
 namespace onmt

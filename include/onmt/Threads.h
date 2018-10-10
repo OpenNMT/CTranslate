@@ -1,6 +1,6 @@
 #pragma once
 
-#include "onmt_export.h"
+#include "onmt/onmt_export.h"
 
 namespace onmt
 {

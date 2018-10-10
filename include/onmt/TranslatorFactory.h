@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "onmt_export.h"
+#include "onmt/onmt_export.h"
 #include "Translator.h"
 
 namespace onmt

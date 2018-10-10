@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "onmt_export.h"
+#include "onmt/onmt_export.h"
 
 namespace onmt
 {
