@@ -1,6 +1,12 @@
 ## [Unreleased]
 
+### Breaking changes
+
+* Translation results now have an additional dimension covering the multiple hypotheses for each batch
+
 ### New features
+
+* Add n-best feature
 
 ### Fixes and improvements
 
