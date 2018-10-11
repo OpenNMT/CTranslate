@@ -11,7 +11,7 @@
 #include <string.h>
 #include <stddef.h>
 
-#include "th_export.h"
+#include "TH/th_export.h"
 
 #ifdef __cplusplus
 # define TH_EXTERNC extern "C"
