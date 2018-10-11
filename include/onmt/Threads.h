@@ -1,9 +1,11 @@
 #pragma once
 
+#include "onmt/onmt_export.h"
+
 namespace onmt
 {
 
-  class Threads
+  class ONMT_EXPORT Threads
   {
   public:
     static void set(int number);

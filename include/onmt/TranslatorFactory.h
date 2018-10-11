@@ -2,12 +2,13 @@
 
 #include <memory>
 
+#include "onmt/onmt_export.h"
 #include "Translator.h"
 
 namespace onmt
 {
 
-  class TranslatorFactory
+  class ONMT_EXPORT TranslatorFactory
   {
   public:
     static std::unique_ptr<ITranslator> build(const std::string& model,

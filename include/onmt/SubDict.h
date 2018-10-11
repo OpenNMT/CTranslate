@@ -5,13 +5,14 @@
 #include <string>
 #include <vector>
 
+#include "onmt/onmt_export.h"
 #include "onmt/Eigen/MatrixBatch.h"
 #include "onmt/Dictionary.h"
 
 namespace onmt
 {
 
-  class SubDict {
+  class ONMT_EXPORT SubDict {
   public:
     /* build subdict class given a dictionary and map file */
     SubDict(const std::string& map_file, const Dictionary& dict);

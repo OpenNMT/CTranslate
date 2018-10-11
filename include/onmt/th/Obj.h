@@ -6,6 +6,7 @@
 #include <list>
 #include <vector>
 
+#include "onmt/onmt_export.h"
 #include "TH/THDiskFile.h"
 
 namespace onmt
@@ -31,7 +32,7 @@ namespace onmt
     };
 
 
-    class Obj
+    class ONMT_EXPORT Obj
     {
     public:
       Obj(ObjType type);
@@ -50,7 +51,7 @@ namespace onmt
     Obj* read_obj(THFile *tf, Env &Env);
 
 
-    class Nil: public Obj
+    class ONMT_EXPORT Nil: public Obj
     {
     public:
       Nil();
@@ -59,7 +60,7 @@ namespace onmt
     };
 
 
-    class Number: public Obj
+    class ONMT_EXPORT Number: public Obj
     {
     public:
       Number();
@@ -71,7 +72,7 @@ namespace onmt
     };
 
 
-    class Boolean: public Obj
+    class ONMT_EXPORT Boolean: public Obj
     {
     public:
       Boolean();
@@ -83,7 +84,7 @@ namespace onmt
     };
 
 
-    class String: public Obj
+    class ONMT_EXPORT String: public Obj
     {
     public:
       String();
@@ -95,7 +96,7 @@ namespace onmt
     };
 
 
-    class Table: public Obj {
+    class ONMT_EXPORT Table: public Obj {
     public:
       enum class TableType
       {
@@ -122,7 +123,7 @@ namespace onmt
     };
 
 
-    class TorchObj: public Obj
+    class ONMT_EXPORT TorchObj: public Obj
     {
     public:
       TorchObj(const std::string& classname, int version);
@@ -134,7 +135,7 @@ namespace onmt
     };
 
 
-    class Creator
+    class ONMT_EXPORT Creator
     {
     public:
       Creator(const std::string& classname, int version);
@@ -158,7 +159,7 @@ namespace onmt
     };
 
 
-    class Factory
+    class ONMT_EXPORT Factory
     {
     public:
       static TorchObj* create(const std::string& classname, int version);
@@ -220,7 +221,7 @@ namespace onmt
     };
 
 
-    class Class: public TorchObj
+    class ONMT_EXPORT Class: public TorchObj
     {
     public:
       Class(const std::string& classname, int version);

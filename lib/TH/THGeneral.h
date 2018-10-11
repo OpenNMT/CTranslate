@@ -11,21 +11,15 @@
 #include <string.h>
 #include <stddef.h>
 
+#include "TH/th_export.h"
+
 #ifdef __cplusplus
 # define TH_EXTERNC extern "C"
 #else
 # define TH_EXTERNC extern
 #endif
 
-#ifdef _WIN32
-# ifdef TH_EXPORTS
-#  define TH_API TH_EXTERNC
-# else
-#  define TH_API TH_EXTERNC
-# endif
-#else
-# define TH_API TH_EXTERNC
-#endif
+#define TH_API TH_EXTERNC TH_EXPORT
 
 TH_API void _THError(const char *file, const int line, const char *fmt, ...);
 TH_API void _THAssertionFailed(const char *file, const int line, const char *exp, const char *fmt, ...);

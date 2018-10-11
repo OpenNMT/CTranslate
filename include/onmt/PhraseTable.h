@@ -3,10 +3,12 @@
 #include <string>
 #include <unordered_map>
 
+#include "onmt/onmt_export.h"
+
 namespace onmt
 {
 
-  class PhraseTable
+  class ONMT_EXPORT PhraseTable
   {
   public:
     PhraseTable(const std::string& file);
