@@ -200,7 +200,7 @@ namespace onmt
   }
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-  std::vector<std::string> Translator<MatFwd, MatIn, MatEmb, ModelT>::translate(const std::string& text,
+  std::vector<std::string> Translator<MatFwd, MatIn, MatEmb, ModelT>::get_translations(const std::string& text,
                                                                    ITokenizer& tokenizer)
   {
     std::vector<std::string> src_tokens;
@@ -210,9 +210,9 @@ namespace onmt
 
     TranslationResult res = translate(src_tokens, src_features);
     std::vector<std::string> tgt_texts;
-    tgt_texts.reserve(res.count(0));
+    tgt_texts.reserve(res.count_job(0));
 
-    for (size_t i = 0; i < res.count(0); ++i)
+    for (size_t i = 0; i < res.count_job(0); ++i)
       tgt_texts.push_back(tokenizer.detokenize(res.get_words(0, i), res.get_features(0, i)));
 
     return tgt_texts;
@@ -254,7 +254,7 @@ namespace onmt
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
   std::vector<std::vector<std::string> >
-  Translator<MatFwd, MatIn, MatEmb, ModelT>::translate_batch(const std::vector<std::string>& texts,
+  Translator<MatFwd, MatIn, MatEmb, ModelT>::get_translations_batch(const std::vector<std::string>& texts,
                                                              ITokenizer& tokenizer)
   {
     std::vector<std::vector<std::string> > batch_tokens;
@@ -274,11 +274,11 @@ namespace onmt
     std::vector<std::vector<std::string> > tgt_texts;
     tgt_texts.reserve(texts.size());
 
-    for (size_t i = 0; i < res.count_batch(); ++i)
+    for (size_t i = 0; i < res.count(); ++i)
     {
       tgt_texts.emplace_back();
-      tgt_texts[i].reserve(res.count(i));
-      for (size_t j = 0; j < res.count(i); ++j)
+      tgt_texts[i].reserve(res.count_job(i));
+      for (size_t j = 0; j < res.count_job(i); ++j)
       {
         if (res.has_features())
           tgt_texts[i].push_back(tokenizer.detokenize(res.get_words(i, j), res.get_features(i, j)));

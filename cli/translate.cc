@@ -100,7 +100,7 @@ int main(int argc, char* argv[])
                      auto batch = p_reader->read_next();
                      if (batch.empty())
                        break;
-                     auto res = p_trans->translate_batch(batch.get_data());
+                     auto res = p_trans->get_translations_batch(batch.get_data());
                      p_writer->write(BatchOutput(res, batch.get_id()));
                    }
                    return true;

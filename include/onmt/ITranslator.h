@@ -15,12 +15,19 @@ namespace onmt
     virtual ~ITranslator() = default;
 
     // Translate a raw text. If the tokenizer is not given, the input text is split on spaces.
-    virtual std::vector<std::string>
+    virtual std::string
     translate(const std::string& text);
-    virtual std::vector<std::string>
-    translate(const std::string& text, ITokenizer& tokenizer) = 0;
+    virtual std::string
+    translate(const std::string& text, ITokenizer& tokenizer);
 
-    // Translate pre-tokenized text.
+    // Multiple translations version of the previous methods.
+
+    virtual std::vector<std::string>
+    get_translations(const std::string& text);
+    virtual std::vector<std::string>
+    get_translations(const std::string& text, ITokenizer& tokenizer) = 0;
+
+    // Translate pre-tokenized text. (As with previous methods, this is also for multiple translations.)
     virtual TranslationResult
     translate(const std::vector<std::string>& tokens,
               const std::vector<std::vector<std::string> >& features) = 0;
@@ -28,11 +35,19 @@ namespace onmt
 
     // Batch version of the previous methods: translate several sequences at once.
 
-    virtual std::vector<std::vector<std::string> >
+    virtual std::vector<std::string>
     translate_batch(const std::vector<std::string>& texts);
-    virtual std::vector<std::vector<std::string> >
-    translate_batch(const std::vector<std::string>& texts, ITokenizer& tokenizer) = 0;
+    virtual std::vector<std::string>
+    translate_batch(const std::vector<std::string>& texts, ITokenizer& tokenizer);
 
+    // Multiple translations version of the previous methods.
+
+    virtual std::vector<std::vector<std::string> >
+    get_translations_batch(const std::vector<std::string>& texts);
+    virtual std::vector<std::vector<std::string> >
+    get_translations_batch(const std::vector<std::string>& texts, ITokenizer& tokenizer) = 0;
+
+    // Translate pre-tokenized text. (As with previous methods, this is also for multiple translations.)
     virtual TranslationResult
     translate_batch(const std::vector<std::vector<std::string> >& batch_tokens,
                     const std::vector<std::vector<std::vector<std::string> > >& batch_features) = 0;
