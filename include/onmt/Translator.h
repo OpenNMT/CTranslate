@@ -20,8 +20,8 @@ namespace onmt
   public:
     friend class TranslatorFactory;
 
-    std::vector<std::string> translate(const std::string& text, ITokenizer& tokenizer) override;
-    std::vector<std::vector<std::string> > translate_batch(const std::vector<std::string>& texts, ITokenizer& tokenizer) override;
+    std::vector<std::string> get_translations(const std::string& text, ITokenizer& tokenizer) override;
+    std::vector<std::vector<std::string> > get_translations_batch(const std::vector<std::string>& texts, ITokenizer& tokenizer) override;
 
     TranslationResult
     translate(const std::vector<std::string>& tokens,

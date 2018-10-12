@@ -12,39 +12,39 @@ namespace onmt
   {
   }
 
-  const std::vector<std::string>& TranslationResult::get_words(size_t batch_index, size_t text_index) const
+  const std::vector<std::string>& TranslationResult::get_words(size_t job_index, size_t translation_index) const
   {
-    return _words[batch_index][text_index];
+    return _words[job_index][translation_index];
   }
 
-  const std::vector<std::vector<std::string> >& TranslationResult::get_features(size_t batch_index, size_t text_index) const
+  const std::vector<std::vector<std::string> >& TranslationResult::get_features(size_t job_index, size_t translation_index) const
   {
-    return _features[batch_index][text_index];
+    return _features[job_index][translation_index];
   }
 
-  const std::vector<std::vector<float> >& TranslationResult::get_attention(size_t batch_index, size_t text_index) const
+  const std::vector<std::vector<float> >& TranslationResult::get_attention(size_t job_index, size_t translation_index) const
   {
-    return _attention[batch_index][text_index];
+    return _attention[job_index][translation_index];
   }
 
-  const std::vector<std::vector<std::string> >& TranslationResult::get_words(size_t batch_index) const
+  const std::vector<std::vector<std::string> >& TranslationResult::get_words_job(size_t job_index) const
   {
-    return _words[batch_index];
+    return _words[job_index];
   }
 
-  const std::vector<std::vector<std::vector<std::string> > >& TranslationResult::get_features(size_t batch_index) const
+  const std::vector<std::vector<std::vector<std::string> > >& TranslationResult::get_features_job(size_t job_index) const
   {
-    return _features[batch_index];
+    return _features[job_index];
   }
 
-  const std::vector<std::vector<std::vector<float> > >& TranslationResult::get_attention(size_t batch_index) const
+  const std::vector<std::vector<std::vector<float> > >& TranslationResult::get_attention_job(size_t job_index) const
   {
-    return _attention[batch_index];
+    return _attention[job_index];
   }
 
-  size_t TranslationResult::count(size_t batch_index) const
+  size_t TranslationResult::count_job(size_t job_index) const
   {
-    return _words[batch_index].size();
+    return _words[job_index].size();
   }
 
   const std::vector<std::vector<std::vector<std::string> > >& TranslationResult::get_words_batch() const
@@ -62,7 +62,7 @@ namespace onmt
     return _attention;
   }
 
-  size_t TranslationResult::count_batch() const
+  size_t TranslationResult::count() const
   {
     return _words.size();
   }
