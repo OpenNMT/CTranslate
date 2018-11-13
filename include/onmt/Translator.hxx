@@ -4,6 +4,7 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
+#include <memory>
 
 namespace onmt
 {
@@ -98,13 +99,6 @@ namespace onmt
       pad_input(input, pad_value, cur_max_len);
 
     return cur_max_len;
-  }
-
-  // The generator outputs a beam_size*batch_size x vocab_size matrix.
-  // This function allows to easily query the output given a batch and a beam.
-  static size_t get_offset(size_t batch, size_t beam, size_t batch_size)
-  {
-    return beam*batch_size + batch;
   }
 
   template <typename MatFwd>
@@ -506,11 +500,14 @@ namespace onmt
     size_t rnn_size = _model->template get_option_value<size_t>("rnn_size");
     bool with_input_feeding = _model->get_option_flag("input_feed", true);
 
-    MatFwd context_dec = context.replicate(_beam_size, 1);
+    MatFwd context_dec(context.replicate(1, 1));
     context_dec.setHiddenDim(source_l);
 
-    MatFwd input_feed(_beam_size * batch_size, rnn_size);
-    input_feed.setZero();
+    std::vector<size_t> beam_size(batch_size, 1); // for the first decoding step, beam size is 1
+    size_t total_beam_size = batch_size;
+    std::unique_ptr<MatFwd> input_feed(with_input_feeding ? new MatFwd(total_beam_size, rnn_size) : nullptr);
+    if (with_input_feeding)
+      input_feed->setZero();
 
     // Copy encoder states to decoder states.
     size_t copy_offset = 0;
@@ -520,12 +517,13 @@ namespace onmt
       size_t dec_layers = _model->template get_option_value<size_t>("dec_layers");
       copy_offset = enc_layers - dec_layers;
     }
+
     std::vector<MatFwd> rnn_state_dec;
     rnn_state_dec.reserve(rnn_state_enc.size() - copy_offset);
     for (size_t l = copy_offset; l < rnn_state_enc.size(); ++l)
     {
-      rnn_state_dec.emplace_back(_beam_size * batch_size, rnn_size);
-      rnn_state_dec.back() = rnn_state_enc[l].replicate(_beam_size, 1);
+      rnn_state_dec.emplace_back(total_beam_size, rnn_size);
+      rnn_state_dec.back() = rnn_state_enc[l].replicate(1, 1);
     }
 
     std::vector<std::vector<std::vector<size_t> > > next_ys; // b x n x K
@@ -533,7 +531,6 @@ namespace onmt
     std::vector<std::vector<std::vector<float> > > scores; // b x n x K
     std::vector<std::vector<std::vector<std::vector<size_t> > > > next_features; // b x n x j x K
     std::vector<std::vector<MatFwd> > all_attention; // b x n x [ K x source_l ]
-    std::vector<int> batch_idx;
 
     // Get a pointer to the attention softmax module to mask its output.
     nn::Module<MatFwd>* softmax_attn = _decoder->find("softmaxAttn");
@@ -541,14 +538,13 @@ namespace onmt
     // Prepare data structures for the beam search.
     for (size_t b = 0; b < batch_size; ++b)
     {
-      std::vector<size_t> in1(_beam_size, Dictionary::pad_id);
-      in1[0] = Dictionary::bos_id;
+      std::vector<size_t> in1(1, Dictionary::bos_id);
       next_ys.emplace_back(1, in1);
 
-      std::vector<size_t> prev_ks1(_beam_size, 1);
+      std::vector<size_t> prev_ks1(1, 1);
       prev_ks.emplace_back(1, prev_ks1);
 
-      std::vector<float> scores1(_beam_size, 0.0);
+      std::vector<float> scores1(1, 0.0);
       scores.emplace_back(1, scores1);
 
       if (_model->get_tgt_feat_dicts().size() > 0)
@@ -557,23 +553,19 @@ namespace onmt
         next_features.back().emplace_back();
         for (size_t j = 0; j < _model->get_tgt_feat_dicts().size(); ++j)
         {
-          std::vector<size_t> in_feat1(_beam_size, Dictionary::pad_id);
-          in_feat1[0] = Dictionary::eos_id;
+          std::vector<size_t> in_feat1(1, Dictionary::eos_id);
           next_features.back().back().push_back(in_feat1);
         }
       }
 
       std::vector<MatFwd> attn1;
-      attn1.emplace_back(_beam_size, source_l);
+      attn1.emplace_back(1, source_l);
       attn1.back().setZero();
       all_attention.push_back(attn1);
-
-      batch_idx.push_back(b);
     }
 
     size_t remaining_sents = batch_size;
     std::vector<bool> done(batch_size, false);
-    std::vector<std::vector<bool> > found_eos(batch_size, std::vector<bool>(_beam_size, false));
 
     std::vector<std::vector<float> > max_score(batch_size, std::vector<float>(_n_best, -std::numeric_limits<float>::max()));
     std::vector<std::vector<size_t> > best_k(batch_size, std::vector<size_t>(_n_best, 0));
@@ -591,28 +583,29 @@ namespace onmt
         input.push_back(rnn_state_dec[l]);
 
       // Words and features.
-      input.emplace_back(_beam_size * remaining_sents, 1 + _model->get_tgt_feat_dicts().size());
-      for (size_t b = 0; b < batch_size; ++b)
+      input.emplace_back(total_beam_size, 1 + _model->get_tgt_feat_dicts().size());
+      for (size_t b = 0, batch_offset = 0; b < batch_size; ++b)
       {
         if (done[b])
           continue;
 
-        int idx = batch_idx[b];
-
-        for (size_t k = 0; k < _beam_size; ++k)
+        for (size_t k = 0; k < next_ys[b][i - 1].size(); ++k)
         {
-          input.back()(get_offset(idx, k, remaining_sents), 0) = next_ys[b][i-1][k];
+          if (next_ys[b][i - 1][k] == Dictionary::eos_id)
+            continue;
+
+          size_t index = batch_offset++;
+          input.back()(index, 0) = next_ys[b][i - 1][k];
 
           for (size_t j = 0; j < _model->get_tgt_feat_dicts().size(); ++j)
-            input.back()(get_offset(idx, k, remaining_sents), j + 1) = next_features[b][i-1][j][k];
+            input.back()(index, j + 1) = next_features[b][i - 1][j][k];
         }
-
       }
 
       // Context and input feed.
       input.push_back(context_dec);
       if (with_input_feeding)
-        input.push_back(input_feed);
+        input.push_back(*input_feed);
 
       MatFwd attn_softmax_out;
 
@@ -626,7 +619,7 @@ namespace onmt
 
         MatFwd& soft_out = out[0];
 
-        for (size_t b = 0; b < batch_size; ++b)
+        for (size_t b = 0, batch_offset = 0; b < batch_size; ++b)
         {
           if (done[b])
             continue;
@@ -635,14 +628,15 @@ namespace onmt
 
           if (pad_len > 0)
           {
-            size_t idx = batch_idx[b];
-            for (size_t k = 0; k < _beam_size; ++k)
+            for (size_t k = 0; k < beam_size[b]; ++k)
             {
-              size_t index = get_offset(idx, k, remaining_sents);
+              size_t index = batch_offset + k;
               soft_out.row(index).head(pad_len).setZero();
               soft_out.row(index) /= soft_out.row(index).sum(); // Normalization (softmax output).
             }
           }
+
+          batch_offset += beam_size[b];
         }
 
         attn_softmax_out = soft_out;
@@ -656,63 +650,54 @@ namespace onmt
 
       // Update rnn_state_dec based on decoder output.
       if (with_input_feeding)
-        input_feed = out_decoder[out_decoder_pred_idx];
+        *input_feed = out_decoder[out_decoder_pred_idx];
       for (size_t l = 0; l < rnn_state_dec.size(); ++l)
         rnn_state_dec[l] = out_decoder[l];
 
       MatFwd& out = gen_out[0];
-      out.setHiddenDim(remaining_sents); // beam x remaining_sents*vocab_size
 
       size_t new_remaining_sents = remaining_sents;
 
       _profiler.start();
 
       // Update beam path for all non finished sentences.
-      for (size_t b = 0; b < batch_size; ++b)
+      total_beam_size = 0;
+      for (size_t b = 0, batch_offset = 0; b < batch_size; batch_offset += beam_size[b++])
       {
         if (done[b])
           continue;
 
-        int idx = batch_idx[b];
         // Penalize beam scores based on the previous step.
-        for (size_t k = 0; k < _beam_size; ++k)
-          out.row(get_offset(idx, k, remaining_sents)).array() += scores[b][i-1][k];
+        for (size_t k = 0, l = 0; k < next_ys[b][i - 1].size(); ++k)
+        {
+          if (next_ys[b][i - 1][k] == Dictionary::eos_id)
+            continue;
+
+          out.row(batch_offset + l++).array() += scores[b][i - 1][k];
+        }
 
         prev_ks[b].emplace_back(_beam_size, 0);
         next_ys[b].emplace_back(_beam_size, 0);
         scores[b].emplace_back(_beam_size, 0.0);
         all_attention[b].emplace_back(_beam_size, source_l);
 
+        std::unique_ptr<MatFwd> block((remaining_sents > 1) ? new MatFwd(out.block(batch_offset, 0, beam_size[b], out.cols())) : nullptr);
+        MatFwd& cur_sent_out = block ? *block : out;
         for (size_t k = 0; k < _beam_size; ++k)
         {
-          float best_score = -std::numeric_limits<float>::max();
+          // Pick the best score across all beams.
           size_t best_score_id = 0;
-          size_t from_beam = 0;
+          size_t from_beam = 0, from_beam_offset = 0;
+          float best_score = cur_sent_out.maxCoeff(&from_beam_offset, &best_score_id);
+          for (size_t l = 0, m = 0; l < next_ys[b][i - 1].size(); ++l)
+          {
+            if (next_ys[b][i - 1][l] == Dictionary::eos_id)
+              continue;
 
-          if (i == 1 || _beam_size == 1) // All outputs are the same on the first decoding step.
-          {
-            best_score_id = 0;
-            best_score = out.row(idx).maxCoeff(&best_score_id);
-          }
-          else if (!found_eos[b][k])
-          {
-            // Pick the best score across all beams.
-            for (size_t k = 0; k < _beam_size; ++k)
+            if (m++ == from_beam_offset)
             {
-              if (found_eos[b][k])
-                continue;
-
-              size_t best_score_id_k = 0;
-              float best_score_k = out
-                .row(get_offset(idx, k, remaining_sents))
-                .maxCoeff(&best_score_id_k);
-
-              if (best_score_k > best_score)
-              {
-                best_score = best_score_k;
-                best_score_id = best_score_id_k;
-                from_beam = k;
-              }
+              from_beam = l;
+              break;
             }
           }
 
@@ -725,14 +710,11 @@ namespace onmt
 
           scores[b][i][k] = best_score;
 
-          size_t from_beam_offset = get_offset(idx, from_beam, remaining_sents);
-
           // Store the attention.
-          all_attention[b][i].row(k) = attn_softmax_out.row(from_beam_offset);
+          all_attention[b][i].row(k) = attn_softmax_out.row(batch_offset + from_beam_offset);
 
           // Override the best to ignore it for the next beam.
-          if (!found_eos[b][k])
-            out.row(from_beam_offset)(best_score_id) = -std::numeric_limits<float>::max();
+          cur_sent_out(from_beam_offset, best_score_id) = -std::numeric_limits<float>::max();
         }
 
         if (_model->get_tgt_feat_dicts().size() > 0)
@@ -740,25 +722,37 @@ namespace onmt
           next_features[b].emplace_back();
           for (size_t j = 0; j < _model->get_tgt_feat_dicts().size(); ++j)
           {
-            next_features[b][i].emplace_back();
-            for (size_t k = 0; k < _beam_size; ++k)
+            next_features[b][i].emplace_back(_beam_size, 0);
+            for (size_t k = 0, l = 0; k < next_ys[b][i - 1].size(); ++k)
             {
-              size_t best_feature_val = 0;
-              gen_out[1+j].row(get_offset(idx, k, remaining_sents)).maxCoeff(&best_feature_val);
-              next_features[b][i][j].push_back(best_feature_val);
+              if (next_ys[b][i - 1][k] == Dictionary::eos_id)
+                continue;
+
+              auto it = std::find(prev_ks[b][i].begin(), prev_ks[b][i].end(), k);
+              if (it != prev_ks[b][i].end())
+              {
+                size_t best_feature_val = 0;
+                gen_out[1 + j].row(batch_offset + l).maxCoeff(&best_feature_val);
+
+                do {
+                  next_features[b][i][j][std::distance(prev_ks[b][i].begin(), it)] = best_feature_val;
+                  it = std::find(++it, prev_ks[b][i].end(), k);
+                } while (it != prev_ks[b][i].end());
+              }
+
+              ++l;
             }
           }
         }
 
-        // Update the current best beam.
+        // Update the current best.
+        size_t num_finished = 0;
         for (size_t k = 0; k < _beam_size; ++k)
         {
-          if (found_eos[b][k])
-            continue;
-
           if (next_ys[b][i][k] == Dictionary::eos_id)
           {
-            found_eos[b][k] = true;
+            ++num_finished;
+
             // Add to the n-best list if applicable, and keep the list sorted.
             for (size_t n = 0; n < _n_best; ++n)
             {
@@ -780,9 +774,9 @@ namespace onmt
           }
         }
 
-        // Done when top-of-beam is EOS, n-best finished, and no scores higher than the n-best.
-        done[b] = found_eos[b][0];
-        if (done[b])
+        // Done when n-best hypotheses are finished, and no scores of unfinished hypotheses higher than the n-best.
+        done[b] = (num_finished > 0);
+        if (done[b] && num_finished < _beam_size)
         {
           for (size_t n = 0; n < _n_best; ++n)
           {
@@ -797,7 +791,7 @@ namespace onmt
           {
             for (size_t k = 0; k < _beam_size; ++k)
             {
-              if (!found_eos[b][k] && scores[b][i][k] > max_score[b][_n_best - 1])
+              if (next_ys[b][i][k] != Dictionary::eos_id && scores[b][i][k] > max_score[b][_n_best - 1])
               {
                 done[b] = false;
                 break;
@@ -808,6 +802,8 @@ namespace onmt
 
         if (done[b])
           new_remaining_sents--;
+        else
+          total_beam_size += _beam_size - num_finished;
       }
 
       _profiler.stop("Beam search");
@@ -820,50 +816,56 @@ namespace onmt
 
         for (size_t l = 0; l < rnn_state_dec.size(); ++l)
         {
-          new_rnn_state_dec.emplace_back(_beam_size*new_remaining_sents, rnn_size);
+          new_rnn_state_dec.emplace_back(total_beam_size, rnn_size);
           new_rnn_state_dec.back().setZero();
         }
 
         // Also remove finished sentences from the context.
-        MatFwd new_context(_beam_size*new_remaining_sents, source_l*rnn_size);
-        MatFwd new_input_feed(_beam_size*new_remaining_sents, rnn_size);
+        MatFwd new_context(total_beam_size, source_l*rnn_size);
+        std::unique_ptr<MatFwd> new_input_feed(with_input_feeding ? new MatFwd(total_beam_size, rnn_size) : nullptr);
 
-        size_t new_idx = 0; // Update each batch index.
-
-        for (size_t b = 0; b < batch_size; ++b)
+        for (size_t b = 0, prev_batch_offset = 0, new_batch_offset = 0; b < batch_size; ++b)
         {
+          size_t j = 0;
           if (!done[b])
           {
-            for (size_t k = 0; k < _beam_size; ++k)
+            for (size_t k = 0; k < next_ys[b][i].size(); ++k)
             {
+              if (next_ys[b][i][k] == Dictionary::eos_id)
+                continue;
+
+              // Copy the states from the beam we came from.
+              size_t prev_k_offset = prev_ks[b][i][k] - std::count(next_ys[b][i - 1].begin(), std::next(next_ys[b][i - 1].begin(), prev_ks[b][i][k] + 1), Dictionary::eos_id);
               for (size_t l = 0; l < new_rnn_state_dec.size(); ++l)
               {
-                // Copy the states from the beam we came from.
-                new_rnn_state_dec[l].row(get_offset(new_idx, k, new_remaining_sents)) =
-                  rnn_state_dec[l].row(get_offset(batch_idx[b], prev_ks[b][i][k], remaining_sents));
+                new_rnn_state_dec[l].row(new_batch_offset + j) =
+                  rnn_state_dec[l].row(prev_batch_offset + prev_k_offset);
               }
 
               if (with_input_feeding)
               {
-                new_input_feed.row(get_offset(new_idx, k, new_remaining_sents)) =
-                  input_feed.row(get_offset(batch_idx[b], k, remaining_sents));
+                new_input_feed->row(new_batch_offset + j) =
+                  input_feed->row(prev_batch_offset + prev_k_offset);
               }
 
-              new_context.row(get_offset(new_idx, k, new_remaining_sents)) =
-                context_dec.row(get_offset(batch_idx[b], k, remaining_sents));
+              new_context.row(new_batch_offset + j) =
+                context_dec.row(prev_batch_offset + prev_k_offset);
+
+              ++j;
             }
 
-            batch_idx[b] = new_idx++;
+            new_batch_offset += j;
           }
-          else
-            batch_idx[b] = -1;
+
+          prev_batch_offset += beam_size[b];
+          beam_size[b] = j;
         }
 
         rnn_state_dec = new_rnn_state_dec;
         context_dec = new_context;
         context_dec.setHiddenDim(source_l); // Do not forget to view it as a 3D tensor.
         if (with_input_feeding)
-          input_feed = new_input_feed;
+          input_feed.reset(new_input_feed.release());
       }
 
       remaining_sents = new_remaining_sents;
@@ -899,6 +901,9 @@ namespace onmt
 
         for (size_t k = start_k, j = len - 1; j > 1; --j)
         {
+          for (size_t f = 0; f < _model->get_tgt_feat_dicts().size(); ++f)
+            tgt_feat_ids[f][j - 2] = next_features[b][j][f][k];
+          
           k = prev_ks[b][j][k];
 
           tgt_ids[j - 2] = next_ys[b][j - 1][k];
@@ -907,8 +912,6 @@ namespace onmt
             size_t pad_length = source_l - batch_tokens[b].size();
             attention[j - 2][l] = all_attention[b][j - 1](k, l + pad_length);
           }
-          for (size_t f = 0; f < _model->get_tgt_feat_dicts().size(); ++f)
-            tgt_feat_ids[f][j - 2] = next_features[b][j][f][k];
         }
 
         batch_attention[b].push_back(attention);
