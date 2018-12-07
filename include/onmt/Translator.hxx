@@ -75,8 +75,7 @@ namespace onmt
   {
     if (input.size() > max_len)
     {
-      while (input.size() > max_len)
-        input.pop_back();
+      input.resize(max_len);
     }
     else if (input.size() < max_len)
     {
@@ -86,14 +85,12 @@ namespace onmt
     }
   }
 
-  static size_t pad_inputs(std::vector<std::vector<size_t> >& inputs, size_t pad_value, size_t max_len)
+  static size_t pad_inputs(std::vector<std::vector<size_t> >& inputs, size_t pad_value)
   {
     size_t cur_max_len = 0;
 
     for (const auto& input: inputs)
       cur_max_len = std::max(cur_max_len, input.size());
-
-    cur_max_len = std::min(cur_max_len, max_len);
 
     for (auto& input: inputs)
       pad_input(input, pad_value, cur_max_len);
@@ -215,7 +212,7 @@ namespace onmt
   class tdict
   {
   public:
-    tdict(int n)
+    tdict(size_t n)
       : _ndict(n)
     {}
     size_t _ndict;
@@ -328,7 +325,7 @@ namespace onmt
     }
 
     // Pad inputs to the left.
-    size_t source_l = pad_inputs(batch_ids, Dictionary::pad_id, _max_sent_length);
+    size_t source_l = pad_inputs(batch_ids, Dictionary::pad_id);
 
     for (size_t j = 0; j < _model->get_src_feat_dicts().size(); ++j)
     {
@@ -500,7 +497,7 @@ namespace onmt
     size_t rnn_size = _model->template get_option_value<size_t>("rnn_size");
     bool with_input_feeding = _model->get_option_flag("input_feed", true);
 
-    MatFwd context_dec(context.replicate(1, 1));
+    MatFwd context_dec(context);
     context_dec.setHiddenDim(source_l);
 
     std::vector<size_t> beam_size(batch_size, 1); // for the first decoding step, beam size is 1
@@ -523,7 +520,7 @@ namespace onmt
     for (size_t l = copy_offset; l < rnn_state_enc.size(); ++l)
     {
       rnn_state_dec.emplace_back(total_beam_size, rnn_size);
-      rnn_state_dec.back() = rnn_state_enc[l].replicate(1, 1);
+      rnn_state_dec.back() = rnn_state_enc[l];
     }
 
     std::vector<std::vector<std::vector<size_t> > > next_ys; // b x n x K
@@ -573,7 +570,7 @@ namespace onmt
 
     size_t i;
 
-    for (i = 1; remaining_sents > 0 && i < _max_sent_length; ++i)
+    for (i = 1; remaining_sents > 0 && i <= _max_sent_length + 1; ++i)
     {
       // Prepare decoder input at timestep i.
       std::vector<MatFwd> input;
@@ -676,45 +673,65 @@ namespace onmt
           out.row(batch_offset + l++).array() += scores[b][i - 1][k];
         }
 
-        prev_ks[b].emplace_back(_beam_size, 0);
-        next_ys[b].emplace_back(_beam_size, 0);
-        scores[b].emplace_back(_beam_size, 0.0);
-        all_attention[b].emplace_back(_beam_size, source_l);
+        size_t new_beam_size = (i > _max_sent_length) ? beam_size[b] : _beam_size;
+        prev_ks[b].emplace_back(new_beam_size, 0);
+        next_ys[b].emplace_back(new_beam_size, 0);
+        scores[b].emplace_back(new_beam_size, 0.0);
+        all_attention[b].emplace_back(new_beam_size, source_l);
 
-        std::unique_ptr<MatFwd> block((remaining_sents > 1) ? new MatFwd(out.block(batch_offset, 0, beam_size[b], out.cols())) : nullptr);
-        MatFwd& cur_sent_out = block ? *block : out;
-        for (size_t k = 0; k < _beam_size; ++k)
+        if (i > _max_sent_length)
         {
-          // Pick the best score across all beams.
-          size_t best_score_id = 0;
-          size_t from_beam = 0, from_beam_offset = 0;
-          float best_score = cur_sent_out.maxCoeff(&from_beam_offset, &best_score_id);
-          for (size_t l = 0, m = 0; l < next_ys[b][i - 1].size(); ++l)
+          for (size_t k = 0, l = 0; k < next_ys[b][i - 1].size(); ++k)
           {
-            if (next_ys[b][i - 1][l] == Dictionary::eos_id)
+            if (next_ys[b][i - 1][k] == Dictionary::eos_id)
               continue;
 
-            if (m++ == from_beam_offset)
-            {
-              from_beam = l;
-              break;
-            }
+            prev_ks[b][i][l] = k;
+            next_ys[b][i][l] = Dictionary::eos_id;
+            scores[b][i][l] = scores[b][i - 1][k];
+
+            // Store the attention.
+            all_attention[b][i].row(l) = attn_softmax_out.row(batch_offset + l);
+            ++l;
           }
+        }
+        else
+        {
+          std::unique_ptr<MatFwd> block((remaining_sents > 1) ? new MatFwd(out.block(batch_offset, 0, beam_size[b], out.cols())) : nullptr);
+          MatFwd& cur_sent_out = block ? *block : out;
+          for (size_t k = 0; k < new_beam_size; ++k)
+          {
+            // Pick the best score across all beams.
+            size_t best_score_id = 0;
+            size_t from_beam = 0, from_beam_offset = 0;
+            float best_score = cur_sent_out.maxCoeff(&from_beam_offset, &best_score_id);
+            for (size_t l = 0, m = 0; l < next_ys[b][i - 1].size(); ++l)
+            {
+              if (next_ys[b][i - 1][l] == Dictionary::eos_id)
+                continue;
 
-          prev_ks[b][i][k] = from_beam;
-          if (subvocab.size())
-            /* restore the actual index */
-            next_ys[b][i][k] = subvocab[best_score_id];
-          else
-            next_ys[b][i][k] = best_score_id;
+              if (m++ == from_beam_offset)
+              {
+                from_beam = l;
+                break;
+              }
+            }
 
-          scores[b][i][k] = best_score;
+            prev_ks[b][i][k] = from_beam;
+            if (subvocab.size())
+              /* restore the actual index */
+              next_ys[b][i][k] = subvocab[best_score_id];
+            else
+              next_ys[b][i][k] = best_score_id;
 
-          // Store the attention.
-          all_attention[b][i].row(k) = attn_softmax_out.row(batch_offset + from_beam_offset);
+            scores[b][i][k] = best_score;
 
-          // Override the best to ignore it for the next beam.
-          cur_sent_out(from_beam_offset, best_score_id) = -std::numeric_limits<float>::max();
+            // Store the attention.
+            all_attention[b][i].row(k) = attn_softmax_out.row(batch_offset + from_beam_offset);
+
+            // Override the best to ignore it for the next beam.
+            cur_sent_out(from_beam_offset, best_score_id) = -std::numeric_limits<float>::max();
+          }
         }
 
         if (_model->get_tgt_feat_dicts().size() > 0)
@@ -722,7 +739,7 @@ namespace onmt
           next_features[b].emplace_back();
           for (size_t j = 0; j < _model->get_tgt_feat_dicts().size(); ++j)
           {
-            next_features[b][i].emplace_back(_beam_size, 0);
+            next_features[b][i].emplace_back(new_beam_size, 0);
             for (size_t k = 0, l = 0; k < next_ys[b][i - 1].size(); ++k)
             {
               if (next_ys[b][i - 1][k] == Dictionary::eos_id)
@@ -747,7 +764,7 @@ namespace onmt
 
         // Update the current best.
         size_t num_finished = 0;
-        for (size_t k = 0; k < _beam_size; ++k)
+        for (size_t k = 0; k < new_beam_size; ++k)
         {
           if (next_ys[b][i][k] == Dictionary::eos_id)
           {
@@ -776,7 +793,7 @@ namespace onmt
 
         // Done when n-best hypotheses are finished, and no scores of unfinished hypotheses higher than the n-best.
         done[b] = (num_finished > 0);
-        if (done[b] && num_finished < _beam_size)
+        if (done[b] && num_finished < new_beam_size)
         {
           for (size_t n = 0; n < _n_best; ++n)
           {
@@ -789,7 +806,7 @@ namespace onmt
 
           if (done[b])
           {
-            for (size_t k = 0; k < _beam_size; ++k)
+            for (size_t k = 0; k < new_beam_size; ++k)
             {
               if (next_ys[b][i][k] != Dictionary::eos_id && scores[b][i][k] > max_score[b][_n_best - 1])
               {
@@ -803,7 +820,7 @@ namespace onmt
         if (done[b])
           new_remaining_sents--;
         else
-          total_beam_size += _beam_size - num_finished;
+          total_beam_size += new_beam_size - num_finished;
       }
 
       _profiler.stop("Beam search");
