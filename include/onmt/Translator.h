@@ -12,24 +12,41 @@ namespace onmt
 {
 
   template <typename MatFwd = Eigen::MatrixBatch<float>,
-            typename MatIn = Eigen::Map<const Eigen::RowMajorMat<float> >,
-            typename MatEmb = Eigen::Map<const Eigen::RowMajorMat<float> >,
+            typename MatIn = Eigen::RowMajorMatMap<float>,
+            typename MatEmb = Eigen::RowMajorMatMap<float>,
             typename ModelT = float>
   class Translator: public ITranslator
   {
   public:
     friend class TranslatorFactory;
 
-    std::vector<std::string> get_translations(const std::string& text, ITokenizer& tokenizer) override;
-    std::vector<std::vector<std::string> > get_translations_batch(const std::vector<std::string>& texts, ITokenizer& tokenizer) override;
+    std::vector<std::string>
+    get_translations(const std::string& text,
+                     ITokenizer& tokenizer,
+                     std::vector<float>& scores,
+                     std::vector<size_t>& count_tgt_words,
+                     std::vector<size_t>& count_tgt_unk_words,
+                     size_t& count_src_words,
+                     size_t& count_src_unk_words) override;
+
+    std::vector<std::vector<std::string> >
+    get_translations_batch(const std::vector<std::string>& texts,
+                           ITokenizer& tokenizer,
+                           std::vector<std::vector<float> >& scores,
+                           std::vector<std::vector<size_t> >& count_tgt_words,
+                           std::vector<std::vector<size_t> >& count_tgt_unk_words,
+                           std::vector<size_t>& count_src_words,
+                           std::vector<size_t>& count_src_unk_words) override;
 
     TranslationResult
     translate(const std::vector<std::string>& tokens,
-              const std::vector<std::vector<std::string> >& features) override;
+              const std::vector<std::vector<std::string> >& features,
+              size_t& count_src_unk_words) override;
 
     TranslationResult
     translate_batch(const std::vector<std::vector<std::string> >& batch_tokens,
-                    const std::vector<std::vector<std::vector<std::string> > >& batch_features) override;
+                    const std::vector<std::vector<std::vector<std::string> > >& batch_features,
+                    std::vector<size_t>& batch_count_src_unk_words) override;
 
   protected:
     Translator(const std::string& model,
@@ -77,8 +94,8 @@ namespace onmt
     TranslationResult
     decode(const std::vector<std::vector<std::string> >& batch_tokens,
            size_t source_l,
-           std::vector<MatFwd>& rnn_state_enc,
-           MatFwd& context,
+           const std::vector<MatFwd>& rnn_state_enc,
+           const MatFwd& context,
            const std::vector<size_t>& subvocab);
 
   private:
@@ -94,8 +111,8 @@ namespace onmt
 
   template <typename T>
   using DefaultTranslator = Translator<Eigen::MatrixBatch<T>,
-                                       Eigen::Map<const Eigen::RowMajorMat<T> >,
-                                       Eigen::Map<const Eigen::RowMajorMat<T> >,
+                                       Eigen::RowMajorMatMap<T>,
+                                       Eigen::RowMajorMatMap<T>,
                                        T>;
 
 }

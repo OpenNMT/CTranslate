@@ -11,7 +11,7 @@ public:
   BatchReader(const std::string& file, size_t batch_size);
   BatchReader(std::istream& in, size_t batch_size);
 
-  BatchInput read_next();
+  Batch read_next();
 
   size_t read_lines() const
   {

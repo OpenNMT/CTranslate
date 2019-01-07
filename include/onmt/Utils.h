@@ -3,6 +3,13 @@
 #include <cstddef>
 #include <cstdint>
 
+#ifdef WITH_BOOST_LOG
+#  include "onmt/Logger.h"
+#  define ONMT_LOG_STREAM_SEV(s, l) BOOST_LOG_SEV(onmt::Logger::lg(), l) << s
+#else
+#  define ONMT_LOG_STREAM_SEV(s, l) ((void)0)
+#endif
+
 namespace onmt
 {
 

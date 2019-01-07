@@ -17,6 +17,9 @@ namespace onmt
     template <typename T>
     using Map = ::Eigen::Map<T>;
 
+    template <typename T>
+    using RowMajorMatMap = Map<const RowMajorMat<T>>;
+
     // This class inherits from Eigen::Matrix to simulate a batch of Matrix
     // (a.k.a. a 3D Tensor). The object stores a hidden dimension, for example:
     //
