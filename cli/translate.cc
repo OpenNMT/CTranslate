@@ -5,8 +5,16 @@
 #include <algorithm>
 #include <thread>
 #include <future>
+#include <exception>
+#include <cmath>
+#include <iomanip>
+#include <ios>
 
 #include <onmt/onmt.h>
+#include <onmt/Utils.h>
+#ifdef WITH_BOOST_LOG
+#  include <onmt/Logger.h>
+#endif
 
 #include "BatchReader.h"
 #include "BatchWriter.h"
@@ -34,6 +42,9 @@ int main(int argc, char* argv[])
     ("threads", po::value<size_t>()->default_value(0), "number of threads to use (set to 0 to use the number defined by OpenMP)")
     ("cuda", po::bool_switch()->default_value(false), "use cuda when available")
     ("qlinear", po::bool_switch()->default_value(false), "use quantized linear for speed-up")
+    ("log_file", po::value<std::string>()->default_value(""), "path to the log file (write to standard output if not set)")
+    ("disable_logs", po::bool_switch()->default_value(false), "if set, output nothing")
+    ("log_level", po::value<std::string>()->default_value(""), "output logs at this level and above (accepted: DEBUG, INFO, WARNING, ERROR, NONE; default: INFO)")
     ;
 
   po::variables_map vm;
@@ -51,6 +62,10 @@ int main(int argc, char* argv[])
     std::cerr << "missing model" << std::endl;
     return 1;
   }
+
+#ifdef WITH_BOOST_LOG
+  onmt::Logger::init(vm["log_file"].as<std::string>(), vm["disable_logs"].as<bool>(), vm["log_level"].as<std::string>());
+#endif
 
   if (vm["threads"].as<size_t>() > 0)
     onmt::Threads::set(vm["threads"].as<size_t>());
@@ -100,8 +115,23 @@ int main(int argc, char* argv[])
                      auto batch = p_reader->read_next();
                      if (batch.empty())
                        break;
-                     auto res = p_trans->get_translations_batch(batch.get_data());
-                     p_writer->write(BatchOutput(res, batch.get_id()));
+
+                     std::vector<std::vector<std::string> > res;
+                     std::vector<std::vector<float> > score;
+                     std::vector<std::vector<size_t> > count_tgt_words, count_tgt_unk_words;
+                     std::vector<size_t> count_src_words, count_src_unk_words;
+                     try
+                     {
+                       res = p_trans->get_translations_batch(batch.get_input(), score, count_tgt_words, count_tgt_unk_words, count_src_words, count_src_unk_words);
+                     }
+                     catch (const std::exception& e)
+                     {
+                       ONMT_LOG_STREAM_SEV(e.what(), boost::log::trivial::error);
+                       throw;
+                     }
+
+                     batch.set_result(res, score, count_tgt_words, count_tgt_unk_words, count_src_words, count_src_unk_words);
+                     p_writer->write(batch);
                    }
                    return true;
                  },
@@ -112,6 +142,13 @@ int main(int argc, char* argv[])
 
   for (auto& f: futures)
     f.wait();
+
+  ONMT_LOG_STREAM_SEV("Translated " << writer->total_count_src_words() << " words, src unk count: " << writer->total_count_src_unk_words()
+    << ", coverage: " << std::floor(writer->total_count_src_unk_words() * 1000.0 / writer->total_count_src_words()) / 10.0 << "%, "
+    << "tgt words: " << writer->total_count_tgt_words() << " words, tgt unk count: " << writer->total_count_tgt_unk_words()
+    << ", coverage: " << std::floor(writer->total_count_tgt_unk_words() * 1000.0 / writer->total_count_tgt_words()) / 10.0 << "%, ", boost::log::trivial::info);
+  ONMT_LOG_STREAM_SEV("PRED AVG SCORE: " << std::fixed << std::setprecision(2) << writer->total_score() / writer->total_count_tgt_words()
+    << ", PRED PPL: " << std::exp(-writer->total_score() / writer->total_count_tgt_words()), boost::log::trivial::info);
 
   if (vm["time"].as<bool>())
   {

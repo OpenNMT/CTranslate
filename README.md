@@ -9,7 +9,7 @@ CTranslate provides optimized CPU translation and optionally offloads matrix mul
 ## Dependencies
 
 * [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page) >= 3.3
-* [Boost](http://www.boost.org/) (`program_options`, when `-DLIB_ONLY=OFF`)
+* [Boost](http://www.boost.org/) (`log`, when `-DWITH_BOOST_LOG=ON`; `program_options`, when `-DLIB_ONLY=OFF`)
 
 ### Optional
 

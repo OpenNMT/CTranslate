@@ -3,7 +3,6 @@
 #include <memory>
 #include "onmt/nn/Linear.h"
 #include "onmt/th/Obj.h"
-#include "onmt/StorageLoader.h"
 #include "onmt/Utils.h"
 #include "onmt/simd/MatrixMult.h"
 

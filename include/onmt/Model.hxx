@@ -1,6 +1,7 @@
 #pragma once
 
 #include "onmt/th/Obj.h"
+#include "onmt/Utils.h"
 
 namespace onmt
 {
@@ -8,6 +9,7 @@ namespace onmt
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
   Model<MatFwd, MatIn, MatEmb, ModelT>::Model(const std::string& filename)
   {
+    ONMT_LOG_STREAM_SEV("Loading '" << filename << "'...", boost::log::trivial::info);
     THFile* tf = THDiskFile_new(filename.c_str(), "r", 0);
     THFile_binary(tf);
     THDiskFile_longSize(tf, th::dfLongSize);

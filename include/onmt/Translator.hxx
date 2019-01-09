@@ -191,21 +191,40 @@ namespace onmt
   }
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
-  std::vector<std::string> Translator<MatFwd, MatIn, MatEmb, ModelT>::get_translations(const std::string& text,
-                                                                   ITokenizer& tokenizer)
+  std::vector<std::string>
+  Translator<MatFwd, MatIn, MatEmb, ModelT>::get_translations(const std::string& text,
+                                                              ITokenizer& tokenizer,
+                                                              std::vector<float>& scores,
+                                                              std::vector<size_t>& count_tgt_words,
+                                                              std::vector<size_t>& count_tgt_unk_words,
+                                                              size_t& count_src_words,
+                                                              size_t& count_src_unk_words)
   {
     std::vector<std::string> src_tokens;
     std::vector<std::vector<std::string> > src_features;
 
     tokenizer.tokenize(text, src_tokens, src_features);
 
-    TranslationResult res = translate(src_tokens, src_features);
+    count_src_words = src_tokens.size();
+    TranslationResult res = translate(src_tokens, src_features, count_src_unk_words);
     std::vector<std::string> tgt_texts;
-    tgt_texts.reserve(res.count_job(0));
+    size_t count_results = res.count_job(0);
+    tgt_texts.reserve(count_results);
+    count_tgt_words.clear();
+    count_tgt_words.reserve(count_results);
 
-    for (size_t i = 0; i < res.count_job(0); ++i)
-      tgt_texts.push_back(tokenizer.detokenize(res.get_words(0, i), res.get_features(0, i)));
+    for (size_t i = 0; i < count_results; ++i)
+    {
+      const auto& words = res.get_words(0, i);
+      count_tgt_words.push_back(words.size());
+      if (res.has_features())
+        tgt_texts.push_back(tokenizer.detokenize(words, res.get_features(0, i)));
+      else
+        tgt_texts.push_back(tokenizer.detokenize(words, {}));
+    }
 
+    scores = res.get_score_job(0);
+    count_tgt_unk_words = res.get_count_unk_words_job(0);
     return tgt_texts;
   }
 
@@ -235,21 +254,30 @@ namespace onmt
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
   TranslationResult
   Translator<MatFwd, MatIn, MatEmb, ModelT>::translate(const std::vector<std::string>& tokens,
-                                                       const std::vector<std::vector<std::string> >& features)
+                                                       const std::vector<std::vector<std::string> >& features,
+                                                       size_t& count_src_unk_words)
   {
     std::vector<std::vector<std::string> > src_batch(1, tokens);
     std::vector<std::vector<std::vector<std::string> > > src_feat_batch(1, features);
-
-    return translate_batch(src_batch, src_feat_batch);
+    std::vector<size_t> batch_count_src_unk_words;
+    auto res = translate_batch(src_batch, src_feat_batch, batch_count_src_unk_words);
+    count_src_unk_words = batch_count_src_unk_words.at(0);
+    return res;
   }
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
   std::vector<std::vector<std::string> >
   Translator<MatFwd, MatIn, MatEmb, ModelT>::get_translations_batch(const std::vector<std::string>& texts,
-                                                             ITokenizer& tokenizer)
+                                                                    ITokenizer& tokenizer,
+                                                                    std::vector<std::vector<float> >& scores,
+                                                                    std::vector<std::vector<size_t> >& count_tgt_words,
+                                                                    std::vector<std::vector<size_t> >& count_tgt_unk_words,
+                                                                    std::vector<size_t>& count_src_words,
+                                                                    std::vector<size_t>& count_src_unk_words)
   {
     std::vector<std::vector<std::string> > batch_tokens;
     std::vector<std::vector<std::vector<std::string> > > batch_features;
+    count_src_words.clear();
 
     for (const auto& text: texts)
     {
@@ -258,26 +286,36 @@ namespace onmt
       tokenizer.tokenize(text, tokens, features);
       batch_tokens.push_back(tokens);
       batch_features.push_back(features);
+      count_src_words.push_back(tokens.size());
     }
 
-    TranslationResult res = translate_batch(batch_tokens, batch_features);
+    TranslationResult res = translate_batch(batch_tokens, batch_features, count_src_unk_words);
 
     std::vector<std::vector<std::string> > tgt_texts;
     tgt_texts.reserve(texts.size());
+    count_tgt_words.clear();
+    count_tgt_words.reserve(texts.size());
 
     for (size_t i = 0; i < res.count(); ++i)
     {
+      size_t count_results = res.count_job(i);
       tgt_texts.emplace_back();
-      tgt_texts[i].reserve(res.count_job(i));
-      for (size_t j = 0; j < res.count_job(i); ++j)
+      tgt_texts[i].reserve(count_results);
+      count_tgt_words.emplace_back();
+      count_tgt_words[i].reserve(count_results);
+      for (size_t j = 0; j < count_results; ++j)
       {
+        const auto& words = res.get_words(i, j);
+        count_tgt_words[i].push_back(words.size());
         if (res.has_features())
-          tgt_texts[i].push_back(tokenizer.detokenize(res.get_words(i, j), res.get_features(i, j)));
+          tgt_texts[i].push_back(tokenizer.detokenize(words, res.get_features(i, j)));
         else
-          tgt_texts[i].push_back(tokenizer.detokenize(res.get_words(i, j), {}));
+          tgt_texts[i].push_back(tokenizer.detokenize(words, {}));
       }
     }
 
+    scores = res.get_score_batch();
+    count_tgt_unk_words = res.get_count_unk_words_batch();
     return tgt_texts;
   }
 
@@ -285,9 +323,11 @@ namespace onmt
   TranslationResult
   Translator<MatFwd, MatIn, MatEmb, ModelT>::translate_batch(
     const std::vector<std::vector<std::string> >& batch_tokens,
-    const std::vector<std::vector<std::vector<std::string> > >& batch_features)
+    const std::vector<std::vector<std::vector<std::string> > >& batch_features,
+    std::vector<size_t>& batch_count_src_unk_words)
   {
     size_t batch_size = batch_tokens.size();
+    batch_count_src_unk_words.clear();
 
     // Convert words to ids.
     std::vector<std::vector<size_t> > batch_ids;
@@ -322,6 +362,8 @@ namespace onmt
         for (size_t j = 0; j < _model->get_src_feat_dicts().size(); ++j)
           batch_feat_ids[b].push_back(words_to_ids(_model->get_src_feat_dicts()[j], batch_features[b][j]));
       }
+
+      batch_count_src_unk_words.push_back(std::count(batch_ids[b].begin(), batch_ids[b].end(), Dictionary::unk_id));
     }
 
     // Pad inputs to the left.
@@ -483,8 +525,8 @@ namespace onmt
   Translator<MatFwd, MatIn, MatEmb, ModelT>::decode(
     const std::vector<std::vector<std::string> >& batch_tokens,
     size_t source_l,
-    std::vector<MatFwd>& rnn_state_enc,
-    MatFwd& context,
+    const std::vector<MatFwd>& rnn_state_enc,
+    const MatFwd& context,
     const std::vector<size_t>& subvocab)
   {
     if (_beam_size < _n_best)
@@ -892,12 +934,14 @@ namespace onmt
     std::vector<std::vector<std::vector<std::string> > > batch_tgt_tokens;
     std::vector<std::vector<std::vector<std::vector<std::string> > > > batch_tgt_features;
     std::vector<std::vector<std::vector<std::vector<float> > > > batch_attention;
+    std::vector<std::vector<size_t> > batch_tgt_count_unk_words;
 
     for (size_t b = 0; b < batch_size; ++b)
     {
       batch_tgt_tokens.emplace_back();
       batch_tgt_features.emplace_back();
       batch_attention.emplace_back();
+      batch_tgt_count_unk_words.emplace_back();
       for (size_t n = 0; n < _n_best; ++n)
       {
         size_t start_k = best_k[b][n];
@@ -932,6 +976,7 @@ namespace onmt
         }
 
         batch_attention[b].push_back(attention);
+        batch_tgt_count_unk_words[b].push_back(std::count(tgt_ids.begin(), tgt_ids.end(), Dictionary::unk_id));
 
         if (_replace_unk)
           batch_tgt_tokens[b].push_back(ids_to_words_replace(_model->get_tgt_dict(),
@@ -948,7 +993,7 @@ namespace onmt
       }
     }
 
-    return TranslationResult(batch_tgt_tokens, batch_tgt_features, batch_attention);
+    return TranslationResult(batch_tgt_tokens, batch_tgt_features, batch_attention, max_score, batch_tgt_count_unk_words);
   }
 
 }
