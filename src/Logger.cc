@@ -1,7 +1,5 @@
 #include "onmt/Logger.h"
 
-#include <memory>
-
 #include <boost/log/core.hpp>
 #include <boost/log/expressions.hpp>
 #include <boost/log/utility/setup/file.hpp>
@@ -30,6 +28,7 @@ namespace onmt
         boost::log::add_file_log
         (
           boost::log::keywords::file_name = log_file,
+          boost::log::keywords::auto_flush = true,
           boost::log::keywords::format =
           (
             boost::log::expressions::stream
