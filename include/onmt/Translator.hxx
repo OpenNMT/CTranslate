@@ -26,7 +26,8 @@ namespace onmt
                                                        const PhraseTable& phrase_table,
                                                        const std::vector<size_t>& ids,
                                                        const std::vector<std::string>& source,
-                                                       const std::vector<std::vector<float> >& attn)
+                                                       const std::vector<std::vector<float> >& attn,
+                                                       const bool tag_unk)
   {
     std::vector<std::string> words;
     words.reserve(ids.size());
@@ -49,6 +50,10 @@ namespace onmt
           std::string tgt = phrase_table.lookup(replacement);
           if (!tgt.empty())
             replacement = tgt;
+        }
+        else if(tag_unk)
+        {
+          replacement = "｟unk:" + replacement + "｠";
         }
 
         words.push_back(replacement);
@@ -135,6 +140,7 @@ namespace onmt
                                                         const std::string& phrase_table,
                                                         const std::string& vocab_mapping,
                                                         bool replace_unk,
+                                                        bool replace_unk_tagged,
                                                         size_t max_sent_length,
                                                         size_t beam_size,
                                                         size_t n_best,
@@ -149,6 +155,7 @@ namespace onmt
     , _cuda(cuda)
     , _qlinear(qlinear)
     , _replace_unk(replace_unk)
+    , _replace_unk_tagged(replace_unk_tagged)
     , _max_sent_length(max_sent_length)
     , _beam_size(beam_size)
     , _n_best(n_best)
@@ -169,6 +176,7 @@ namespace onmt
     , _cuda(other._cuda)
     , _qlinear(other._qlinear)
     , _replace_unk(other._replace_unk)
+    , _replace_unk_tagged(other._replace_unk_tagged)
     , _max_sent_length(other._max_sent_length)
     , _beam_size(other._beam_size)
     , _n_best(other._n_best)
@@ -978,12 +986,13 @@ namespace onmt
         batch_attention[b].push_back(attention);
         batch_tgt_count_unk_words[b].push_back(std::count(tgt_ids.begin(), tgt_ids.end(), Dictionary::unk_id));
 
-        if (_replace_unk)
+        if (_replace_unk || _replace_unk_tagged)
           batch_tgt_tokens[b].push_back(ids_to_words_replace(_model->get_tgt_dict(),
                                                              *_phrase_table,
                                                              tgt_ids,
                                                              batch_tokens[b],
-                                                             attention));
+                                                             attention,
+                                                             _replace_unk_tagged));
         else
           batch_tgt_tokens[b].push_back(ids_to_words(_model->get_tgt_dict(), tgt_ids));
 

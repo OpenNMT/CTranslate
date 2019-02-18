@@ -53,6 +53,7 @@ namespace onmt
                const std::string& phrase_table,
                const std::string& vocab_mapping,
                bool replace_unk,
+               bool replace_unk_tagged,
                size_t max_sent_length,
                size_t beam_size,
                size_t n_best,
@@ -74,6 +75,7 @@ namespace onmt
     bool _qlinear;
 
     bool _replace_unk;
+    bool _replace_unk_tagged;
     size_t _max_sent_length;
     size_t _beam_size;
     size_t _n_best;

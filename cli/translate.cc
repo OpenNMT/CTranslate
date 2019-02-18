@@ -32,6 +32,7 @@ int main(int argc, char* argv[])
     ("phrase_table", po::value<std::string>()->default_value(""), "path to the phrase table")
     ("vocab_mapping", po::value<std::string>()->default_value(""), "path to a vocabulary mapping table")
     ("replace_unk", po::bool_switch()->default_value(false), "replace unknown tokens by source tokens with the highest attention")
+    ("replace_unk_tagged", po::bool_switch()->default_value(false), "The same as -replace_unk, but wrap the replaced token in｟unk:xxxxx｠if it is not found in the phrase table")
     ("batch_size", po::value<size_t>()->default_value(30), "batch size")
     ("beam_size", po::value<size_t>()->default_value(5), "beam size")
     ("n_best", po::value<size_t>()->default_value(1), "n best")
@@ -75,6 +76,7 @@ int main(int argc, char* argv[])
                                                               vm["phrase_table"].as<std::string>(),
                                                               vm["vocab_mapping"].as<std::string>(),
                                                               vm["replace_unk"].as<bool>(),
+                                                              vm["replace_unk_tagged"].as<bool>(),
                                                               vm["max_sent_length"].as<size_t>(),
                                                               vm["beam_size"].as<size_t>(),
                                                               vm["n_best"].as<size_t>(),
