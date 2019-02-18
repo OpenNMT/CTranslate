@@ -15,6 +15,7 @@ namespace onmt
                                               const std::string& phrase_table = "",
                                               const std::string& vocab_mapping = "",
                                               bool replace_unk = true,
+                                              bool replace_unk_tagged = false,
                                               size_t max_sent_length = 250,
                                               size_t beam_size = 5,
                                               size_t n_best = 1,
