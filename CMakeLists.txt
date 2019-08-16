@@ -80,6 +80,7 @@ set(SOURCES
   src/Profiler.cc
   src/ITranslator.cc
   src/TranslatorFactory.cc
+  src/TranslationOptions.cc
   src/TranslationResult.cc
   src/Threads.cc
   )
