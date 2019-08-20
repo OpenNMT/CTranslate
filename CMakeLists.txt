@@ -127,6 +127,7 @@ if (WITH_QLINEAR)
 endif()
 
 if (MKL_FOUND)
+  add_definitions(-DWITH_MKL)
   add_definitions(-DEIGEN_USE_MKL_ALL)
   list(APPEND INCLUDE_DIRECTORIES ${MKL_INCLUDE_DIR})
   list(APPEND LIBRARIES ${MKL_LIBRARIES})
