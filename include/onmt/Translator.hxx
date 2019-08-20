@@ -139,11 +139,6 @@ namespace onmt
   Translator<MatFwd, MatIn, MatEmb, ModelT>::Translator(const std::string& model,
                                                         const std::string& phrase_table,
                                                         const std::string& vocab_mapping,
-                                                        bool replace_unk,
-                                                        bool replace_unk_tagged,
-                                                        size_t max_sent_length,
-                                                        size_t beam_size,
-                                                        size_t n_best,
                                                         bool cuda,
                                                         bool qlinear,
                                                         bool profiling)
@@ -154,11 +149,6 @@ namespace onmt
     , _subdict(new SubDict(vocab_mapping, _model->get_tgt_dict()))
     , _cuda(cuda)
     , _qlinear(qlinear)
-    , _replace_unk(replace_unk)
-    , _replace_unk_tagged(replace_unk_tagged)
-    , _max_sent_length(max_sent_length)
-    , _beam_size(beam_size)
-    , _n_best(n_best)
     , _factory(_profiler, cuda, qlinear)
   {
     init_graph();
@@ -175,11 +165,6 @@ namespace onmt
     , _subdict(other._subdict)
     , _cuda(other._cuda)
     , _qlinear(other._qlinear)
-    , _replace_unk(other._replace_unk)
-    , _replace_unk_tagged(other._replace_unk_tagged)
-    , _max_sent_length(other._max_sent_length)
-    , _beam_size(other._beam_size)
-    , _n_best(other._n_best)
     , _factory(_profiler, _cuda, _qlinear)
   {
     init_graph();
@@ -206,7 +191,8 @@ namespace onmt
                                                               std::vector<size_t>& count_tgt_words,
                                                               std::vector<size_t>& count_tgt_unk_words,
                                                               size_t& count_src_words,
-                                                              size_t& count_src_unk_words)
+                                                              size_t& count_src_unk_words,
+                                                              const TranslationOptions& options)
   {
     std::vector<std::string> src_tokens;
     std::vector<std::vector<std::string> > src_features;
@@ -214,7 +200,7 @@ namespace onmt
     tokenizer.tokenize(text, src_tokens, src_features);
 
     count_src_words = src_tokens.size();
-    TranslationResult res = translate(src_tokens, src_features, count_src_unk_words);
+    TranslationResult res = translate(src_tokens, src_features, count_src_unk_words, options);
     std::vector<std::string> tgt_texts;
     size_t count_results = res.count_job(0);
     tgt_texts.reserve(count_results);
@@ -263,12 +249,13 @@ namespace onmt
   TranslationResult
   Translator<MatFwd, MatIn, MatEmb, ModelT>::translate(const std::vector<std::string>& tokens,
                                                        const std::vector<std::vector<std::string> >& features,
-                                                       size_t& count_src_unk_words)
+                                                       size_t& count_src_unk_words,
+                                                       const TranslationOptions& options)
   {
     std::vector<std::vector<std::string> > src_batch(1, tokens);
     std::vector<std::vector<std::vector<std::string> > > src_feat_batch(1, features);
     std::vector<size_t> batch_count_src_unk_words;
-    auto res = translate_batch(src_batch, src_feat_batch, batch_count_src_unk_words);
+    auto res = translate_batch(src_batch, src_feat_batch, batch_count_src_unk_words, options);
     count_src_unk_words = batch_count_src_unk_words.at(0);
     return res;
   }
@@ -281,7 +268,8 @@ namespace onmt
                                                                     std::vector<std::vector<size_t> >& count_tgt_words,
                                                                     std::vector<std::vector<size_t> >& count_tgt_unk_words,
                                                                     std::vector<size_t>& count_src_words,
-                                                                    std::vector<size_t>& count_src_unk_words)
+                                                                    std::vector<size_t>& count_src_unk_words,
+                                                                    const TranslationOptions& options)
   {
     std::vector<std::vector<std::string> > batch_tokens;
     std::vector<std::vector<std::vector<std::string> > > batch_features;
@@ -297,7 +285,7 @@ namespace onmt
       count_src_words.push_back(tokens.size());
     }
 
-    TranslationResult res = translate_batch(batch_tokens, batch_features, count_src_unk_words);
+    TranslationResult res = translate_batch(batch_tokens, batch_features, count_src_unk_words, options);
 
     std::vector<std::vector<std::string> > tgt_texts;
     tgt_texts.reserve(texts.size());
@@ -332,7 +320,8 @@ namespace onmt
   Translator<MatFwd, MatIn, MatEmb, ModelT>::translate_batch(
     const std::vector<std::vector<std::string> >& batch_tokens,
     const std::vector<std::vector<std::vector<std::string> > >& batch_features,
-    std::vector<size_t>& batch_count_src_unk_words)
+    std::vector<size_t>& batch_count_src_unk_words,
+    const TranslationOptions& options)
   {
     size_t batch_size = batch_tokens.size();
     batch_count_src_unk_words.clear();
@@ -388,7 +377,7 @@ namespace onmt
     MatFwd context;
 
     encode(batch_tokens, batch_ids, batch_feat_ids, rnn_state_enc, context);
-    return decode(batch_tokens, source_l, rnn_state_enc, context, data.subvocab);
+    return decode(batch_tokens, source_l, rnn_state_enc, context, data.subvocab, options);
   }
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
@@ -535,11 +524,17 @@ namespace onmt
     size_t source_l,
     const std::vector<MatFwd>& rnn_state_enc,
     const MatFwd& context,
-    const std::vector<size_t>& subvocab)
+    const std::vector<size_t>& subvocab,
+    const TranslationOptions& options)
   {
-    if (_beam_size < _n_best)
+    const size_t beam_size = options.beam_size();
+    const size_t n_best = options.n_best();
+    const size_t max_sent_length = options.max_sent_length();
+    const bool replace_unk = options.replace_unk();
+    const bool replace_unk_tagged = options.replace_unk_tagged();
+    if (beam_size < n_best)
       throw std::runtime_error("Beam size must be greater than or equal to the n-best list size");
-    else if (_n_best == 0)
+    else if (n_best == 0)
       throw std::runtime_error("N-best list size must not be zero");
 
     size_t batch_size = batch_tokens.size();
@@ -550,7 +545,7 @@ namespace onmt
     MatFwd context_dec(context);
     context_dec.setHiddenDim(source_l);
 
-    std::vector<size_t> beam_size(batch_size, 1); // for the first decoding step, beam size is 1
+    std::vector<size_t> actual_beam_size(batch_size, 1); // for the first decoding step, beam size is 1
     size_t total_beam_size = batch_size;
     std::unique_ptr<MatFwd> input_feed(with_input_feeding ? new MatFwd(total_beam_size, rnn_size) : nullptr);
     if (with_input_feeding)
@@ -614,13 +609,13 @@ namespace onmt
     size_t remaining_sents = batch_size;
     std::vector<bool> done(batch_size, false);
 
-    std::vector<std::vector<float> > max_score(batch_size, std::vector<float>(_n_best, -std::numeric_limits<float>::max()));
-    std::vector<std::vector<size_t> > best_k(batch_size, std::vector<size_t>(_n_best, 0));
-    std::vector<std::vector<size_t> > best_finished_at(batch_size, std::vector<size_t>(_n_best, 0));
+    std::vector<std::vector<float> > max_score(batch_size, std::vector<float>(n_best, -std::numeric_limits<float>::max()));
+    std::vector<std::vector<size_t> > best_k(batch_size, std::vector<size_t>(n_best, 0));
+    std::vector<std::vector<size_t> > best_finished_at(batch_size, std::vector<size_t>(n_best, 0));
 
     size_t i;
 
-    for (i = 1; remaining_sents > 0 && i <= _max_sent_length + 1; ++i)
+    for (i = 1; remaining_sents > 0 && i <= max_sent_length + 1; ++i)
     {
       // Prepare decoder input at timestep i.
       std::vector<MatFwd> input;
@@ -675,7 +670,7 @@ namespace onmt
 
           if (pad_len > 0)
           {
-            for (size_t k = 0; k < beam_size[b]; ++k)
+            for (size_t k = 0; k < actual_beam_size[b]; ++k)
             {
               size_t index = batch_offset + k;
               soft_out.row(index).head(pad_len).setZero();
@@ -683,7 +678,7 @@ namespace onmt
             }
           }
 
-          batch_offset += beam_size[b];
+          batch_offset += actual_beam_size[b];
         }
 
         attn_softmax_out = soft_out;
@@ -709,7 +704,7 @@ namespace onmt
 
       // Update beam path for all non finished sentences.
       total_beam_size = 0;
-      for (size_t b = 0, batch_offset = 0; b < batch_size; batch_offset += beam_size[b++])
+      for (size_t b = 0, batch_offset = 0; b < batch_size; batch_offset += actual_beam_size[b++])
       {
         if (done[b])
           continue;
@@ -723,13 +718,13 @@ namespace onmt
           out.row(batch_offset + l++).array() += scores[b][i - 1][k];
         }
 
-        size_t new_beam_size = (i > _max_sent_length) ? beam_size[b] : _beam_size;
+        size_t new_beam_size = (i > max_sent_length) ? actual_beam_size[b] : beam_size;
         prev_ks[b].emplace_back(new_beam_size, 0);
         next_ys[b].emplace_back(new_beam_size, 0);
         scores[b].emplace_back(new_beam_size, 0.0);
         all_attention[b].emplace_back(new_beam_size, source_l);
 
-        if (i > _max_sent_length)
+        if (i > max_sent_length)
         {
           for (size_t k = 0, l = 0; k < next_ys[b][i - 1].size(); ++k)
           {
@@ -747,7 +742,7 @@ namespace onmt
         }
         else
         {
-          std::unique_ptr<MatFwd> block((remaining_sents > 1) ? new MatFwd(out.block(batch_offset, 0, beam_size[b], out.cols())) : nullptr);
+          std::unique_ptr<MatFwd> block((remaining_sents > 1) ? new MatFwd(out.block(batch_offset, 0, actual_beam_size[b], out.cols())) : nullptr);
           MatFwd& cur_sent_out = block ? *block : out;
           for (size_t k = 0; k < new_beam_size; ++k)
           {
@@ -821,11 +816,11 @@ namespace onmt
             ++num_finished;
 
             // Add to the n-best list if applicable, and keep the list sorted.
-            for (size_t n = 0; n < _n_best; ++n)
+            for (size_t n = 0; n < n_best; ++n)
             {
               if (scores[b][i][k] > max_score[b][n])
               {
-                for (size_t m = _n_best - 1; m > n; --m)
+                for (size_t m = n_best - 1; m > n; --m)
                 {
                   max_score[b][m] = max_score[b][m - 1];
                   best_k[b][m] = best_k[b][m - 1];
@@ -845,7 +840,7 @@ namespace onmt
         done[b] = (num_finished > 0);
         if (done[b] && num_finished < new_beam_size)
         {
-          for (size_t n = 0; n < _n_best; ++n)
+          for (size_t n = 0; n < n_best; ++n)
           {
             if (max_score[b][n] == -std::numeric_limits<float>::max())
             {
@@ -858,7 +853,7 @@ namespace onmt
           {
             for (size_t k = 0; k < new_beam_size; ++k)
             {
-              if (next_ys[b][i][k] != Dictionary::eos_id && scores[b][i][k] > max_score[b][_n_best - 1])
+              if (next_ys[b][i][k] != Dictionary::eos_id && scores[b][i][k] > max_score[b][n_best - 1])
               {
                 done[b] = false;
                 break;
@@ -924,8 +919,8 @@ namespace onmt
             new_batch_offset += j;
           }
 
-          prev_batch_offset += beam_size[b];
-          beam_size[b] = j;
+          prev_batch_offset += actual_beam_size[b];
+          actual_beam_size[b] = j;
         }
 
         rnn_state_dec = new_rnn_state_dec;
@@ -950,7 +945,7 @@ namespace onmt
       batch_tgt_features.emplace_back();
       batch_attention.emplace_back();
       batch_tgt_count_unk_words.emplace_back();
-      for (size_t n = 0; n < _n_best; ++n)
+      for (size_t n = 0; n < n_best; ++n)
       {
         size_t start_k = best_k[b][n];
         size_t len = best_finished_at[b][n] + 1;
@@ -986,13 +981,13 @@ namespace onmt
         batch_attention[b].push_back(attention);
         batch_tgt_count_unk_words[b].push_back(std::count(tgt_ids.begin(), tgt_ids.end(), Dictionary::unk_id));
 
-        if (_replace_unk || _replace_unk_tagged)
+        if (replace_unk || replace_unk_tagged)
           batch_tgt_tokens[b].push_back(ids_to_words_replace(_model->get_tgt_dict(),
                                                              *_phrase_table,
                                                              tgt_ids,
                                                              batch_tokens[b],
                                                              attention,
-                                                             _replace_unk_tagged));
+                                                             replace_unk_tagged));
         else
           batch_tgt_tokens[b].push_back(ids_to_words(_model->get_tgt_dict(), tgt_ids));
 

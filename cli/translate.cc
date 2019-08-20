@@ -43,9 +43,11 @@ int main(int argc, char* argv[])
     ("threads", po::value<size_t>()->default_value(0), "number of threads to use (set to 0 to use the number defined by OpenMP)")
     ("cuda", po::bool_switch()->default_value(false), "use cuda when available")
     ("qlinear", po::bool_switch()->default_value(false), "use quantized linear for speed-up")
+#ifdef WITH_BOOST_LOG
     ("log_file", po::value<std::string>()->default_value(""), "path to the log file (write to standard output if not set)")
     ("disable_logs", po::bool_switch()->default_value(false), "if set, output nothing")
-    ("log_level", po::value<std::string>()->default_value(""), "output logs at this level and above (accepted: DEBUG, INFO, WARNING, ERROR, NONE; default: INFO)")
+    ("log_level", po::value<std::string>()->default_value("INFO"), "output logs at this level and above (accepted: DEBUG, INFO, WARNING, ERROR, NONE)")
+#endif
     ;
 
   po::variables_map vm;
@@ -71,15 +73,16 @@ int main(int argc, char* argv[])
   if (vm["threads"].as<size_t>() > 0)
     onmt::Threads::set(vm["threads"].as<size_t>());
 
+  onmt::TranslationOptions options(vm["max_sent_length"].as<size_t>(),
+                                   vm["beam_size"].as<size_t>(),
+                                   vm["n_best"].as<size_t>(),
+                                   vm["replace_unk"].as<bool>(),
+                                   vm["replace_unk_tagged"].as<bool>());
+
   std::vector<std::unique_ptr<onmt::ITranslator>> translator_pool;
   translator_pool.emplace_back(onmt::TranslatorFactory::build(vm["model"].as<std::string>(),
                                                               vm["phrase_table"].as<std::string>(),
                                                               vm["vocab_mapping"].as<std::string>(),
-                                                              vm["replace_unk"].as<bool>(),
-                                                              vm["replace_unk_tagged"].as<bool>(),
-                                                              vm["max_sent_length"].as<size_t>(),
-                                                              vm["beam_size"].as<size_t>(),
-                                                              vm["n_best"].as<size_t>(),
                                                               vm["cuda"].as<bool>(),
                                                               vm["qlinear"].as<bool>(),
                                                               vm["profiler"].as<bool>()));
@@ -110,7 +113,7 @@ int main(int argc, char* argv[])
   {
     futures.emplace_back(
       std::async(std::launch::async,
-                 [](BatchReader* p_reader, BatchWriter* p_writer, onmt::ITranslator* p_trans)
+                 [](BatchReader* p_reader, BatchWriter* p_writer, onmt::ITranslator* p_trans, const onmt::TranslationOptions& options)
                  {
                    while (true)
                    {
@@ -124,7 +127,7 @@ int main(int argc, char* argv[])
                      std::vector<size_t> count_src_words, count_src_unk_words;
                      try
                      {
-                       res = p_trans->get_translations_batch(batch.get_input(), score, count_tgt_words, count_tgt_unk_words, count_src_words, count_src_unk_words);
+                       res = p_trans->get_translations_batch(batch.get_input(), score, count_tgt_words, count_tgt_unk_words, count_src_words, count_src_unk_words, options);
                      }
                      catch (const std::exception& e)
                      {
@@ -139,7 +142,8 @@ int main(int argc, char* argv[])
                  },
                  reader.get(),
                  writer.get(),
-                 translator.get()));
+                 translator.get(),
+                 options));
   }
 
   for (auto& f: futures)
