@@ -34,7 +34,13 @@
 option(MKL_USE_STATIC_LIBS "Use static libraries" OFF)
 
 # ---[ Root folders
-set(INTEL_ROOT "/opt/intel" CACHE PATH "Folder contains intel libs")
+if(WIN32)
+  set(ProgramFilesx86 "ProgramFiles(x86)")
+  set(INTEL_ROOT_DEFAULT $ENV{${ProgramFilesx86}}/IntelSWTools/compilers_and_libraries/windows)
+else()
+  set(INTEL_ROOT_DEFAULT "/opt/intel")
+endif()
+set(INTEL_ROOT ${INTEL_ROOT_DEFAULT} CACHE PATH "Folder contains intel libs")
 find_path(MKL_ROOT include/mkl.h PATHS $ENV{MKLROOT} ${INTEL_ROOT}/mkl
                                    DOC "Folder contains MKL")
 
@@ -55,21 +61,32 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 4)
   if(WIN32)
     list(APPEND __mkl_libs intel_c)
   else()
-    list(APPEND __mkl_libs intel gf)
+    list(APPEND __mkl_libs intel)
   endif()
 else()
-  list(APPEND __mkl_libs intel_lp64 gf_lp64)
+  list(APPEND __mkl_libs intel_lp64)
 endif()
 
-list(APPEND __mkl_libs gnu_thread)
+if(WIN32)
+  list(APPEND __mkl_libs intel_thread)
+else()
+  list(APPEND __mkl_libs gnu_thread)
+endif()
+
 list(APPEND __mkl_libs core)
 
 foreach (__lib ${__mkl_libs})
   set(__mkl_lib "mkl_${__lib}")
   string(TOUPPER ${__mkl_lib} __mkl_lib_upper)
 
-  if(MKL_USE_STATIC_LIBS)
-    set(__mkl_lib "lib${__mkl_lib}.a")
+  if(WIN32)
+    if(NOT MKL_USE_STATIC_LIBS)
+      set(__mkl_lib "${__mkl_lib}_dll")
+    endif()
+  else()
+    if(MKL_USE_STATIC_LIBS)
+      set(__mkl_lib "lib${__mkl_lib}.a")
+    endif()
   endif()
 
   find_library(${__mkl_lib_upper}_LIBRARY
@@ -84,8 +101,14 @@ foreach (__lib ${__mkl_libs})
 endforeach()
 
 if(WIN32)
-  find_path(INTEL_INCLUDE_DIR omp.h PATHS ${INTEL_ROOT} PATH_SUFFIXES include)
-  list(APPEND __looked_for INTEL_INCLUDE_DIR)
+  set(__iomp5_libs iomp5 libiomp5md.lib)
+  find_library(MKL_RTL_LIBRARY ${__iomp5_libs}
+    PATHS ${INTEL_ROOT} ${INTEL_ROOT}/compiler ${MKL_ROOT}/.. ${MKL_ROOT}/../compiler
+    PATH_SUFFIXES ${__path_suffixes}
+    DOC "Path to OpenMP runtime library")
+
+  list(APPEND __looked_for MKL_RTL_LIBRARY)
+  list(APPEND MKL_LIBRARIES ${MKL_RTL_LIBRARY})
 endif()
 
 include(FindPackageHandleStandardArgs)

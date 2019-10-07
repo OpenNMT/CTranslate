@@ -166,9 +166,12 @@ generate_export_header(${PROJECT_NAME} EXPORT_FILE_NAME ${PROJECT_BINARY_DIR}/on
 target_link_libraries(${PROJECT_NAME} ${LIBRARIES})
 target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIRECTORIES})
 
-if (Boost_LOG_FOUND AND MSVC)
-  if (NOT (MSVC_VERSION LESS 1910))
-    target_compile_options(${PROJECT_NAME} PUBLIC /permissive-) #to avoid C4596 errors in VS2017
+if (MSVC AND NOT (MSVC_VERSION LESS 1910))
+  if (Boost_LOG_FOUND)
+    target_compile_options(${PROJECT_NAME} PUBLIC /permissive-) #to avoid C4596 errors in VS2017+
+  endif()
+  if (OPENMP_FOUND)
+    target_compile_options(${PROJECT_NAME} PUBLIC /Zc:twoPhase-) #to avoid "C2338: two-phase name lookup is not supported for C++/CLI, C++/CX, or OpenMP; use /Zc:twoPhase-" errors in VS2017+
   endif()
 endif()
 
