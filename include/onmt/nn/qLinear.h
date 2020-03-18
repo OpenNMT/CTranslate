@@ -16,13 +16,23 @@ namespace onmt
     {
     public:
       qLinear(th::Table* data)
-        : Linear<MatFwd, MatIn, ModelT>(data), _quant_input_buffer(nullptr)
+        : Linear<MatFwd, MatIn, ModelT>(nullptr)
+        , _weight_short(StorageLoader<Eigen::Map<const Eigen::RowMajorMat<short> >, short>::get_matrix(data, "weight"))
+        , _bias_short(StorageLoader<Eigen::Map<const Eigen::RowMajorMat<short> >, short>::get_matrix(data, "bias"))
+        , _quant_input_buffer(nullptr)
       {
-        // Quantize the weight - ncols=width is supposed to be multiple of SIMD_VSIZE
-        if (this->_wcols % SIMD_VSIZE)
-          throw std::runtime_error("Weight matrix width should be multiple of 8/16 for qLinear");
-        _malloc_align(_quant_weight_buffer, _quant_weight, this->_wrows * this->_wcols / SIMD_VSIZE);
-        simd::Quantize(this->_weight.data(), _quant_weight, this->_wrows, this->_wcols);
+        this->_wrows = this->_weight_short.rows();
+        this->_wcols = this->_weight_short.cols();
+        const short * ptr_weight = this->_weight_short.data();
+        void * p = (void *) ptr_weight;
+        size_t size = this->_wrows * this->_wcols * sizeof(short);
+        size_t space = size + 64;
+        align(sizeof(SIMD_TYPE), size, p, space);
+        _quant_weight = (SIMD_TYPE*)p;
+        /* there might be a memory shift necessary for alignment */
+        if (space - size != 64) {
+          memmove(p, ptr_weight, size);
+        }
       }
 
       virtual ~qLinear()
@@ -65,14 +75,14 @@ namespace onmt
                          _subdict);
 
         /* add bias */
-        if (this->_bias.rows() > 0)
+        if (this->_bias_short.rows() > 0)
         {
           if (this->_rwrows)
             for (int i = 0; i < input.rows(); ++i)
-              this->_output.row(i).noalias() += this->_rbias.transpose();
+              this->_output.row(i).noalias() += this->_rbias_short.transpose().template cast<float>() / simd::quant_mult;
           else
             for (int i = 0; i < input.rows(); ++i)
-              this->_output.row(i).noalias() += this->_bias.transpose();
+              this->_output.row(i).noalias() += this->_bias_short.transpose().template cast<float>() / simd::quant_mult;
         }
       }
 
@@ -81,14 +91,17 @@ namespace onmt
       {
         this->_rwrows = v.size();
         _subdict = v;
-        this->_rbias.resize(v.size(), 1);
+        this->_rbias_short.resize(v.size(), 1);
         /* adjust bias */
         for (size_t i = 0; i < v.size(); i++) {
-          this->_rbias.row(i) = this->_bias.row(v[i]);
+          this->_rbias_short.row(i) = this->_bias_short.row(v[i]);
         }
       }
 
     protected:
+      Eigen::Map<const Eigen::RowMajorMat<short> > _weight_short;
+      Eigen::Map<const Eigen::RowMajorMat<short> > _bias_short;
+      Eigen::RowMajorMat<short> _rbias_short;
       void* _quant_weight_buffer;
       void* _quant_input_buffer;
       SIMD_TYPE* _quant_weight;
