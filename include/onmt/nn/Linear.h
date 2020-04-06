@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include "onmt/nn/Module.h"
 #include "onmt/th/Obj.h"
 #include "onmt/StorageLoader.h"
@@ -13,22 +14,37 @@ namespace onmt
   namespace nn
   {
 
-    template <typename MatFwd, typename MatIn, typename ModelT>
-    class Linear: public Module<MatFwd>
+    template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
+    class Linear: public Module<MatFwd, MatIn, MatEmb, ModelT>
     {
     public:
       Linear(th::Table* data)
-        : Module<MatFwd>("nn.Linear")
-        , _weight(StorageLoader<MatIn, ModelT>::get_matrix(data, "weight"))
-        , _bias(StorageLoader<MatIn, ModelT>::get_matrix(data, "bias"))
+        : Module<MatFwd, MatIn, MatEmb, ModelT>("nn.Linear")
+        , _weight(new MatIn(StorageLoader<MatIn, ModelT>::get_matrix(data, "weight")))
+        , _bias(new MatIn(StorageLoader<MatIn, ModelT>::get_matrix(data, "bias")))
       {
-        _wrows = _weight.rows();
-        _wcols = _weight.cols();
+        _wrows = _weight->rows();
+        _wcols = _weight->cols();
+        _rwrows = 0;
+      }
+
+      Linear(const Linear& other)
+        : Module<MatFwd, MatIn, MatEmb, ModelT>(other)
+        , _weight(other._weight)
+        , _bias(other._bias)
+      {
+        _wrows = _weight->rows();
+        _wcols = _weight->cols();
         _rwrows = 0;
       }
 
       virtual ~Linear()
       {
+      }
+
+      virtual Module<MatFwd, MatIn, MatEmb, ModelT>* clone(const ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>*) const override
+      {
+        return new Linear(*this);
       }
 
       virtual void forward_impl(const MatFwd& input) override
@@ -46,11 +62,11 @@ namespace onmt
         else
         {
           this->_output.resize(input.rows(), _wrows);
-          this->_output = input * _weight.transpose();
-          if (_bias.rows() > 0)
+          this->_output = input * _weight->transpose();
+          if (_bias->rows() > 0)
           {
             for (int i = 0; i < input.rows(); ++i)
-              this->_output.row(i).noalias() += _bias.transpose();
+              this->_output.row(i).noalias() += _bias->transpose();
           }
         }
       }
@@ -58,7 +74,7 @@ namespace onmt
       std::string get_details() const override
       {
         std::string details = std::to_string(_wcols) + "->" + std::to_string(_wrows);
-        if (_bias.rows() == 0)
+        if (_bias->rows() == 0)
           details += " without bias";
         return details;
       }
@@ -77,14 +93,14 @@ namespace onmt
         /* build sub-matrix */
         for (size_t i = 0; i < v.size(); i++)
         {
-          _rweight.row(i) = _weight.row(v[i]);
-          _rbias.row(i) = _bias.row(v[i]);
+          _rweight.row(i) = _weight->row(v[i]);
+          _rbias.row(i) = _bias->row(v[i]);
         }
       }
 
     protected:
-      MatIn _weight;
-      MatIn _bias;
+      std::shared_ptr<MatIn> _weight;
+      std::shared_ptr<MatIn> _bias;
       Eigen::RowMajorMat<ModelT> _rweight;
       Eigen::RowMajorMat<ModelT> _rbias;
       size_t _wrows, _wcols;

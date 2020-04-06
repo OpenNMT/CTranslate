@@ -9,15 +9,27 @@ namespace onmt
   namespace nn
   {
 
-    template <typename MatFwd>
-    class Replicate: public Module<MatFwd>
+    template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
+    class Replicate: public Module<MatFwd, MatIn, MatEmb, ModelT>
     {
     public:
       Replicate(th::Table* data)
-        : Module<MatFwd>("nn.Replicate")
+        : Module<MatFwd, MatIn, MatEmb, ModelT>("nn.Replicate")
         , _dimension(th::get_number(data, "dim"))
         , _nfeatures(th::get_number(data, "nfeatures"))
       {
+      }
+
+      Replicate(const Replicate& other)
+        : Module<MatFwd, MatIn, MatEmb, ModelT>(other)
+        , _dimension(other._dimension)
+        , _nfeatures(other._nfeatures)
+      {
+      }
+
+      Module<MatFwd, MatIn, MatEmb, ModelT>* clone(const ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>*) const override
+      {
+        return new Replicate(*this);
       }
 
       void forward_impl(const MatFwd& input) override

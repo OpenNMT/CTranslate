@@ -9,14 +9,25 @@ namespace onmt
   namespace nn
   {
 
-    template <typename MatFwd>
-    class SelectTable: public Module<MatFwd>
+    template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
+    class SelectTable: public Module<MatFwd, MatIn, MatEmb, ModelT>
     {
     public:
       SelectTable(th::Table* data)
-        : Module<MatFwd>("nn.SelectTable")
+        : Module<MatFwd, MatIn, MatEmb, ModelT>("nn.SelectTable")
         , _index(th::get_number(data, "index"))
       {
+      }
+
+      SelectTable(const SelectTable& other)
+        : Module<MatFwd, MatIn, MatEmb, ModelT>(other)
+        , _index(other._index)
+      {
+      }
+
+      Module<MatFwd, MatIn, MatEmb, ModelT>* clone(const ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>*) const override
+      {
+        return new SelectTable(*this);
       }
 
       void forward_impl(const std::vector<MatFwd>& inputs) override

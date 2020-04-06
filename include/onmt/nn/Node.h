@@ -3,24 +3,45 @@
 #include <vector>
 #include <fstream>
 #include <map>
+#include <unordered_map>
+#include <limits>
 
-#include "onmt/nn/Module.h"
+#include "onmt/nn/ModuleFactory.h"
 
 namespace onmt
 {
   namespace nn
   {
 
-    template <typename MatFwd>
+    template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
     class Node
     {
     public:
-      Node(size_t id)
+      Node(size_t id, const ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory,
+        std::unordered_map<size_t, Node<MatFwd, MatIn, MatEmb, ModelT>>& node_map)
         : _visited(false)
         , _id(id)
         , _select_index(-1)
         , _expected_inputs(0)
         , _children()
+        , _factory(factory)
+        , _node_map(node_map)
+      {
+      }
+
+      Node(const Node& other, const ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory,
+        std::unordered_map<size_t, Node<MatFwd, MatIn, MatEmb, ModelT>>& node_map)
+        : _visited(false)
+        , _id(other._id)
+        , _select_index(other._select_index)
+        , _expected_inputs(other._index_to_input.size())
+        , _module_id(other._module_id)
+        , _children(other._children)
+        , _input_to_index(other._input_to_index)
+        , _index_to_input(other._index_to_input)
+        , _module_inputs(other._index_to_input.size())
+        , _factory(factory)
+        , _node_map(node_map)
       {
       }
 
@@ -34,14 +55,14 @@ namespace onmt
         _select_index = index;
       }
 
-      void add_child(Node& child)
+      void add_child(size_t child)
       {
-        _children.push_back(&child);
+        _children.push_back(child);
       }
 
-      void set_module(nn::Module<MatFwd>* module)
+      void set_module_id(size_t module_id)
       {
-        _module = module;
+        _module_id = module_id;
       }
 
       void add_input_index(size_t id)
@@ -54,18 +75,20 @@ namespace onmt
         _expected_inputs += 1;
       }
 
-      Module<MatFwd>* find(const std::string& custom_name)
+      Module<MatFwd, MatIn, MatEmb, ModelT>* find(const std::string& custom_name)
       {
-        if (_module)
+        if (_module_id != std::numeric_limits<size_t>::max())
         {
-          auto res = _module->find(custom_name);
+          auto mod = _factory.get_module(_module_id);
+          auto res = mod->find(custom_name);
           if (res)
             return res;
         }
 
         for (auto child: _children)
         {
-          auto res = child->find(custom_name);
+          auto& node = _node_map.at(child);
+          auto res = node.find(custom_name);
           if (res)
             return res;
         }
@@ -73,18 +96,24 @@ namespace onmt
         return nullptr;
       }
 
-      void* apply(void* (*func)(Module<MatFwd>*, void*), void* data)
+      void* apply(void* (*func)(Module<MatFwd, MatIn, MatEmb, ModelT>*, void*), void* data)
       {
         if (_visited)
           return nullptr;
 
         _visited = true;
 
-        if (_module)
-          _module->apply(func, data);
+        if (_module_id != std::numeric_limits<size_t>::max())
+        {
+          auto mod = _factory.get_module(_module_id);
+          mod->apply(func, data);
+        }
 
         for (auto child: _children)
-          child->apply(func, data);
+        {
+          auto& node = _node_map.at(child);
+          node.apply(func, data);
+        }
 
         return nullptr;
       }
@@ -97,10 +126,11 @@ namespace onmt
         _visited = true;
 
         os << _id << "  [label=\"Node" << _id;
-        if (_module)
+        if (_module_id != std::numeric_limits<size_t>::max())
         {
-          os << "\nmodule = " << _module->get_name();
-          std::string details = _module->get_details();
+          auto mod = _factory.get_module(_module_id);
+          os << "\nmodule = " << mod->get_name();
+          std::string details = mod->get_details();
           if (!details.empty())
             os << " " << details;
         }
@@ -124,8 +154,9 @@ namespace onmt
 
         for (auto child: _children)
         {
-          os <<  _id << " -> " << child->_id << ";" << std::endl;
-          child->to_dot(os);
+          auto& node = _node_map.at(child);
+          os <<  _id << " -> " << node._id << ";" << std::endl;
+          node.to_dot(os);
         }
       }
 
@@ -145,8 +176,11 @@ namespace onmt
         // Only forward into the module when all inputs were forwarded into the node.
         if (_expected_inputs <= 0)
         {
-          if (_module && _module->get_name() != "nn.Identity")
-            _output = _module->forward(_module_inputs);
+          Module<MatFwd, MatIn, MatEmb, ModelT>* mod = nullptr;
+          if (_module_id != std::numeric_limits<size_t>::max())
+            mod = _factory.get_module(_module_id);
+          if (mod && mod->get_name() != "nn.Identity")
+            _output = mod->forward(_module_inputs);
           else
             _output = _module_inputs;
 
@@ -160,7 +194,10 @@ namespace onmt
           {
             // Forward output into every chilren node
             for (auto child: _children)
-              child->forward(_output, final_output, this);
+            {
+              auto& node = _node_map.at(child);
+              node.forward(_output, final_output, this);
+            }
           }
         }
       }
@@ -175,12 +212,14 @@ namespace onmt
       size_t _id;
       int _select_index;
       int _expected_inputs;
-      nn::Module<MatFwd>* _module;
-      std::vector<Node*> _children;
+      size_t _module_id;
+      std::vector<size_t> _children;
       std::map<size_t, size_t> _input_to_index;
       std::vector<size_t> _index_to_input;
       std::vector<MatFwd> _module_inputs;
       std::vector<MatFwd> _output;
+      const ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& _factory;
+      std::unordered_map<size_t, Node<MatFwd, MatIn, MatEmb, ModelT>>& _node_map;
     };
 
   }

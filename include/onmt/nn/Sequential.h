@@ -16,20 +16,31 @@ namespace onmt
       {
       }
 
+      Sequential(const Sequential& other,
+                 const ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory)
+        : Container<MatFwd, MatIn, MatEmb, ModelT>(other, factory)
+      {
+      }
+
+      Module<MatFwd, MatIn, MatEmb, ModelT>* clone(const ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>* factory) const override
+      {
+        return new Sequential(*this, *factory);
+      }
+
       void forward_impl(const std::vector<MatFwd>& inputs) override
       {
-        if (this->_sequence.empty())
+        if (this->_sequence->empty())
         {
           this->_outputs = inputs;
           return;
         }
 
-        auto it = this->_sequence.begin();
-        this->_outputs = (*it)->forward(inputs);
+        auto it = this->_sequence->begin();
+        this->_outputs = this->_factory.get_module(*it)->forward(inputs);
 
-        for (it++; it != this->_sequence.end(); it++)
+        for (it++; it != this->_sequence->end(); it++)
         {
-          this->_outputs = (*it)->forward(this->_outputs);
+          this->_outputs = this->_factory.get_module(*it)->forward(this->_outputs);
         }
       }
     };

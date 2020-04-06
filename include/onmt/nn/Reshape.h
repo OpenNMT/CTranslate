@@ -7,14 +7,25 @@ namespace onmt
   namespace nn
   {
 
-    template <typename MatFwd>
-    class Reshape: public Module<MatFwd>
+    template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
+    class Reshape: public Module<MatFwd, MatIn, MatEmb, ModelT>
     {
     public:
       Reshape(th::Table* data)
-        : Module<MatFwd>("nn.Reshape")
+        : Module<MatFwd, MatIn, MatEmb, ModelT>("nn.Reshape")
         , _dims(th::get_storage_as_vector<long>(data, "size"))
       {
+      }
+
+      Reshape(const Reshape& other)
+        : Module<MatFwd, MatIn, MatEmb, ModelT>(other)
+        , _dims(other._dims)
+      {
+      }
+
+      Module<MatFwd, MatIn, MatEmb, ModelT>* clone(const ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>*) const override
+      {
+        return new Reshape(*this);
       }
 
       void forward_impl(const std::vector<MatFwd>& inputs) override

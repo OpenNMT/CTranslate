@@ -17,13 +17,16 @@ namespace onmt
     {
     public:
       ModuleFactory(Profiler& profiler, bool cuda, bool qlinear);
+      ModuleFactory(const ModuleFactory& other);
       ~ModuleFactory();
 
-      Module<MatFwd>* build(th::Class* obj);
+      size_t build(th::Class* obj);
+      Module<MatFwd, MatIn, MatEmb, ModelT>* get_module(size_t id) const;
+      void set_profiler(Profiler& profiler);
 
     private:
-      std::vector<Module<MatFwd>*> _storage;
-      Profiler& _profiler;
+      std::vector<Module<MatFwd, MatIn, MatEmb, ModelT>*> _storage;
+      Profiler* _profiler;
       bool _cuda;
       bool _qlinear;
 #ifdef WITH_CUDA

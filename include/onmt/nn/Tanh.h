@@ -7,13 +7,23 @@ namespace onmt
   namespace nn
   {
 
-    template <typename MatFwd>
-    class Tanh: public Module<MatFwd>
+    template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
+    class Tanh: public Module<MatFwd, MatIn, MatEmb, ModelT>
     {
     public:
       Tanh()
-        : Module<MatFwd>("nn.Tanh")
+        : Module<MatFwd, MatIn, MatEmb, ModelT>("nn.Tanh")
       {
+      }
+
+      Tanh(const Tanh& other)
+        : Module<MatFwd, MatIn, MatEmb, ModelT>(other)
+      {
+      }
+
+      Module<MatFwd, MatIn, MatEmb, ModelT>* clone(const ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>*) const override
+      {
+        return new Tanh(*this);
       }
 
       void forward_impl(const MatFwd& input) override

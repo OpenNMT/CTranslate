@@ -7,13 +7,23 @@ namespace onmt
   namespace nn
   {
 
-    template <typename MatFwd>
-    class LogSoftMax: public Module<MatFwd>
+    template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
+    class LogSoftMax: public Module<MatFwd, MatIn, MatEmb, ModelT>
     {
     public:
       LogSoftMax()
-        : Module<MatFwd>("nn.LogSoftMax")
+        : Module<MatFwd, MatIn, MatEmb, ModelT>("nn.LogSoftMax")
       {
+      }
+
+      LogSoftMax(const LogSoftMax& other)
+        : Module<MatFwd, MatIn, MatEmb, ModelT>(other)
+      {
+      }
+
+      Module<MatFwd, MatIn, MatEmb, ModelT>* clone(const ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>*) const override
+      {
+        return new LogSoftMax(*this);
       }
 
       void forward_impl(const MatFwd& input)

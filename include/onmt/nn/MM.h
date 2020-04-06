@@ -7,15 +7,27 @@ namespace onmt
   namespace nn
   {
 
-    template <typename MatFwd>
-    class MM: public Module<MatFwd>
+    template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
+    class MM: public Module<MatFwd, MatIn, MatEmb, ModelT>
     {
     public:
       MM(th::Table* data)
-        : Module<MatFwd>("nn.MM")
+        : Module<MatFwd, MatIn, MatEmb, ModelT>("nn.MM")
         , _transA(get_boolean(data, "transA"))
         , _transB(get_boolean(data, "transB"))
       {
+      }
+
+      MM(const MM& other)
+        : Module<MatFwd, MatIn, MatEmb, ModelT>(other)
+        , _transA(other._transA)
+        , _transB(other._transB)
+      {
+      }
+
+      Module<MatFwd, MatIn, MatEmb, ModelT>* clone(const ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>*) const override
+      {
+        return new MM(*this);
       }
 
       void forward_impl(const std::vector<MatFwd>& inputs) override
