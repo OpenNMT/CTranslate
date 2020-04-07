@@ -7,13 +7,23 @@ namespace onmt
   namespace nn
   {
 
-    template <typename MatFwd>
-    class CMulTable: public Module<MatFwd>
+    template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
+    class CMulTable: public Module<MatFwd, MatIn, MatEmb, ModelT>
     {
     public:
       CMulTable()
-        : Module<MatFwd>("nn.CMulTable")
+        : Module<MatFwd, MatIn, MatEmb, ModelT>("nn.CMulTable")
       {
+      }
+
+      CMulTable(const CMulTable& other)
+        : Module<MatFwd, MatIn, MatEmb, ModelT>(other)
+      {
+      }
+
+      Module<MatFwd, MatIn, MatEmb, ModelT>* clone(const ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>*) const override
+      {
+        return new CMulTable(*this);
       }
 
       void forward_impl(const std::vector<MatFwd>& inputs) override

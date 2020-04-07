@@ -2,6 +2,7 @@
 
 #include <string>
 #include <stdexcept>
+#include <cstdlib>
 
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
@@ -74,7 +75,7 @@ namespace onmt
     T* to_host(const T* device, T* host, int rows, int cols)
     {
       if (!host)
-        host = (T*) malloc(rows * cols * sizeof (T));
+        host = (T*) std::malloc(rows * cols * sizeof (T));
 
       CUBLAS_CHECK(cublasGetMatrix(rows, cols, sizeof (T), device, rows, host, rows));
 

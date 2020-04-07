@@ -7,13 +7,23 @@ namespace onmt
   namespace nn
   {
 
-    template <typename MatFwd>
-    class JoinTable: public Module<MatFwd>
+    template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
+    class JoinTable: public Module<MatFwd, MatIn, MatEmb, ModelT>
     {
     public:
       JoinTable()
-        : Module<MatFwd>("nn.JoinTable")
+        : Module<MatFwd, MatIn, MatEmb, ModelT>("nn.JoinTable")
       {
+      }
+
+      JoinTable(const JoinTable& other)
+        : Module<MatFwd, MatIn, MatEmb, ModelT>(other)
+      {
+      }
+
+      Module<MatFwd, MatIn, MatEmb, ModelT>* clone(const ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>*) const override
+      {
+        return new JoinTable(*this);
       }
 
       void forward_impl(const std::vector<MatFwd>& inputs) override

@@ -69,6 +69,8 @@ namespace onmt
     std::shared_ptr<Model<MatFwd, MatIn, MatEmb, ModelT>> _model;
     std::shared_ptr<const PhraseTable> _phrase_table;
     std::shared_ptr<const SubDict> _subdict;
+    std::shared_ptr<std::vector<size_t>> _encoder_mod_ids;
+    std::shared_ptr<std::vector<size_t>> _decoder_mod_ids;
 
     bool _cuda;
     bool _qlinear;
@@ -98,10 +100,10 @@ namespace onmt
     void init_graph();
 
     nn::ModuleFactory<MatFwd, MatIn, MatEmb, ModelT> _factory;
-    nn::Module<MatFwd>* _encoder;
-    nn::Module<MatFwd>* _encoder_bwd;
-    nn::Module<MatFwd>* _decoder;
-    nn::Module<MatFwd>* _generator;
+    nn::Module<MatFwd, MatIn, MatEmb, ModelT>* _encoder;
+    nn::Module<MatFwd, MatIn, MatEmb, ModelT>* _encoder_bwd;
+    nn::Module<MatFwd, MatIn, MatEmb, ModelT>* _decoder;
+    nn::Module<MatFwd, MatIn, MatEmb, ModelT>* _generator;
   };
 
 

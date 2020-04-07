@@ -16,8 +16,8 @@ namespace onmt
     Model(const std::string& filename);
 
     void create_graph(nn::ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory,
-                      std::vector<nn::Module<MatFwd>*>& encoder,
-                      std::vector<nn::Module<MatFwd>*>& decoder);
+                      std::vector<size_t>& encoder,
+                      std::vector<size_t>& decoder);
 
     const Dictionary& get_src_dict() const;
     const Dictionary& get_tgt_dict() const;
@@ -36,7 +36,7 @@ namespace onmt
     void load_dictionaries(th::Table* obj);
 
     void load_modules(th::Table* obj,
-                      std::vector<nn::Module<MatFwd>*>& modules,
+                      std::vector<size_t>& modules,
                       nn::ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& module_factory) const;
 
     th::Env _env;
@@ -49,7 +49,7 @@ namespace onmt
 
     std::unordered_map<std::string, double> _options_value;
     std::unordered_map<std::string, std::string> _options_str;
-    std::string _empty_str = "";
+    const std::string _empty_str;
   };
 
 }

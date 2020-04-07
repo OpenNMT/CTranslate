@@ -77,7 +77,7 @@ namespace onmt
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
   void Model<MatFwd, MatIn, MatEmb, ModelT>::load_modules(
     th::Table* obj,
-    std::vector<nn::Module<MatFwd>*>& modules,
+    std::vector<size_t>& modules,
     nn::ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& module_factory) const
   {
     auto modules_set = th::get_field<th::Table*>(obj, "modules");
@@ -94,27 +94,28 @@ namespace onmt
     }
   }
 
-  template <typename MF>
+  template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
   struct record_graph {
     record_graph():currentGraph(nullptr),attentionGraph(nullptr) {}
-    nn::Module<MF> *currentGraph;
-    nn::Module<MF> *attentionGraph;
+    nn::Module<MatFwd, MatIn, MatEmb, ModelT> *currentGraph;
+    nn::Module<MatFwd, MatIn, MatEmb, ModelT> *attentionGraph;
   };
 
-  template <typename MF>
-  static void* _find_attentiongraph(nn::Module<MF>* M, void* t)
+  template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
+  static void* _find_attentiongraph(nn::Module<MatFwd, MatIn, MatEmb, ModelT>* M, void* t)
   {
     if (M->get_name() == "nn.gModule"){
-      ((record_graph<MF>*)t)->currentGraph = M;
+      ((record_graph<MatFwd, MatIn, MatEmb, ModelT>*)t)->currentGraph = M;
     }
     else if (M->get_custom_name() == "softmaxAttn") {
-      ((record_graph<MF>*)t)->attentionGraph = ((record_graph<MF>*)t)->currentGraph;
+      ((record_graph<MatFwd, MatIn, MatEmb, ModelT>*)t)->attentionGraph =
+        ((record_graph<MatFwd, MatIn, MatEmb, ModelT>*)t)->currentGraph;
     }
     return 0;
   }
 
-  template <typename MF>
-  static void* _mark_block(nn::Module<MF>* M, void* t)
+  template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
+  static void* _mark_block(nn::Module<MatFwd, MatIn, MatEmb, ModelT>* M, void* t)
   {
     M->set_block((const char*)t);
     return 0;
@@ -123,25 +124,26 @@ namespace onmt
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
   void Model<MatFwd, MatIn, MatEmb, ModelT>::create_graph(
     nn::ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>& factory,
-    std::vector<nn::Module<MatFwd>*>& encoder,
-    std::vector<nn::Module<MatFwd>*>& decoder)
+    std::vector<size_t>& encoder,
+    std::vector<size_t>& decoder)
   {
     auto models = th::get_field<th::Table*>(_root, "models");
     load_modules(th::get_field<th::Table*>(models, "encoder"), encoder, factory);
     load_modules(th::get_field<th::Table*>(models, "decoder"), decoder, factory);
 
     /* annotate the different modules for profiling */
-    encoder[0]->apply(_mark_block<MatFwd>, (void*)"encoder_fwd");
+    factory.get_module(encoder[0])->apply(_mark_block<MatFwd, MatIn, MatEmb, ModelT>, (void*)"encoder_fwd");
     if (encoder.size() > 1)
-      encoder[1]->apply(_mark_block<MatFwd>, (void*)"encoder_bwd");
-    decoder[0]->apply(_mark_block<MatFwd>, (void*)"decoder");
-    decoder[1]->apply(_mark_block<MatFwd>, (void*)"generator");
+      factory.get_module(encoder[1])->apply(_mark_block<MatFwd, MatIn, MatEmb, ModelT>, (void*)"encoder_bwd");
+    auto decoder_mod = factory.get_module(decoder[0]);
+    decoder_mod->apply(_mark_block<MatFwd, MatIn, MatEmb, ModelT>, (void*)"decoder");
+    factory.get_module(decoder[1])->apply(_mark_block<MatFwd, MatIn, MatEmb, ModelT>, (void*)"generator");
 
     /* find the attention module and annotate it specifically */
-    record_graph<MatFwd> rg;
-    decoder[0]->apply(_find_attentiongraph<MatFwd>, (void*)&rg);
+    record_graph<MatFwd, MatIn, MatEmb, ModelT> rg;
+    decoder_mod->apply(_find_attentiongraph<MatFwd, MatIn, MatEmb, ModelT>, (void*)&rg);
     if (rg.attentionGraph)
-      rg.attentionGraph->apply(_mark_block<MatFwd>, (void*)"attention");
+      rg.attentionGraph->apply(_mark_block<MatFwd, MatIn, MatEmb, ModelT>, (void*)"attention");
   }
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>

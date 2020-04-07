@@ -11,7 +11,10 @@ namespace onmt
   namespace nn
   {
 
-    template <typename MatFwd>
+    template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
+    class ModuleFactory;
+
+    template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
     class Module
     {
     public:
@@ -33,9 +36,22 @@ namespace onmt
       {
       }
 
+      Module(const Module& other)
+        : _name(other._name)
+        , _custom_name(other._custom_name)
+        , _profile(other._profile)
+        , _block(other._block)
+        , _profiler(nullptr)
+        , _outputs(1)
+        , _output(_outputs.front())
+      {
+      }
+
       virtual ~Module()
       {
       }
+
+      virtual Module<MatFwd, MatIn, MatEmb, ModelT>* clone(const ModuleFactory<MatFwd, MatIn, MatEmb, ModelT>* factory) const = 0;
 
       const std::vector<MatFwd>& forward(const std::vector<MatFwd>& inputs)
       {
@@ -68,7 +84,7 @@ namespace onmt
         _output = input;
       }
 
-      virtual Module<MatFwd>* find(const std::string& custom_name)
+      virtual Module<MatFwd, MatIn, MatEmb, ModelT>* find(const std::string& custom_name)
       {
         if (_custom_name == custom_name)
           return this;
@@ -76,7 +92,7 @@ namespace onmt
         return nullptr;
       }
 
-      virtual void* apply(void* (*func)(Module<MatFwd>*, void*), void* data)
+      virtual void* apply(void* (*func)(Module<MatFwd, MatIn, MatEmb, ModelT>*, void*), void* data)
       {
         return func(this, data);
       }
@@ -111,9 +127,9 @@ namespace onmt
         _custom_name = custom_name;
       }
 
-      void set_profiler(Profiler& profiler)
+      void set_profiler(Profiler* profiler)
       {
-        _profiler = &profiler;
+        _profiler = profiler;
       }
 
       void set_block(const char* s)

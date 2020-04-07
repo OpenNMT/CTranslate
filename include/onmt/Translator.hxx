@@ -147,10 +147,13 @@ namespace onmt
     , _model(new Model<MatFwd, MatIn, MatEmb, ModelT>(model))
     , _phrase_table(new PhraseTable(phrase_table))
     , _subdict(new SubDict(vocab_mapping, _model->get_tgt_dict()))
+    , _encoder_mod_ids(new std::vector<size_t>())
+    , _decoder_mod_ids(new std::vector<size_t>())
     , _cuda(cuda)
     , _qlinear(qlinear)
     , _factory(_profiler, cuda, qlinear)
   {
+    _model->create_graph(_factory, *_encoder_mod_ids, *_decoder_mod_ids);
     init_graph();
     _profiler.stop("Initialization");
   }
@@ -163,10 +166,13 @@ namespace onmt
     , _model(other._model)
     , _phrase_table(other._phrase_table)
     , _subdict(other._subdict)
+    , _encoder_mod_ids(other._encoder_mod_ids)
+    , _decoder_mod_ids(other._decoder_mod_ids)
     , _cuda(other._cuda)
     , _qlinear(other._qlinear)
-    , _factory(_profiler, _cuda, _qlinear)
+    , _factory(other._factory)
   {
+    _factory.set_profiler(_profiler);
     init_graph();
     _profiler.stop("Initialization");
   }
@@ -174,13 +180,10 @@ namespace onmt
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
   void Translator<MatFwd, MatIn, MatEmb, ModelT>::init_graph()
   {
-    std::vector<nn::Module<MatFwd>*> encoder;
-    std::vector<nn::Module<MatFwd>*> decoder;
-    _model->create_graph(_factory, encoder, decoder);
-    _encoder = encoder[0];
-    _encoder_bwd = encoder.size() > 1 ? encoder[1] : nullptr;
-    _decoder = decoder[0];
-    _generator = decoder[1];
+    _encoder = _factory.get_module((*_encoder_mod_ids)[0]);
+    _encoder_bwd = _encoder_mod_ids->size() > 1 ? _factory.get_module((*_encoder_mod_ids)[1]) : nullptr;
+    _decoder = _factory.get_module((*_decoder_mod_ids)[0]);
+    _generator = _factory.get_module((*_decoder_mod_ids)[1]);
   }
 
   template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
@@ -232,12 +235,12 @@ namespace onmt
     std::vector<size_t> subvocab;
   };
 
-  template <typename MatFwd, typename MatIn, typename, typename ModelT>
-  void* reduce_vocabulary(nn::Module<MatFwd>* M, void* t)
+  template <typename MatFwd, typename MatIn, typename MatEmb, typename ModelT>
+  void* reduce_vocabulary(nn::Module<MatFwd, MatIn, MatEmb, ModelT>* M, void* t)
   {
     if (M->get_name() == "nn.Linear")
     {
-      nn::Linear<MatFwd, MatIn, ModelT>* mL = (nn::Linear<MatFwd, MatIn, ModelT>*)M;
+      nn::Linear<MatFwd, MatIn, MatEmb, ModelT>* mL = (nn::Linear<MatFwd, MatIn, MatEmb, ModelT>*)M;
       tdict* data = (tdict*)t;
       if (mL->get_weight_rows() == data->_ndict)
         mL->apply_subdictionary(data->subvocab);
@@ -277,12 +280,10 @@ namespace onmt
 
     for (const auto& text: texts)
     {
-      std::vector<std::string> tokens;
-      std::vector<std::vector<std::string> > features;
-      tokenizer.tokenize(text, tokens, features);
-      batch_tokens.push_back(tokens);
-      batch_features.push_back(features);
-      count_src_words.push_back(tokens.size());
+      batch_tokens.emplace_back();
+      batch_features.emplace_back();
+      tokenizer.tokenize(text, batch_tokens.back(), batch_features.back());
+      count_src_words.push_back(batch_tokens.back().size());
     }
 
     TranslationResult res = translate_batch(batch_tokens, batch_features, count_src_unk_words, options);
@@ -575,7 +576,7 @@ namespace onmt
     std::vector<std::vector<MatFwd> > all_attention; // b x n x [ K x source_l ]
 
     // Get a pointer to the attention softmax module to mask its output.
-    nn::Module<MatFwd>* softmax_attn = _decoder->find("softmaxAttn");
+    nn::Module<MatFwd, MatIn, MatEmb, ModelT>* softmax_attn = _decoder->find("softmaxAttn");
 
     // Prepare data structures for the beam search.
     for (size_t b = 0; b < batch_size; ++b)
