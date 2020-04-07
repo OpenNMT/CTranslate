@@ -1,3 +1,5 @@
+**This project is considered obsolete as the Torch framework is no longer maintained. For compatibility with OpenNMT-tf or OpenNMT-py, please check out [CTranslate2](https://github.com/OpenNMT/CTranslate2).**
+
 [![Build Status](https://api.travis-ci.org/OpenNMT/CTranslate.svg?branch=master)](https://travis-ci.org/OpenNMT/CTranslate)
 
 # CTranslate
